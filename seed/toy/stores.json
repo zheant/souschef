@@ -1,0 +1,10 @@
+[
+  {
+    "external_key": "toy_store",
+    "banner": "Toy Store",
+    "address": "1 rue Test",
+    "lat": 45.53,
+    "lng": -73.6,
+    "shopping_center_id": null
+  }
+]

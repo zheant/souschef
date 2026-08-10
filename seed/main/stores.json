@@ -1,0 +1,34 @@
+[
+  {
+    "external_key": "maxiprix_lebourgneuf",
+    "banner": "Maxi-Prix",
+    "address": "1000 boul. des Épinettes",
+    "lat": 45.5602,
+    "lng": -73.6512,
+    "shopping_center_id": "centre_les_rives"
+  },
+  {
+    "external_key": "superfrais_lebourgneuf",
+    "banner": "SuperFrais",
+    "address": "1010 boul. des Épinettes",
+    "lat": 45.5598,
+    "lng": -73.6505,
+    "shopping_center_id": "centre_les_rives"
+  },
+  {
+    "external_key": "marche_central",
+    "banner": "Marché Central",
+    "address": "250 rue du Marché",
+    "lat": 45.521,
+    "lng": -73.573,
+    "shopping_center_id": null
+  },
+  {
+    "external_key": "epicier_du_coin",
+    "banner": "L'Épicier du Coin",
+    "address": "12 rue Locale",
+    "lat": 45.532,
+    "lng": -73.5905,
+    "shopping_center_id": null
+  }
+]

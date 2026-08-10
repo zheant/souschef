@@ -1,0 +1,29 @@
+[
+  {
+    "id": "riz",
+    "name": "Riz",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": 0.02,
+    "salvage_value_cents_per_base_unit": 0.1,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "lentille",
+    "name": "Lentilles",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": 0.02,
+    "salvage_value_cents_per_base_unit": 0.1,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "oeuf",
+    "name": "Œuf",
+    "unit_kind": "count",
+    "base_unit": "unit",
+    "perishability": 0.3,
+    "salvage_value_cents_per_base_unit": 10.0,
+    "density_g_per_ml": null
+  }
+]

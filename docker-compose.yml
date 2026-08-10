@@ -1,0 +1,46 @@
+# Démarrage en une commande : docker compose up
+# La cible `api` applique les migrations puis exécute le seeding idempotent
+# avant de servir — la pile est donc utilisable dès la fin du démarrage.
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: menu
+      POSTGRES_PASSWORD: menu
+      POSTGRES_DB: menu_optimizer
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U menu -d menu_optimizer"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    ports:
+      - "5432:5432"
+
+  api:
+    build: ./backend
+    environment:
+      MENU_DATABASE_URL: postgresql+psycopg2://menu:menu@db:5432/menu_optimizer
+      MENU_SEED_DIR: /seed/main
+    volumes:
+      - ./seed:/seed:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "alembic upgrade head &&
+      python -m app.seeding.seed --seed-dir /seed/main &&
+      uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    ports:
+      - "8000:8000"
+
+  web:
+    build: ./frontend
+    depends_on:
+      - api
+    ports:
+      - "5173:5173"
+
+volumes:
+  pgdata:

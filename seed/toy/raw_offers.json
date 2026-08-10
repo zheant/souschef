@@ -1,0 +1,46 @@
+[
+  {
+    "store_external_key": "toy_store",
+    "week": "2026-W33",
+    "raw_text": "Toy — riz_1kg",
+    "product_external_key": "riz_1kg",
+    "price_cents_cad": 300,
+    "regular_price_cents_cad": 300,
+    "is_promo": false,
+    "valid_from": "2026-08-10",
+    "valid_to": "2026-08-16"
+  },
+  {
+    "store_external_key": "toy_store",
+    "week": "2026-W33",
+    "raw_text": "Toy — riz_400g",
+    "product_external_key": "riz_400g",
+    "price_cents_cad": 180,
+    "regular_price_cents_cad": 180,
+    "is_promo": false,
+    "valid_from": "2026-08-10",
+    "valid_to": "2026-08-16"
+  },
+  {
+    "store_external_key": "toy_store",
+    "week": "2026-W33",
+    "raw_text": "Toy — lentille_500g",
+    "product_external_key": "lentille_500g",
+    "price_cents_cad": 250,
+    "regular_price_cents_cad": 250,
+    "is_promo": false,
+    "valid_from": "2026-08-10",
+    "valid_to": "2026-08-16"
+  },
+  {
+    "store_external_key": "toy_store",
+    "week": "2026-W33",
+    "raw_text": "Toy — oeuf_12",
+    "product_external_key": "oeuf_12",
+    "price_cents_cad": 450,
+    "regular_price_cents_cad": 450,
+    "is_promo": false,
+    "valid_from": "2026-08-10",
+    "valid_to": "2026-08-16"
+  }
+]

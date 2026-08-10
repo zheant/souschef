@@ -1,0 +1,71 @@
+[
+  {
+    "id": "riz_nature",
+    "name": "Riz nature",
+    "original_servings": 2,
+    "prep_time_fixed_h": "0.1",
+    "prep_time_marginal_h": "0.02",
+    "min_batch_servings": 1,
+    "max_batch_servings": 8,
+    "tags": {},
+    "required_equipment": [],
+    "diet_flags": [],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "riz",
+        "qty_fixed_per_batch_base_unit": "0",
+        "qty_marginal_per_serving_base_unit": "80",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "dahl_toy",
+    "name": "Dahl",
+    "original_servings": 2,
+    "prep_time_fixed_h": "0.2",
+    "prep_time_marginal_h": "0.03",
+    "min_batch_servings": 2,
+    "max_batch_servings": 8,
+    "tags": {},
+    "required_equipment": [],
+    "diet_flags": [],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "lentille",
+        "qty_fixed_per_batch_base_unit": "0",
+        "qty_marginal_per_serving_base_unit": "70",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "riz",
+        "qty_fixed_per_batch_base_unit": "0",
+        "qty_marginal_per_serving_base_unit": "40",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "omelette_toy",
+    "name": "Omelette",
+    "original_servings": 1,
+    "prep_time_fixed_h": "0.05",
+    "prep_time_marginal_h": "0.05",
+    "min_batch_servings": 1,
+    "max_batch_servings": 4,
+    "tags": {},
+    "required_equipment": [],
+    "diet_flags": [],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "oeuf",
+        "qty_fixed_per_batch_base_unit": "0",
+        "qty_marginal_per_serving_base_unit": "2",
+        "substitutable": false
+      }
+    ]
+  }
+]

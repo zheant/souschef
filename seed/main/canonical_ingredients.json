@@ -1,0 +1,209 @@
+[
+  {
+    "id": "riz_basmati",
+    "name": "Riz basmati",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": 0.02,
+    "salvage_value_cents_per_base_unit": 0.241554,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "farine_tout_usage",
+    "name": "Farine tout usage",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": 0.03,
+    "salvage_value_cents_per_base_unit": 0.050225,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "lentille_verte",
+    "name": "Lentilles vertes sèches",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": 0.02,
+    "salvage_value_cents_per_base_unit": 0.082,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "poulet_cuisse",
+    "name": "Cuisses de poulet",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": 0.85,
+    "salvage_value_cents_per_base_unit": 0.233772,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "boeuf_hache",
+    "name": "Bœuf haché mi-maigre",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": 0.85,
+    "salvage_value_cents_per_base_unit": 0.33921,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "tofu_ferme",
+    "name": "Tofu ferme",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": 0.6,
+    "salvage_value_cents_per_base_unit": 0.290603,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "oignon_jaune",
+    "name": "Oignon jaune",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": 0.15,
+    "salvage_value_cents_per_base_unit": 0.074953,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "carotte",
+    "name": "Carotte",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": 0.25,
+    "salvage_value_cents_per_base_unit": 0.051517,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "pomme_de_terre",
+    "name": "Pomme de terre",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": 0.15,
+    "salvage_value_cents_per_base_unit": 0.059856,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "tomate_conserve",
+    "name": "Tomates en conserve",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": 0.05,
+    "salvage_value_cents_per_base_unit": 0.109515,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "cheddar",
+    "name": "Cheddar",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": 0.4,
+    "salvage_value_cents_per_base_unit": 0.559841,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "beurre",
+    "name": "Beurre salé",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": 0.2,
+    "salvage_value_cents_per_base_unit": 0.55952,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "coriandre_fraiche",
+    "name": "Coriandre fraîche",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": 0.95,
+    "salvage_value_cents_per_base_unit": 0.0,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "epinard_frais",
+    "name": "Épinards frais",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": 0.9,
+    "salvage_value_cents_per_base_unit": 0.0,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "lait_325",
+    "name": "Lait 3,25 %",
+    "unit_kind": "volume",
+    "base_unit": "ml",
+    "perishability": 0.7,
+    "salvage_value_cents_per_base_unit": 0.078538,
+    "density_g_per_ml": 1.03
+  },
+  {
+    "id": "huile_olive",
+    "name": "Huile d'olive",
+    "unit_kind": "volume",
+    "base_unit": "ml",
+    "perishability": 0.02,
+    "salvage_value_cents_per_base_unit": 0.47055,
+    "density_g_per_ml": 0.91
+  },
+  {
+    "id": "sauce_soja",
+    "name": "Sauce soja",
+    "unit_kind": "volume",
+    "base_unit": "ml",
+    "perishability": 0.02,
+    "salvage_value_cents_per_base_unit": 0.160111,
+    "density_g_per_ml": 1.1
+  },
+  {
+    "id": "creme_35",
+    "name": "Crème 35 %",
+    "unit_kind": "volume",
+    "base_unit": "ml",
+    "perishability": 0.75,
+    "salvage_value_cents_per_base_unit": 0.271179,
+    "density_g_per_ml": 0.98
+  },
+  {
+    "id": "bouillon_poulet",
+    "name": "Bouillon de poulet",
+    "unit_kind": "volume",
+    "base_unit": "ml",
+    "perishability": 0.3,
+    "salvage_value_cents_per_base_unit": 0.065831,
+    "density_g_per_ml": 1.0
+  },
+  {
+    "id": "oeuf",
+    "name": "Œuf de calibre gros",
+    "unit_kind": "count",
+    "base_unit": "unit",
+    "perishability": 0.3,
+    "salvage_value_cents_per_base_unit": 14.073704,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "tortilla",
+    "name": "Tortilla de blé",
+    "unit_kind": "count",
+    "base_unit": "unit",
+    "perishability": 0.35,
+    "salvage_value_cents_per_base_unit": 26.341926,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "gousse_ail",
+    "name": "Gousse d'ail",
+    "unit_kind": "count",
+    "base_unit": "unit",
+    "perishability": 0.1,
+    "salvage_value_cents_per_base_unit": 3.493163,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "feuille_laurier",
+    "name": "Feuille de laurier séchée",
+    "unit_kind": "count",
+    "base_unit": "unit",
+    "perishability": 0.02,
+    "salvage_value_cents_per_base_unit": 3.359266,
+    "density_g_per_ml": null
+  }
+]

@@ -1,0 +1,61 @@
+{
+  "profile": {
+    "id": "default",
+    "home_lat": 45.5285,
+    "home_lng": -73.598,
+    "time_value_cents_per_hour": 1500,
+    "meals_per_horizon": 14,
+    "demand_slack_epsilon": 0.1,
+    "max_store_visits": 2,
+    "min_distinct_recipes": 4,
+    "max_share_per_recipe": 0.3,
+    "diet_flags": [],
+    "allergen_flags": [],
+    "taste_preferences": {
+      "liked_tags": [
+        "tex-mex",
+        "asiatique"
+      ],
+      "disliked_tags": [
+        "espagnole",
+        "quebecoise"
+      ]
+    },
+    "available_equipment": [
+      "four",
+      "grande_casserole",
+      "wok",
+      "mixeur",
+      "cocotte"
+    ],
+    "max_prep_time_per_meal_h": 1.5
+  },
+  "members": [
+    {
+      "name": "Alex",
+      "appetite_coefficient": 1.0
+    },
+    {
+      "name": "Camille",
+      "appetite_coefficient": 1.0
+    },
+    {
+      "name": "Noa",
+      "appetite_coefficient": 0.6
+    }
+  ],
+  "pantry": [
+    {
+      "canonical_ingredient_id": "riz_basmati",
+      "quantity_base_unit": 500
+    },
+    {
+      "canonical_ingredient_id": "huile_olive",
+      "quantity_base_unit": 250
+    },
+    {
+      "canonical_ingredient_id": "feuille_laurier",
+      "quantity_base_unit": 0
+    }
+  ]
+}
