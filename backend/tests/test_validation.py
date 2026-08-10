@@ -1,7 +1,12 @@
+import dataclasses
+from datetime import date
 from decimal import Decimal
+from pathlib import Path
 
 import pytest
 
+from app.services.appetence import RuleBasedAppetenceScorer
+from app.services.prefilter import prefilter_recipes
 from app.services.problem_data import PriceData, ProductData
 from app.services.validation import (
     BatchBoundsError, CapacityError, DiversityInfeasibleError,
@@ -11,6 +16,10 @@ from app.services.validation import (
 from tests.conftest import (
     make_ingredient, make_problem, make_profile, make_recipe,
 )
+from tests.seed_loader import problem_from_seed_dir
+
+SEED = Path(__file__).resolve().parents[2] / "seed"
+ON = date(2026, 8, 10)
 
 
 def big_recipes(n=6):
@@ -85,3 +94,94 @@ def test_capacity_against_high_bound():
     p2 = make_problem(recipes=ok[:4])
     with pytest.raises(CapacityError):
         validate_problem(p2, p2.recipes)
+
+
+# ---------------------------------------------------------------------------
+# D17 (docs/deviations.md) : assertions 6/6b dédupliquées par dish_family_id
+# ---------------------------------------------------------------------------
+
+def test_assertion_6_old_formula_missed_a_family_bias():
+    """L'ancienne formule R_min·min(β) sur le minimum GLOBAL passait à tort
+    dès qu'une seule famille détenait ce minimum : ici min global = 1 (plat
+    "petit"), R_min=4 → 4×1=4 ≤ 37 aurait laissé passer. Mais les 3 AUTRES
+    plats distincts nécessaires ont chacun β=20 : la vraie somme minimale
+    est 1+20+20+20=61 > 37 — bien infaisable, et l'assertion doit le voir."""
+    recipes = [
+        make_recipe(rid="petit", beta=1, m=12, dish_family_id="petit"),
+        make_recipe(rid="petit_familial", beta=8, m=16, dish_family_id="petit"),
+        make_recipe(rid="gros_a", beta=20, m=25, dish_family_id="gros_a"),
+        make_recipe(rid="gros_b", beta=20, m=25, dish_family_id="gros_b"),
+        make_recipe(rid="gros_c", beta=20, m=25, dish_family_id="gros_c"),
+    ]
+    p = make_problem(profile=make_profile(r_min=4), recipes=recipes)
+    with pytest.raises(DiversityInfeasibleError):
+        validate_problem(p, p.recipes)
+
+
+def test_assertion_6_family_counted_once_with_its_smallest_beta():
+    """Une famille à 2 variantes ne compte qu'UNE fois, avec son β le plus
+    favorable (le plus petit) — ni doublée, ni prise au pire des deux."""
+    recipes = [
+        make_recipe(rid="plat_a", beta=2, m=12, dish_family_id="plat_a"),
+        make_recipe(rid="plat_a_familial", beta=4, m=16, dish_family_id="plat_a"),
+        make_recipe(rid="plat_b", beta=2, m=12, dish_family_id="plat_b"),
+        make_recipe(rid="plat_c", beta=2, m=12, dish_family_id="plat_c"),
+        make_recipe(rid="plat_d", beta=2, m=12, dish_family_id="plat_d"),
+    ]
+    p = make_problem(profile=make_profile(r_min=4), recipes=recipes)
+    passed, _ = validate_problem(p, p.recipes)
+    assert "6_compatibilite_diversite" in passed
+
+
+def test_assertion_6_fewer_families_than_r_min_raises():
+    """R_min=4 mais seulement 3 familles distinctes (6 recettes, 2 variantes
+    chacune) : infaisable quels que soient les β — depuis D16 une famille ne
+    peut jamais fournir plus d'un plat distinct."""
+    recipes = [
+        make_recipe(rid="a", beta=1, m=12, dish_family_id="a"),
+        make_recipe(rid="a_familial", beta=1, m=12, dish_family_id="a"),
+        make_recipe(rid="b", beta=1, m=12, dish_family_id="b"),
+        make_recipe(rid="b_familial", beta=1, m=12, dish_family_id="b"),
+        make_recipe(rid="c", beta=1, m=12, dish_family_id="c"),
+        make_recipe(rid="c_familial", beta=1, m=12, dish_family_id="c"),
+    ]
+    p = make_problem(profile=make_profile(r_min=4), recipes=recipes)
+    with pytest.raises(DiversityInfeasibleError):
+        validate_problem(p, p.recipes)
+
+
+def test_capacity_6b_does_not_double_count_family_variants():
+    """6b (miroir de 6) : une famille à 2 variantes de capacité 8 chacune ne
+    doit apporter que 8 à la capacité totale, pas 16 — une seule variante
+    peut être active à la fois (D16)."""
+    recipes = [
+        make_recipe(rid="plat_a", beta=1, m=8, dish_family_id="plat_a"),
+        make_recipe(rid="plat_a_familial", beta=1, m=8, dish_family_id="plat_a"),
+        make_recipe(rid="plat_b", beta=1, m=8, dish_family_id="plat_b"),
+        make_recipe(rid="plat_c", beta=1, m=8, dish_family_id="plat_c"),
+        make_recipe(rid="plat_d", beta=1, m=8, dish_family_id="plat_d"),
+    ]
+    # Capacité correcte (1 valeur/famille) = 4×8 = 32 < 37 → CapacityError.
+    # L'ancien calcul (1 valeur/recette) aurait donné 5×8 = 40 ≥ 37 (passe à
+    # tort, "plat_a" compté deux fois pour une seule famille disponible).
+    p = make_problem(profile=make_profile(r_min=4), recipes=recipes)
+    with pytest.raises(CapacityError):
+        validate_problem(p, p.recipes)
+
+
+def test_assertion_6_catches_n_repas_2_on_seed_profile_before_solver():
+    """Avant le correctif, n_repas=2 sur le profil du seed principal passait
+    toutes les assertions puis échouait au solveur (Infeasible) sans message
+    exploitable (repéré en balayant n_repas de 2 à 14). Avec la
+    déduplication par famille, l'assertion 6 l'attrape directement, avec un
+    message lisible."""
+    problem = problem_from_seed_dir(SEED / "main", ON)
+    profile = dataclasses.replace(problem.profile, meals_per_horizon=2)
+    problem = dataclasses.replace(problem, profile=profile)
+    pre = prefilter_recipes(
+        problem.recipes, problem.profile, RuleBasedAppetenceScorer(problem)
+    )
+    with pytest.raises(DiversityInfeasibleError) as exc_info:
+        validate_problem(problem, pre.surviving)
+    msg = str(exc_info.value)
+    assert "R_min" in msg or "famille" in msg

@@ -429,3 +429,89 @@ base qui n'était pas dans le périmètre demandé). `python -m
 app.seeding.check_profile_drift` continuera de la signaler tant qu'elle
 n'aura pas été traitée explicitement (nouveau seeding, ou correction
 manuelle assumée).
+
+## D17 — Assertions 6 et 6b dédupliquées par `dish_family_id`
+*(corrigé lors d'une session de vérification, 2026-08-10, en conséquence
+directe de D16)*
+
+**Écart.** Les assertions 6 et 6b (`services/validation.py`) raisonnaient
+par **recette**, pas par **plat**, alors que D16 interdit à deux variantes
+de la même famille d'être actives ensemble. Les deux souffraient d'un biais
+symétrique :
+
+- **Assertion 6** (borne basse) : `R_min · min(β_r)` utilisait le **minimum
+  global** de β sur toutes les recettes survivantes, en supposant à tort
+  que R_min recettes pouvaient toutes l'atteindre. Si ce minimum n'existe
+  que dans une seule famille, les R_min−1 autres plats distincts requis ne
+  peuvent pas tous l'égaler — l'ancienne formule passait alors à tort.
+  Repéré concrètement : `n_repas = 2` sur le profil du seed principal
+  (balayage de la session précédente) passait toutes les assertions puis
+  échouait au solveur avec un simple statut `Infeasible`, sans message
+  exploitable — exactement ce que la spec interdit (« lève une exception
+  explicite, jamais un avertissement silencieux »).
+- **Assertion 6b** (capacité, borne haute) : sommait `min(α·⌈D(1+ε)⌉, m_r)`
+  sur **toutes** les recettes survivantes, comptant deux fois la capacité
+  d'une famille à deux variantes alors qu'une seule peut être active à la
+  fois (D16) — biais miroir, du côté optimiste cette fois (la capacité
+  réelle est surestimée, pas sous-estimée).
+
+**Correctif.** Les deux assertions comptent désormais **une seule valeur
+par `dish_family_id`** parmi les recettes survivant au préfiltrage :
+
+- Assertion 6 : pour chaque famille, le β minimal de ses variantes
+  survivantes ; somme des R_min plus petites de ces valeurs, comparée à
+  `⌈D⌉`. Ajout d'une vérification directe si moins de R_min familles
+  distinctes survivent (infaisabilité immédiate, indépendante de β).
+- Assertion 6b : pour chaque famille, la capacité la plus généreuse de ses
+  variantes (`max` plutôt que la somme) ; somme sur les familles comparée à
+  `⌈D(1+ε)⌉`.
+
+Testé : reproduction du biais de l'assertion 6 avec un cas synthétique où
+l'ancienne formule (`4×1=4 ≤ 37`) passait à tort alors que la vraie somme
+minimale (`1+20+20+20=61`) est infaisable ; cas miroir pour 6b (double
+comptage `5×8=40` vs le vrai `4×8=32`, sous R_min=4) ; cas « moins de
+familles que R_min » ; et surtout le cas réel qui a motivé le correctif :
+`n_repas=2` sur le profil du seed principal lève désormais
+`DiversityInfeasibleError` avec un message lisible, sans jamais atteindre
+le solveur (`tests/test_validation.py::test_assertion_6_catches_n_repas_2_on_seed_profile_before_solver`).
+
+**Limite assumée.** `validate_problem` ne reçoit pas `SolverConfig` : la
+déduplication par famille s'applique **inconditionnellement**, même si
+`enable_variant_exclusion=False` est explicitement demandé. C'est cohérent
+avec le statut de ce drapeau (D16 : exception au défaut « tout False »,
+traité comme une contrainte d'intégrité du modèle plutôt qu'un mécanisme à
+activer un à un) mais reste un couplage implicite non exprimé dans la
+signature de la fonction — à garder en tête si `enable_variant_exclusion`
+devient un jour un vrai choix utilisateur plutôt qu'un défaut de fait.
+Conséquence concrète : deux tests de `tests/test_variant_exclusion.py`
+écrits pour D16 (qui forçaient la combinaison de deux variantes via
+`R_min=2` sur une famille unique) ont dû être repensés — ce cas précis est
+désormais rejeté par l'assertion avant même d'atteindre le solveur, ce qui
+est le comportement voulu. Les nouveaux tests démontrent le mécanisme réel
+du contournement autrement : un choix économique (scinder la demande entre
+deux variantes récolte deux fois le premier segment, plein tarif, de la
+lassitude concave de l'appétence), pas une infaisabilité forcée par R_min.
+
+**Oscillation régulier/familial à `n_repas` ∈ {11, 12, 13} : confirmée
+réelle, pas un artefact de tolérance.** Le balayage de la session
+précédente avait trouvé un format régulier (`galettes_lentilles`)
+réapparaissant à `n_repas=12` entre deux points tout-familial (11 et 13),
+et supposé qu'il s'agissait peut-être d'un quasi-ex-aequo à `mip_gap=0,01`.
+Rejoué à `mip_gap=0` (optimalité certifiée, pas seulement une tolérance de
+1 %) : **solutions et valeurs d'objectif strictement identiques** à celles
+obtenues avec `mip_gap=0,01` (2523,22 ¢ / 2591,84 ¢ / 2621,05 ¢ pour
+n=11/12/13). L'oscillation n'est donc pas un artefact numérique — c'est un
+vrai optimum global qui bascule.
+
+Piste de mécanisme (non vérifiée en détail, hors périmètre de cette
+session) : à `n=12`, `galettes_lentilles` reçoit la plus petite allocation
+des quatre plats retenus (6 portions) et c'est elle qui bascule en format
+régulier ; mais à `n=11`, `saute_tofu_soja` reçoit une allocation encore
+plus petite (4 portions) et **reste** familiale. Le seuil de bascule
+régulier/familial n'est donc pas une quantité universelle — il dépend des
+paramètres propres à chaque plat (τ_fixe de base plus faible pour
+`saute_tofu_soja` que pour `galettes_lentilles`, donc le surcoût fixe du
+format familial pèse proportionnellement moins pour lui, et son seuil de
+bascule est plus bas). Chaque paire régulier/familial a vraisemblablement
+son propre point de croisement économique ; le dériver précisément pour
+les 20 paires n'a pas été fait ici.

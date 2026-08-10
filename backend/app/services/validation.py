@@ -15,6 +15,14 @@ Adaptations décidées au point de contrôle de l'étape 2 (docs/deviations.md,
 D9) : la demande est un encadrement ⌈D⌉ ≤ Σx_r ≤ ⌈D(1+ε)⌉. L'assertion 6 se
 teste contre la borne basse ⌈D⌉ ; la capacité entière contre la borne haute
 (plafond par recette min(⌊α·⌈D(1+ε)⌉⌋, m_r)).
+
+D17 (docs/deviations.md) : les assertions 6 et 6b comptent désormais UNE
+valeur par ``dish_family_id`` (D16 : deux variantes du même plat ne peuvent
+plus être actives ensemble), pas une par recette — sinon la borne basse
+sous-estime le β réellement requis (le minimum global peut n'appartenir
+qu'à une seule famille) et la borne haute surestime la capacité (deux
+variantes d'une même famille ne s'additionnent pas, une seule est
+disponible à la fois).
 """
 
 from __future__ import annotations
@@ -171,14 +179,34 @@ def validate_problem(
     passed.append(EmptyProblemError.assertion)
 
     # -- 6. Compatibilité des contraintes de diversité ----------------------
+    # D17 : une seule valeur de β par famille de plat (la plus petite de ses
+    # variantes survivantes), pas R_min fois le minimum GLOBAL — ce minimum
+    # peut n'appartenir qu'à une seule famille, auquel cas les R_min-1 autres
+    # plats distincts nécessaires ne peuvent pas tous l'atteindre.
     r_min = profile.min_distinct_recipes
     alpha = profile.max_share_per_recipe
-    min_beta = min(r.min_batch_servings for r in surviving_recipes)
-    if r_min * min_beta > bounds.low:  # borne basse ⌈D⌉ (D9)
+    family_min_beta: dict[str, int] = {}
+    for r in surviving_recipes:
+        fam = r.dish_family_id
+        if fam not in family_min_beta or r.min_batch_servings < family_min_beta[fam]:
+            family_min_beta[fam] = r.min_batch_servings
+
+    if len(family_min_beta) < r_min:
         raise DiversityInfeasibleError(
-            f"R_min·min β = {r_min}×{min_beta} = {r_min * min_beta} > "
-            f"⌈D⌉ = {bounds.low} : infaisabilité arithmétique que le message "
-            "du solveur ne révélera pas."
+            f"{len(family_min_beta)} famille(s) de plat disponible(s) après "
+            f"préfiltrage < R_min = {r_min} : impossible d'atteindre R_min "
+            "plats distincts, même sans contrainte de portions (D16 : deux "
+            "variantes du même plat ne comptent que pour une famille)."
+        )
+
+    smallest_betas = sorted(family_min_beta.values())[:r_min]
+    needed = sum(smallest_betas)
+    if needed > bounds.low:  # borne basse ⌈D⌉ (D9)
+        raise DiversityInfeasibleError(
+            f"Somme des {r_min} plus petits β_r (une valeur par famille de "
+            f"plat) = {smallest_betas} = {needed} > ⌈D⌉ = {bounds.low} : "
+            "infaisabilité arithmétique que le message du solveur ne "
+            "révélera pas."
         )
     if r_min < math.ceil(1 / alpha):  # ≥ requis — l'égalité est valide
         raise DiversityInfeasibleError(
@@ -188,14 +216,24 @@ def validate_problem(
     passed.append(DiversityInfeasibleError.assertion)
 
     # -- 6b. Capacité entière contre la borne haute (D9) --------------------
+    # D17 : même biais, en miroir — sommer min(cap, m_r) sur TOUTES les
+    # recettes survivantes double-compte la capacité d'une famille à deux
+    # variantes (D16 : une seule peut être active à la fois). Une seule
+    # valeur par famille : la plus généreuse de ses variantes (celle qu'on
+    # choisirait réellement), pas la somme des deux.
     per_recipe_cap = math.floor(alpha * bounds.high)
-    capacity = sum(
-        min(per_recipe_cap, r.max_batch_servings) for r in surviving_recipes
-    )
+    family_capacity: dict[str, int] = {}
+    for r in surviving_recipes:
+        fam = r.dish_family_id
+        cap = min(per_recipe_cap, r.max_batch_servings)
+        if fam not in family_capacity or cap > family_capacity[fam]:
+            family_capacity[fam] = cap
+    capacity = sum(family_capacity.values())
     if capacity < bounds.low:
         raise CapacityError(
-            f"Capacité entière Σ min(⌊α·⌈D(1+ε)⌉⌋, m_r) = {capacity} < "
-            f"⌈D⌉ = {bounds.low} : la demande minimale est hors d'atteinte."
+            f"Capacité entière Σ_familles max(min(⌊α·⌈D(1+ε)⌉⌋, m_r)) = "
+            f"{capacity} < ⌈D⌉ = {bounds.low} : la demande minimale est hors "
+            "d'atteinte."
         )
     passed.append(CapacityError.assertion)
 
