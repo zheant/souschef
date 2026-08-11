@@ -263,9 +263,40 @@ un scénario discriminant où la contrainte *change* réellement la sélection
 (dahl_toy 2→3 portions, pas seulement trivialement satisfaite), le test de
 régression anti-écrasement, et la validation `PantryIngredientNotUsableError`
 sur un ingrédient synthétique qu'aucune recette ne référence). `tsc -b`/
-`vite build` propres. **Non vérifié dans un navigateur** au moment de ce
-commit (contrairement aux deux tranches précédentes, qui l'ont été
-séparément) — à faire avant de considérer l'écran Garde-manger terminé.
+`vite build` propres. **Mise à jour** : l'utilisateur a testé cette tranche
+dans un navigateur et confirmé qu'elle fonctionne ; il a aussi relevé au
+passage que la liste d'épicerie n'affichait que la marque du produit, pas
+le type d'ingrédient (« Great Value, 900 g » sans dire que c'est du riz) —
+corrigé dans la foulée (`services/planning.py::_grocery_list` joint
+maintenant `CanonicalIngredient.name`, champ `ingredient_name` ajouté à
+`GroceryLine`, verrouillé par un test).
+
+## Pilote — questionnaire initial et résumé en langage naturel (2026-08-11)
+
+Cinquième tranche, purement front-end (aucun changement backend, aucune
+migration) : `screens/Household.tsx` cache désormais ρ_h derrière trois
+préréglages (« Petit/Moyen/Grand appétit », valeurs 0,6/1,0/1,4, choisies
+pour rester cohérentes avec le profil de seed `ρ = (1,0 ; 1,0 ; 0,6)`,
+D9) — un member existant dont la valeur ne correspond à aucun préréglage
+affiche « Autre (x,xx) » sans la modifier silencieusement. Un résumé en
+langage naturel («N personnes, N repas à prévoir, cuisine rapide...») se
+recalcule en direct depuis l'état du formulaire, à côté de `D` (inchangé).
+
+κ/ε/K/R_min/α/latitude/longitude **restent des champs numériques exacts**
+(aucune retraduction en catégories) mais repliés sous un `<details>`
+« Paramètres avancés » — cohérent avec « les préférences non essentielles
+peuvent être ignorées et complétées plus tard », rien n'est supprimé ni
+perdu. **Hors périmètre, volontairement** : le check-in hebdomadaire
+(sorties/invités — aucun champ du modèle ne les représente aujourd'hui,
+toucherait le calcul de la demande D9, pas seulement l'écran) et les
+magasins accessibles/programmes de fidélité (aucune notion de magasins
+accessibles au ménage dans le modèle ; les prix membres sont une extension
+de la résolution de prix D15/D18, un chantier à part — `docs/product-pilot.md`
+classe lui-même les offres ciblées « hors du premier périmètre »).
+
+**Vérifié** : `tsc -b`/`vite build` propres. Aucun test backend affecté
+(aucun fichier backend modifié — confirmé par `git status`). Testé par
+l'utilisateur dans un navigateur — fonctionne.
 
 ## Lancer / tester / seeder
 
