@@ -76,6 +76,57 @@ def test_plan_create_fetch_and_grocery_grouping(api_client):
     assert api_client.get("/api/plan/999999").status_code == 404
 
 
+def test_reoptimize_locks_replaces_and_explains(api_client):
+    """Verrouillage/remplacement (pilote, docs/product-pilot.md) : verrouiller
+    riz_nature, remplacer dahl_toy — la portion verrouillée ne bouge pas, la
+    réponse explique ce qui a changé."""
+    r = api_client.post("/api/plan", json={"config": ALL_ON, "on_date": ON})
+    plan = r.json()
+    riz_servings = next(
+        m["servings"] for m in plan["menu"] if m["recipe_id"] == "riz_nature"
+    )
+    assert set(m["recipe_id"] for m in plan["menu"]) == {"riz_nature", "dahl_toy"}
+
+    r = api_client.post(
+        f"/api/plan/{plan['id']}/reoptimize",
+        json={
+            "config": ALL_ON,
+            "locked_recipe_ids": ["riz_nature"],
+            "excluded_recipe_ids": ["dahl_toy"],
+        },
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["plan"]["solver_status"] == "Optimal"
+    assert body["plan"]["id"] != plan["id"]
+    new_servings = {m["recipe_id"]: m["servings"] for m in body["plan"]["menu"]}
+    assert new_servings["riz_nature"] == riz_servings
+    assert "dahl_toy" not in new_servings
+    assert body["changes"]["removed"] == ["dahl_toy"]
+    assert "riz_nature" not in body["changes"]["added"]
+
+    # Verrouiller une recette absente du plan.
+    r = api_client.post(
+        f"/api/plan/{plan['id']}/reoptimize",
+        json={"locked_recipe_ids": ["omelette_toy"]},
+    )
+    assert r.status_code == 404
+
+    # Verrou et exclusion en conflit sur la même recette.
+    r = api_client.post(
+        f"/api/plan/{plan['id']}/reoptimize",
+        json={
+            "locked_recipe_ids": ["riz_nature"],
+            "excluded_recipe_ids": ["riz_nature"],
+        },
+    )
+    assert r.status_code == 422
+
+    assert api_client.post(
+        "/api/plan/999999/reoptimize", json={}
+    ).status_code == 404
+
+
 def test_commit_decrements_and_reports_to_pantry(api_client):
     """Comptabilité vérifiée à la main. Stock initial : 100 g de riz.
     Plan tous-drapeaux (diversité R_min=2) sur le jouet → x_riz + x_dahl.

@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api, cents } from "../api";
-import type { Household, Plan, Store } from "../types";
+import type { Household, MenuChange, Plan, SolverConfigInput, Store } from "../types";
 
 /** Écran 3 — Résultat : menu, liste d'épicerie groupée par magasin avec
  *  sous-totaux et itinéraire suggéré, et la décomposition du coût en cinq
@@ -23,14 +23,41 @@ const TERM_LABELS: [key: "achats" | "deplacements" | "temps" | "recuperation" | 
   ["appetence", "Appétence", true],
 ];
 
+/** Phrase d'explication après une réoptimisation (pilote,
+ *  docs/product-pilot.md : « Deux recettes ont été remplacées... et
+ *  économiser 4,80 $ »). Ne nomme pas les recettes (le plan précédent n'a
+ *  plus ses noms sous la main ici) — compte + delta de coût suffisent. */
+function describeChanges(c: MenuChange): string {
+  const n = Math.max(c.added.length, c.removed.length);
+  const what =
+    n === 0 ? "Le menu n'a pas changé" :
+    n === 1 ? "Une recette a été remplacée" :
+    `${n} recettes ont été remplacées`;
+  const delta = Number(c.cost_delta_cents) / 100;
+  const fmt = (v: number) => Math.abs(v).toLocaleString("fr-CA", { style: "currency", currency: "CAD" });
+  if (delta < -0.005) return `${what}, pour économiser ${fmt(delta)}.`;
+  if (delta > 0.005) return `${what} — ${fmt(delta)} de plus.`;
+  return `${what}, sans changer le coût des achats.`;
+}
+
 export default function ResultScreen(props: {
-  plan: Plan | null; household: Household; stores: Store[];
+  plan: Plan | null; household: Household; stores: Store[]; config: SolverConfigInput;
   onCommitted: (planId: number) => void;
 }) {
   const { plan, household, stores } = props;
   const [committing, setCommitting] = useState(false);
   const [commitMsg, setCommitMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const [lockedIds, setLockedIds] = useState<Set<string>>(new Set());
+  const [reoptimizing, setReoptimizing] = useState(false);
+  const [replacingId, setReplacingId] = useState<string | null>(null);
+  const [reoptimizeMsg, setReoptimizeMsg] = useState<string | null>(null);
+  const [reoptimizeError, setReoptimizeError] = useState<string | null>(null);
+
+  // Nouveau plan chargé (génération, commit, réoptimisation) : les verrous
+  // ne s'appliquent qu'au plan qui les a vus posés.
+  useEffect(() => { setLockedIds(new Set()); }, [plan?.id]);
 
   const itinerary = useMemo(() => {
     if (!plan) return [];
@@ -69,6 +96,45 @@ export default function ResultScreen(props: {
       );
       props.onCommitted(currentPlan.id);
     } catch (e) { setError(String(e)); } finally { setCommitting(false); }
+  }
+
+  function toggleLock(recipeId: string) {
+    setLockedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(recipeId)) next.delete(recipeId); else next.add(recipeId);
+      return next;
+    });
+  }
+
+  async function callReoptimize(lockedRecipeIds: string[], excludedRecipeIds: string[]) {
+    setReoptimizing(true); setReoptimizeError(null); setReoptimizeMsg(null);
+    try {
+      const r = await api.reoptimizePlan(
+        currentPlan.id, props.config, lockedRecipeIds, excludedRecipeIds
+      );
+      if (r.changes) {
+        setReoptimizeMsg(describeChanges(r.changes));
+      } else {
+        setReoptimizeError(
+          `Réoptimisation infaisable : ${r.plan.diagnostic.infeasibility_note ?? "voir le diagnostic"}.`
+        );
+      }
+      props.onCommitted(r.plan.id);
+    } catch (e) {
+      setReoptimizeError(String(e));
+    } finally {
+      setReoptimizing(false); setReplacingId(null);
+    }
+  }
+
+  async function replace(recipeId: string) {
+    setReplacingId(recipeId);
+    const others = currentPlan.menu.map((m) => m.recipe_id).filter((id) => id !== recipeId);
+    await callReoptimize(others, [recipeId]);
+  }
+
+  async function reoptimizeLockedOnly() {
+    await callReoptimize([...lockedIds], []);
   }
 
   return (
@@ -118,7 +184,11 @@ export default function ResultScreen(props: {
         <h2 style={{ marginTop: 0 }}>Menu <span className="sub">— {plan.menu.reduce((s, m) => s + m.servings, 0)} portions</span></h2>
         <table className="ledger">
           <thead>
-            <tr><th>Recette</th><th className="num">Portions</th><th className="num">Temps (h)</th><th className="num">Coût attribué</th></tr>
+            <tr>
+              <th>Recette</th><th className="num">Portions</th>
+              <th className="num">Temps (h)</th><th className="num">Coût attribué</th>
+              <th>Verrou</th><th></th>
+            </tr>
           </thead>
           <tbody>
             {plan.menu.map((m) => (
@@ -127,10 +197,45 @@ export default function ResultScreen(props: {
                 <td className="num">{m.servings}</td>
                 <td className="num">{Number(m.prep_time_h).toFixed(2)}</td>
                 <td className="num">{cents(m.attributed_cost_cents_cad)}</td>
+                <td>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={lockedIds.has(m.recipe_id)}
+                      disabled={reoptimizing}
+                      onChange={() => toggleLock(m.recipe_id)}
+                    />{" "}
+                    Garder
+                  </label>
+                </td>
+                <td>
+                  <button
+                    className="action"
+                    onClick={() => replace(m.recipe_id)}
+                    disabled={reoptimizing || lockedIds.has(m.recipe_id)}
+                  >
+                    {replacingId === m.recipe_id ? "Remplacement…" : "Remplacer"}
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
+        <div className="row" style={{ marginTop: 10 }}>
+          <button
+            className="action"
+            onClick={reoptimizeLockedOnly}
+            disabled={reoptimizing || lockedIds.size === 0}
+          >
+            {reoptimizing && !replacingId ? "Réoptimisation…" : "Réoptimiser le reste du menu"}
+          </button>
+          <span className="muted">
+            Cochez « Garder » sur les recettes à conserver, puis réoptimisez le reste —
+            ou remplacez une seule recette directement.
+          </span>
+        </div>
+        {reoptimizeMsg && <p className="callout" style={{ marginTop: 10 }}>{reoptimizeMsg}</p>}
+        {reoptimizeError && <p className="callout error">{reoptimizeError}</p>}
       </div>
 
       <div className="card">

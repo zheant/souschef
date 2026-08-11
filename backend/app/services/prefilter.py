@@ -51,7 +51,21 @@ def prefilter_recipes(
     profile: ProfileData,
     scorer: AppetenceScorer,
     truncation_keep: int = TRUNCATION_KEEP,
+    force_keep_ids: frozenset[str] = frozenset(),
+    exclude_ids: frozenset[str] = frozenset(),
 ) -> PrefilterResult:
+    """``force_keep_ids``/``exclude_ids`` : verrouillage/remplacement de
+    recette (pilote, docs/product-pilot.md). ``exclude_ids`` est retiré
+    juste après les filtres durs — une recette exclue reste soumise aux
+    mêmes garanties de sécurité si jamais reproposée plus tard, mais ne
+    l'est pas ici. ``force_keep_ids`` rajoute après troncature toute
+    recette qui a survécu aux filtres durs mais est tombée hors de la
+    fenêtre des 150 meilleures par score — une recette verrouillée qui ne
+    passerait *plus* les filtres durs (ex. nouvelle allergie déclarée entre
+    deux générations) n'est **pas** repêchée : la sécurité prime sur le
+    verrou, et l'appelant (``services/planning.py::reoptimize_plan``) doit
+    détecter ce cas et lever une erreur explicite plutôt que de l'ignorer.
+    """
     counts = {"initial": len(recipes)}
 
     allergens = set(profile.allergen_flags)
@@ -75,13 +89,23 @@ def prefilter_recipes(
     ]
     counts["temps_preparation"] = len(step)
 
+    if exclude_ids:
+        step = [r for r in step if r.id not in exclude_ids]
+        counts["exclusion"] = len(step)
+
     scores = {r.id: scorer.score(r) for r in step}
     step.sort(key=lambda r: (-scores[r.id], r.id))  # départage déterministe
-    step = step[:truncation_keep]
-    counts["troncature"] = len(step)
+    kept = step[:truncation_keep]
+    if force_keep_ids:
+        kept_ids = {r.id for r in kept}
+        kept = kept + [
+            r for r in step
+            if r.id in force_keep_ids and r.id not in kept_ids
+        ]
+    counts["troncature"] = len(kept)
 
     return PrefilterResult(
-        surviving=tuple(step),
-        scores={r.id: scores[r.id] for r in step},
+        surviving=tuple(kept),
+        scores={r.id: scores[r.id] for r in kept},
         counts_by_stage=counts,
     )

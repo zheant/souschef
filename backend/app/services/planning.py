@@ -53,6 +53,20 @@ class PlanNotCommittable(ValueError):
     """Le plan n'est pas dans un état commitable (l'API traduit en 409)."""
 
 
+class RecipeNotInPlanError(LookupError):
+    """Verrouillage demandé sur une recette absente du plan précédent
+    (l'API traduit en 404)."""
+
+
+class RecipeNotLockableError(ValueError):
+    """Recette verrouillée disparue du préfiltrage — ex. nouvelle allergie
+    déclarée entre deux générations (l'API traduit en 422)."""
+
+
+class ConflictingRecipeSelectionError(ValueError):
+    """Une recette à la fois verrouillée et exclue (l'API traduit en 422)."""
+
+
 @dataclass(frozen=True)
 class MenuLine:
     recipe_id: str
@@ -83,6 +97,23 @@ class CommitResult:
     pantry_after_commit: dict[str, str]
 
 
+@dataclass(frozen=True)
+class MenuChange:
+    added: tuple[str, ...]
+    removed: tuple[str, ...]
+    #: Poste « achats » du nouveau plan moins celui de l'ancien (positif =
+    #: coûte plus cher).
+    cost_delta_cents: str
+
+
+@dataclass(frozen=True)
+class ReoptimizationResult:
+    plan: PlanView
+    #: None si le nouveau plan est infaisable — le diagnostic d'infaisabilité
+    #: porte déjà l'explication (même convention que l'écran Génération).
+    changes: MenuChange | None
+
+
 def recent_committed_recipe_ids(
     session: Session, profile_id: str, limit: int = RECENT_PLANS_FOR_REPETITION
 ) -> tuple[tuple[str, ...], ...]:
@@ -105,8 +136,96 @@ def generate_plan(
     config: SolverConfig,
     solver: MenuSolver,
 ) -> PlanView:
-    plan, _ = _solve_and_persist(session, profile_id, on_date, config, solver)
+    problem = load_problem_data(session, profile_id, on_date)
+    pre = _run_prefilter(session, profile_id, problem)
+    result = solver.solve(problem, pre, config)
+    plan = _persist_plan(session, profile_id, on_date, config, problem, result)
     return _plan_view(session, plan)
+
+
+def reoptimize_plan(
+    session: Session,
+    profile_id: str,
+    plan_id: int,
+    locked_recipe_ids: frozenset[str],
+    excluded_recipe_ids: frozenset[str],
+    config: SolverConfig,
+    solver: MenuSolver,
+) -> ReoptimizationResult:
+    """Verrouillage/remplacement de recette (pilote, docs/product-pilot.md) —
+    un seul mécanisme sert les deux usages : « remplacer » = verrouiller
+    toutes les autres recettes du plan + exclure la recette visée (et ses
+    variantes d'échelle sœurs, D16) ; « réoptimisation plus large » = même
+    appel avec seulement les recettes explicitement verrouillées par
+    l'utilisateur. C'est à l'appelant (l'API) de construire ces deux
+    ensembles différemment — pas à ce module.
+    """
+    previous = _load_owned_plan(session, profile_id, plan_id)
+
+    if not locked_recipe_ids <= previous.servings.keys():
+        missing = locked_recipe_ids - previous.servings.keys()
+        raise RecipeNotInPlanError(
+            f"Recette(s) absente(s) du plan {plan_id} : {sorted(missing)}."
+        )
+    if locked_recipe_ids & excluded_recipe_ids:
+        raise ConflictingRecipeSelectionError(
+            "Recette(s) à la fois verrouillée(s) et exclue(s) : "
+            f"{sorted(locked_recipe_ids & excluded_recipe_ids)}."
+        )
+
+    problem = load_problem_data(session, profile_id, previous.on_date)
+    # Exclure une recette exclut aussi ses variantes d'échelle sœurs (D16) :
+    # remplacer un plat ne doit pas simplement resservir l'autre format du
+    # même plat — l'exclusion mutuelle de variantes au solveur ne protège
+    # que les recettes qui restent candidates, pas celles écartées ici, en
+    # amont, au préfiltrage.
+    excluded_families = {
+        r.dish_family_id for r in problem.recipes if r.id in excluded_recipe_ids
+    }
+    full_excluded_ids = frozenset(excluded_recipe_ids) | {
+        r.id for r in problem.recipes if r.dish_family_id in excluded_families
+    }
+
+    pre = _run_prefilter(
+        session, profile_id, problem,
+        force_keep_ids=locked_recipe_ids, exclude_ids=full_excluded_ids,
+    )
+    # Erreur explicite AVANT le solveur (jamais un statut Infeasible muet) :
+    # une recette verrouillée qui ne survit plus au préfiltrage (ex.
+    # nouvelle allergie déclarée entre deux générations) n'est pas repêchée
+    # par force_keep_ids (services/prefilter.py) — c'est ici qu'on le détecte.
+    surviving_ids = {r.id for r in pre.surviving}
+    if not locked_recipe_ids <= surviving_ids:
+        raise RecipeNotLockableError(
+            "Recette(s) verrouillée(s) ne passant plus les filtres du "
+            "profil actuel (allergènes/régime/équipement/temps) : "
+            f"{sorted(locked_recipe_ids - surviving_ids)}."
+        )
+
+    locked_recipe_servings = {
+        rid: previous.servings[rid] for rid in locked_recipe_ids
+    }
+    reopt_config = config.model_copy(
+        update={"locked_recipe_servings": locked_recipe_servings}
+    )
+    result = solver.solve(problem, pre, reopt_config)
+    plan = _persist_plan(
+        session, profile_id, previous.on_date, reopt_config, problem, result
+    )
+
+    view = _plan_view(session, plan)
+    changes = None
+    if result.status == "Optimal":
+        old_ids = set(previous.servings.keys())
+        new_ids = set(plan.servings.keys())
+        old_achats = Decimal(previous.diagnostic["objective_terms_cents"]["achats"])
+        new_achats = Decimal(plan.diagnostic["objective_terms_cents"]["achats"])
+        changes = MenuChange(
+            added=tuple(sorted(new_ids - old_ids)),
+            removed=tuple(sorted(old_ids - new_ids)),
+            cost_delta_cents=str(new_achats - old_achats),
+        )
+    return ReoptimizationResult(plan=view, changes=changes)
 
 
 def get_plan(session: Session, profile_id: str, plan_id: int) -> PlanView:
@@ -128,19 +247,29 @@ def _load_owned_plan(session: Session, profile_id: str, plan_id: int) -> Plan:
     return plan
 
 
-def _solve_and_persist(
+def _run_prefilter(
+    session: Session,
+    profile_id: str,
+    problem,
+    force_keep_ids: frozenset[str] = frozenset(),
+    exclude_ids: frozenset[str] = frozenset(),
+):
+    recent = recent_committed_recipe_ids(session, profile_id)
+    scorer = RuleBasedAppetenceScorer(problem, recent_recipe_ids=recent)
+    return prefilter_recipes(
+        problem.recipes, problem.profile, scorer,
+        force_keep_ids=force_keep_ids, exclude_ids=exclude_ids,
+    )
+
+
+def _persist_plan(
     session: Session,
     profile_id: str,
     on_date: date,
     config: SolverConfig,
-    solver: MenuSolver,
-) -> tuple[Plan, SolveResult]:
-    problem = load_problem_data(session, profile_id, on_date)
-    recent = recent_committed_recipe_ids(session, profile_id)
-    scorer = RuleBasedAppetenceScorer(problem, recent_recipe_ids=recent)
-    pre = prefilter_recipes(problem.recipes, problem.profile, scorer)
-    result = solver.solve(problem, pre, config)
-
+    problem,
+    result: SolveResult,
+) -> Plan:
     needs = (
         ingredient_needs(
             problem, result.servings_by_recipe, result.cooked_flags,
@@ -175,7 +304,7 @@ def _solve_and_persist(
     )
     session.add(plan)
     session.flush()
-    return plan, result
+    return plan
 
 
 def _diagnostic_json(result: SolveResult) -> dict:

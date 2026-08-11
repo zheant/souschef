@@ -156,6 +156,42 @@ def post_commit(
             "pantry_after_commit": result.pantry_after_commit}
 
 
+@router.post("/plan/{plan_id}/reoptimize", response_model=schemas.ReoptimizeOut)
+def post_reoptimize(
+    plan_id: int,
+    body: schemas.ReoptimizeRequest,
+    session: Session = Depends(get_session),
+    profile_id: str = Depends(get_profile_id),
+    solver: MenuSolver = Depends(get_solver),
+):
+    try:
+        config = SolverConfig(**body.config)
+    except ValueError as exc:
+        raise HTTPException(422, f"SolverConfig invalide : {exc}") from exc
+    try:
+        result = planning.reoptimize_plan(
+            session, profile_id, plan_id,
+            frozenset(body.locked_recipe_ids),
+            frozenset(body.excluded_recipe_ids),
+            config, solver,
+        )
+    except planning.PlanNotFound as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except planning.RecipeNotInPlanError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except (
+        planning.RecipeNotLockableError, planning.ConflictingRecipeSelectionError,
+    ) as exc:
+        raise HTTPException(422, str(exc)) from exc
+    return schemas.ReoptimizeOut(
+        plan=_plan_out(result.plan),
+        changes=(
+            schemas.MenuChangeOut(**asdict(result.changes))
+            if result.changes else None
+        ),
+    )
+
+
 # ---------------------------------------------------------------------------
 # Catalogue et marché
 # ---------------------------------------------------------------------------

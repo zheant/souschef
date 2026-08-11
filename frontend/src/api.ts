@@ -1,7 +1,7 @@
 // Client API typé — seule porte vers le back-end.
 
 import type {
-  Household, PantryLine, Plan, SolverConfigInput, Store,
+  Household, PantryLine, Plan, ReoptimizeResult, SolverConfigInput, Store,
 } from "./types";
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
@@ -29,6 +29,18 @@ export const api = {
   commitPlan: (id: number) =>
     req<{ plan_id: number; status: string; pantry_after_commit: Record<string, string> }>(
       `/api/plan/${id}/commit`, { method: "POST" }),
+  reoptimizePlan: (
+    id: number, config: SolverConfigInput,
+    lockedRecipeIds: string[], excludedRecipeIds: string[],
+  ) =>
+    req<ReoptimizeResult>(`/api/plan/${id}/reoptimize`, {
+      method: "POST",
+      body: JSON.stringify({
+        config,
+        locked_recipe_ids: lockedRecipeIds,
+        excluded_recipe_ids: excludedRecipeIds,
+      }),
+    }),
   stores: () => req<Store[]>("/api/stores"),
 };
 

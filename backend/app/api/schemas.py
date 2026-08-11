@@ -89,6 +89,30 @@ class PlanOut(BaseModel):
     diagnostic: dict
 
 
+class ReoptimizeRequest(BaseModel):
+    """Verrouillage/remplacement de recette (pilote, docs/product-pilot.md).
+    ``locked_recipe_ids`` doivent appartenir au plan visé ; leurs portions
+    sont fixées exactement, jamais changées silencieusement.
+    ``excluded_recipe_ids`` sont écartées (et leurs variantes d'échelle
+    sœurs, D16) de la réoptimisation."""
+
+    config: dict = Field(default_factory=dict)
+    locked_recipe_ids: list[str] = Field(default_factory=list)
+    excluded_recipe_ids: list[str] = Field(default_factory=list)
+
+
+class MenuChangeOut(BaseModel):
+    added: list[str]
+    removed: list[str]
+    cost_delta_cents: str
+
+
+class ReoptimizeOut(BaseModel):
+    plan: PlanOut
+    #: None si le nouveau plan est infaisable — voir plan.diagnostic.
+    changes: MenuChangeOut | None
+
+
 class NewProductIn(BaseModel):
     """Spécification d'un nouveau produit à créer (D18) — saisie manuelle,
     aucune extraction automatique depuis ``raw_text``."""

@@ -115,6 +115,19 @@ def test_monotony_documented_in_both_configurations(toy):
     assert len(solve(toy, enable_diversity=True).servings_by_recipe) >= 2
 
 
+def test_locked_recipe_servings_pins_exact_portions(toy):
+    """Verrouillage de recette (pilote, docs/product-pilot.md) : x_r fixé à
+    3 pour riz_nature (l'optimum non contraint serait 5, calcul manuel 1) —
+    le solveur doit respecter le verrou à la portion près, pas seulement
+    « au moins 3 »."""
+    res = solve(toy, locked_recipe_servings={"riz_nature": 3})
+    assert res.status == "Optimal"
+    assert res.servings_by_recipe["riz_nature"] == 3
+    assert res.cooked_flags["riz_nature"] is True
+    # Demande encadrée [4, 5] (D9) toujours respectée par le reste du menu.
+    assert 4 <= sum(res.servings_by_recipe.values()) <= 5
+
+
 def test_batch_fixed_cost_and_time(toy):
     """Calcul manuel 3 : optimum −33,5 c ; τ^fixe pèse via δ_r."""
     res = solve(toy, enable_batch_fixed_cost=True, enable_time_cost=True)

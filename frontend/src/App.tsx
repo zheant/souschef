@@ -60,7 +60,7 @@ export default function App() {
       )}
       {household && tab === "Résultat" && (
         <ResultScreen plan={plan} household={household} stores={stores}
-          onCommitted={refreshPlan} />
+          config={config} onCommitted={refreshPlan} />
       )}
       {household && tab === "Garde-manger" && <PantryScreen />}
       {household && tab === "Diagnostic" && (

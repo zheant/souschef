@@ -137,6 +137,43 @@ garde) : appariement flou/heuristique automatique `raw_text → produit`
 hypothèse fausse), écran de curation front-end dédié, flux de rejet
 (`MappingStatus.rejected`).
 
+## Pilote — verrouillage, remplacement, réoptimisation expliquée (2026-08-11)
+
+Première tranche du pilote produit (`docs/product-pilot.md`) construite sur
+`PlanningModule`. Un seul mécanisme sert deux usages : **verrouiller** =
+fixer `x_r` exactement à la valeur du plan précédent (`SolverConfig.
+locked_recipe_servings`, nouvelle contrainte inconditionnelle
+`solver/model.py::_add_locked_recipes` — dict vide = no-op, pas de nouveau
+`enable_*`) ; **remplacer une recette** = verrouiller toutes les autres
+recettes du plan courant + exclure celle visée (et ses variantes d'échelle
+sœurs, D16) + réoptimiser — la bande de demande D9 force alors le solveur à
+ne redistribuer que la part laissée vacante, un remplacement local sans code
+séparé. « Réoptimisation plus large » = même appel avec seulement les
+recettes explicitement verrouillées par l'utilisateur.
+
+`services/prefilter.py::prefilter_recipes` gagne `force_keep_ids`/
+`exclude_ids` (une recette verrouillée qui ne passe plus les filtres durs —
+ex. nouvelle allergie déclarée entre deux générations — n'est **pas**
+repêchée ; `services/planning.py::reoptimize_plan` le détecte et lève
+`RecipeNotLockableError` **avant** d'appeler le solveur, jamais un statut
+`Infeasible` muet). Nouvelle route `POST /api/plan/{id}/reoptimize`,
+`ReoptimizationResult` (menu ajouté/retiré + delta du poste achats,
+`None` si infaisable). Portée volontairement restreinte : la bascule
+automatique « local → plus large si le résultat reste mauvais » (seuil 5 $/
+10 % du produit-pilote) devient un choix manuel à deux boutons, pas une
+détection + escalade automatique — jugement UX honnête pour une première
+tranche, pas une simplification cachée.
+
+**Vérifié contre PostgreSQL réel** : **93/93 tests passés, 0 sauté** (86
+avant ce chantier + 7 nouveaux — un test solveur qui pince `x_r` sur
+l'instance jouet, 5 tests directs de `reoptimize_plan`, 1 test API bout en
+bout), migration inchangée (pas de nouvelle migration ce chantier),
+`tsc -b`/`vite build` du front-end propres. **Non vérifié** : interaction
+réelle dans un navigateur (pas d'affichage/automatisation navigateur
+disponible dans cette session) — à faire manuellement via `docker compose
+up` avant de considérer l'écran Résultat terminé, en particulier
+l'enchaînement verrou → réoptimiser → nouveau plan affiché.
+
 ## Lancer / tester / seeder
 
 ```bash

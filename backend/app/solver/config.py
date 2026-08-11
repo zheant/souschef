@@ -71,6 +71,14 @@ class SolverConfig(BaseModel):
     #: Magasin imposé quand enable_multi_store = False ; None → le plus proche.
     single_store_external_key: str | None = None
 
+    #: recipe_id -> portions fixées exactement (x_r = valeur, δ_r = 1).
+    #: Dict vide = comportement inchangé ; sa présence EST le drapeau, pas un
+    #: enable_* séparé (évite un état ambigu drapeau=True/dict vide).
+    #: Alimenté par services/planning.py::reoptimize_plan — jamais construit
+    #: à la main par un appelant HTTP (verrouiller = figer la valeur du plan
+    #: précédent, pas une valeur arbitraire).
+    locked_recipe_servings: dict[str, int] = Field(default_factory=dict)
+
     solver_time_limit_s: int = Field(default=60, ge=1)
     mip_gap: float = Field(default=0.001, ge=0)
 

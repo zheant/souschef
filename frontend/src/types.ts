@@ -70,6 +70,17 @@ export interface Plan {
   stores_visited: string[]; diagnostic: Diagnostic;
 }
 
+// Verrouillage/remplacement/réoptimisation expliquée (pilote,
+// docs/product-pilot.md).
+export interface MenuChange {
+  added: string[]; removed: string[]; cost_delta_cents: string;
+}
+
+export interface ReoptimizeResult {
+  plan: Plan;
+  changes: MenuChange | null;  // null si le nouveau plan est infaisable
+}
+
 export interface Store {
   external_key: string; banner: string; address: string;
   lat: number; lng: number; shopping_center_id: string | null;

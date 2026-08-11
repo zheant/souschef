@@ -257,6 +257,23 @@ def _add_batch_coherence(m: pulp.LpProblem, c: _Ctx) -> None:
             m += c.x[r.id] <= r.max_batch_servings, f"lot_max_{r.id}"
 
 
+def _add_locked_recipes(m: pulp.LpProblem, c: _Ctx) -> None:
+    """x_r fixé exactement pour chaque recette verrouillée (pilote,
+    docs/product-pilot.md) — pas seulement δ_r = 1 : « une réoptimisation ne
+    change jamais silencieusement les recettes verrouillées » implique le
+    nombre de portions aussi. Inconditionnel (pas de nouveau enable_* — la
+    présence de config.locked_recipe_servings EST le drapeau), no-op si
+    vide. ``rid in c.x`` est garanti par la validation faite en amont dans
+    services/planning.py::reoptimize_plan (après préfiltrage) — pas de
+    branche défensive ici. L'exclusion mutuelle de variantes (D16,
+    _add_variant_exclusion) protège déjà contre le verrouillage simultané
+    de deux variantes d'un même plat."""
+    for rid, servings in c.config.locked_recipe_servings.items():
+        m += c.x[rid] == servings, f"verrouillage_{rid}"
+        if rid in c.delta:
+            m += c.delta[rid] == 1, f"verrouillage_delta_{rid}"
+
+
 def _add_diversity(m: pulp.LpProblem, c: _Ctx) -> None:
     """Σδ_r ≥ R_min et x_r ≤ α·⌈D(1+ε)⌉."""
     r_min = int(c.params.min_distinct_recipes.value)
@@ -456,6 +473,7 @@ class PulpMenuSolver:
         _add_demand(m, c)
         _add_coverage(m, c)
         _add_batch_coherence(m, c)
+        _add_locked_recipes(m, c)
         if config.enable_diversity:
             _add_diversity(m, c)
         if config.enable_variant_exclusion:
