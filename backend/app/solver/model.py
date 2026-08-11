@@ -274,6 +274,35 @@ def _add_locked_recipes(m: pulp.LpProblem, c: _Ctx) -> None:
             m += c.delta[rid] == 1, f"verrouillage_delta_{rid}"
 
 
+#: Fraction minimale du stock déclaré qu'un ingrédient « doit être utilisé »
+#: doit voir consommée (pilote, docs/product-pilot.md) — pas 1,0 : « cette
+#: contrainte ne signifie pas automatiquement que toute la quantité doit
+#: être consommée, puisque les quantités déclarées peuvent être
+#: approximatives ». Constante système, pas configurable par l'utilisateur
+#: (le produit ne demande qu'un bouton, pas un curseur).
+MUST_USE_PANTRY_MIN_FRACTION = 0.5
+
+
+def _add_must_use_pantry(m: pulp.LpProblem, c: _Ctx) -> None:
+    """demand_expr(i) ≥ 0,5·g_i pour chaque ingrédient marqué « doit être
+    utilisé » (pilote, docs/product-pilot.md) — réutilise demand_expr, déjà
+    là pour la couverture, pas de nouveau calcul de besoin. Inconditionnel
+    (tuple vide = no-op) mais sans effet si enable_pantry_stock est
+    inactif : g_i n'est même pas dans le modèle sans ce drapeau, imposer une
+    fraction d'un stock qui n'existe pas dans le modèle n'aurait aucun sens.
+    """
+    if not c.config.enable_pantry_stock:
+        return
+    for iid in c.config.must_use_pantry_ids:
+        g_i = float(c.problem.pantry.get(iid, 0))
+        if g_i <= 0:
+            continue
+        m += (
+            c.demand_expr(iid) >= MUST_USE_PANTRY_MIN_FRACTION * g_i,
+            f"doit_utiliser_{iid}",
+        )
+
+
 def _add_diversity(m: pulp.LpProblem, c: _Ctx) -> None:
     """Σδ_r ≥ R_min et x_r ≤ α·⌈D(1+ε)⌉."""
     r_min = int(c.params.min_distinct_recipes.value)
@@ -474,6 +503,7 @@ class PulpMenuSolver:
         _add_coverage(m, c)
         _add_batch_coherence(m, c)
         _add_locked_recipes(m, c)
+        _add_must_use_pantry(m, c)
         if config.enable_diversity:
             _add_diversity(m, c)
         if config.enable_variant_exclusion:

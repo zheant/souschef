@@ -95,6 +95,22 @@ def put_pantry(
     return [asdict(line) for line in lines]
 
 
+@router.put("/pantry/{canonical_ingredient_id}/priority")
+def put_pantry_priority(
+    canonical_ingredient_id: str,
+    body: schemas.SetPantryPriorityRequest,
+    session: Session = Depends(get_session),
+    profile_id: str = Depends(get_profile_id),
+):
+    try:
+        line = household.set_pantry_priority(
+            session, profile_id, canonical_ingredient_id, body.priority
+        )
+    except household.UnknownIngredientError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    return asdict(line)
+
+
 # ---------------------------------------------------------------------------
 # Plans
 # ---------------------------------------------------------------------------
@@ -120,11 +136,14 @@ def post_plan(
         config = SolverConfig(**body.config)
     except ValueError as exc:
         raise HTTPException(422, f"SolverConfig invalide : {exc}") from exc
-    # Un plan infaisable (statut solveur != Optimal) est aussi persisté et
-    # retourné : l'écran Génération affiche le message du diagnostic.
-    view = planning.generate_plan(
-        session, profile_id, body.on_date or date.today(), config, solver
-    )
+    try:
+        # Un plan infaisable (statut solveur != Optimal) est aussi persisté
+        # et retourné : l'écran Génération affiche le message du diagnostic.
+        view = planning.generate_plan(
+            session, profile_id, body.on_date or date.today(), config, solver
+        )
+    except planning.PantryIngredientNotUsableError as exc:
+        raise HTTPException(422, str(exc)) from exc
     return _plan_out(view)
 
 
@@ -196,6 +215,7 @@ def post_reoptimize(
         raise HTTPException(404, str(exc)) from exc
     except (
         planning.RecipeNotLockableError, planning.ConflictingRecipeSelectionError,
+        planning.PantryIngredientNotUsableError,
     ) as exc:
         raise HTTPException(422, str(exc)) from exc
     return schemas.ReoptimizeOut(

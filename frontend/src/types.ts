@@ -14,7 +14,15 @@ export interface Household {
   demand: { D_exact: string; borne_basse: number; borne_haute: number };
 }
 
-export interface PantryLine { canonical_ingredient_id: string; quantity_base_unit: string }
+// Périssables prioritaires ou obligatoires (pilote, docs/product-pilot.md) :
+// "use_soon" (préférence, stockée, sans effet sur le solveur en v1) vs
+// "must_use" (contrainte réelle).
+export type PantryPriority = "normal" | "use_soon" | "must_use";
+
+export interface PantryLine {
+  canonical_ingredient_id: string; quantity_base_unit: string;
+  priority: PantryPriority;
+}
 
 export interface SolverConfigInput {
   enable_multi_store?: boolean; enable_batch_fixed_cost?: boolean;
@@ -33,7 +41,8 @@ export interface MenuLine {
 }
 
 export interface GroceryLine {
-  product_external_key: string; brand: string; package_unit: string;
+  product_external_key: string; ingredient_name: string;
+  brand: string; package_unit: string;
   units: number; unit_price_cents_cad: number; taxed_total_cents_cad: string;
   consumed_by: string[];
 }

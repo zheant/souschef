@@ -15,7 +15,10 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
-from ..models import CanonicalIngredient, HouseholdMember, HouseholdProfile, PantryStock
+from ..models import (
+    CanonicalIngredient, HouseholdMember, HouseholdProfile, PantryPriority,
+    PantryStock,
+)
 from ..services.demand import compute_demand_bounds
 
 
@@ -59,6 +62,9 @@ class HouseholdView:
 class PantryLine:
     canonical_ingredient_id: str
     quantity_base_unit: str
+    #: Périssables prioritaires ou obligatoires (pilote,
+    #: docs/product-pilot.md) : "normal" | "use_soon" | "must_use".
+    priority: str
 
 
 def get_profile(session: Session, profile_id: str) -> HouseholdView:
@@ -95,6 +101,7 @@ def get_pantry(session: Session, profile_id: str) -> tuple[PantryLine, ...]:
         PantryLine(
             canonical_ingredient_id=r.canonical_ingredient_id,
             quantity_base_unit=str(r.quantity_base_unit),
+            priority=r.priority.value,
         )
         for r in rows
     )
@@ -103,6 +110,13 @@ def get_pantry(session: Session, profile_id: str) -> tuple[PantryLine, ...]:
 def update_pantry(
     session: Session, profile_id: str, lines: list[dict]
 ) -> tuple[PantryLine, ...]:
+    """Upsert de quantité **seulement**. Ne touche jamais ``priority`` : cet
+    endpoint est appelé par deux flux distincts (écran Garde-manger manuel
+    et la confirmation en deux temps de Génération, qui n'envoie jamais de
+    priorité) — si ``priority`` faisait partie de ce ``set_``, chaque
+    confirmation de garde-manger écraserait silencieusement un « doit être
+    utilisé » déjà posé. Voir ``set_pantry_priority`` pour ça, à dessein
+    sur un chemin séparé."""
     known = set(session.scalars(select(CanonicalIngredient.id)).all())
     for line in lines:
         if line["canonical_ingredient_id"] not in known:
@@ -115,6 +129,7 @@ def update_pantry(
                 household_profile_id=profile_id,
                 canonical_ingredient_id=line["canonical_ingredient_id"],
                 quantity_base_unit=Decimal(str(line["quantity_base_unit"])),
+                priority=PantryPriority.normal,
             )
             .on_conflict_do_update(
                 index_elements=["household_profile_id", "canonical_ingredient_id"],
@@ -123,6 +138,38 @@ def update_pantry(
         )
         session.execute(stmt)
     return get_pantry(session, profile_id)
+
+
+def set_pantry_priority(
+    session: Session, profile_id: str, canonical_ingredient_id: str, priority: str
+) -> PantryLine:
+    """Upsert de priorité **seulement** — chemin séparé de
+    ``update_pantry`` à dessein (voir sa docstring). Une ligne neuve est
+    créée avec une quantité à 0 si l'ingrédient n'était pas encore déclaré ;
+    une ligne existante ne voit que sa priorité changer."""
+    if session.get(CanonicalIngredient, canonical_ingredient_id) is None:
+        raise UnknownIngredientError(
+            f"Ingrédient inconnu : '{canonical_ingredient_id}'."
+        )
+    value = PantryPriority(priority)
+    stmt = (
+        pg_insert(PantryStock)
+        .values(
+            household_profile_id=profile_id,
+            canonical_ingredient_id=canonical_ingredient_id,
+            quantity_base_unit=Decimal(0),
+            priority=value,
+        )
+        .on_conflict_do_update(
+            index_elements=["household_profile_id", "canonical_ingredient_id"],
+            set_={"priority": value},
+        )
+    )
+    session.execute(stmt)
+    return next(
+        line for line in get_pantry(session, profile_id)
+        if line.canonical_ingredient_id == canonical_ingredient_id
+    )
 
 
 def _load_profile(session: Session, profile_id: str) -> HouseholdProfile:

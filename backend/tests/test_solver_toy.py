@@ -38,6 +38,7 @@ x_r ≤ 0,75·5 = 3,75 → x_r ≤ 3 (entier). Meilleurs candidats :
   30 c de temps marginal).
 """
 
+import dataclasses
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
@@ -126,6 +127,39 @@ def test_locked_recipe_servings_pins_exact_portions(toy):
     assert res.cooked_flags["riz_nature"] is True
     # Demande encadrée [4, 5] (D9) toujours respectée par le reste du menu.
     assert 4 <= sum(res.servings_by_recipe.values()) <= 5
+
+
+def test_must_use_pantry_forces_minimum_consumption(toy):
+    """Périssables obligatoires (pilote, docs/product-pilot.md) : lentille
+    déclarée à 300 g, must_use. Sans la contrainte (diversité seule), le
+    mélange retenu est dahl_toy=2 (140 g de lentille — sous le seuil de
+    50 % = 150 g) ; avec must_use, le solveur bascule vers dahl_toy=3
+    (210 g) — preuve que la contrainte change réellement la sélection, pas
+    seulement qu'elle est trivialement satisfaite."""
+    problem, pre = toy
+    problem = dataclasses.replace(problem, pantry={"lentille": Decimal(300)})
+    kwargs = dict(
+        enable_multi_store=True, enable_batch_fixed_cost=True,
+        enable_salvage=True, enable_time_cost=True,
+        enable_pantry_stock=True, enable_diversity=True,
+    )
+
+    baseline = PulpMenuSolver().solve(problem, pre, SolverConfig(**kwargs))
+    assert baseline.status == "Optimal"
+    assert 70 * baseline.servings_by_recipe.get("dahl_toy", 0) < 150
+
+    res = PulpMenuSolver().solve(
+        problem, pre, SolverConfig(**kwargs, must_use_pantry_ids=("lentille",))
+    )
+    assert res.status == "Optimal"
+    assert 70 * res.servings_by_recipe.get("dahl_toy", 0) >= 150  # 0,5 × 300
+
+    # Sans enable_pantry_stock, g_i n'est même pas dans le modèle : aucun effet.
+    res_no_flag = PulpMenuSolver().solve(
+        problem, pre, SolverConfig(must_use_pantry_ids=("lentille",))
+    )
+    assert res_no_flag.status == "Optimal"
+    assert res_no_flag.servings_by_recipe == {"riz_nature": 5}  # monotone, inchangé
 
 
 def test_batch_fixed_cost_and_time(toy):

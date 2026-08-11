@@ -216,11 +216,56 @@ les deux écrans plutôt que dupliqué.
 avant ce chantier + 3 nouveaux, dont un test bout en bout qui déclare
 « assez » de riz puis réoptimise et vérifie que le poste achats **baisse
 strictement** — pas seulement que les endpoints répondent). `tsc -b`/
-`vite build` propres. **Non vérifié, comme la tranche précédente** :
-interaction réelle dans un navigateur — à faire manuellement via
-`docker compose up`, en particulier l'enchaînement génération → liste
-priorisée → Continuer → Voir le résultat, et le bouton Passer qui doit
-laisser le plan initial intact.
+`vite build` propres. **Mise à jour** : l'utilisateur a testé cette tranche
+et la précédente (verrouillage/remplacement) manuellement via
+`docker compose up` et confirmé « le tout fonctionne » — les deux sont
+maintenant vérifiées en navigateur, pas seulement par la suite de tests.
+
+## Pilote — périssables prioritaires ou obligatoires (2026-08-11)
+
+Quatrième tranche du pilote produit, complément de la confirmation du
+garde-manger : `household.pantry_stock` gagne `priority`
+(`normal`/`use_soon`/`must_use`, migration `c3d8f21a9e6b`). Seul
+`must_use` a un effet sur le solveur — `use_soon` est stocké (schéma, API,
+sélecteur dans l'écran Garde-manger) mais **sans effet sur le solveur en
+v1** : une vraie préférence douce demanderait un sixième terme d'objectif,
+alors que l'objectif actuel a exactement cinq termes nommés
+(`ObjectiveTerms`), documentés et testés en profondeur (décomposition en
+cinq barres, rapport de diagnostic) — un chantier à part entière, pas un
+ajout mineur greffé ici.
+
+`must_use` : `SolverConfig.must_use_pantry_ids` (même famille « dérivé,
+jamais fourni à la main » que `locked_recipe_servings`), nouvelle
+contrainte `solver/model.py::_add_must_use_pantry` —
+`demand_expr(i) ≥ 0,5·g_i` (réutilise `demand_expr`, déjà là pour la
+couverture ; fraction fixe à 0,5, pas configurable — « ne signifie pas
+automatiquement que toute la quantité doit être consommée »). Sans effet si
+`enable_pantry_stock` est inactif (g_i n'est même pas dans le modèle).
+`services/planning.py::_with_must_use_pantry` la dérive depuis
+`pantry_stock.priority` et lève `PantryIngredientNotUsableError`
+**avant** le solveur si l'ingrédient n'apparaît dans aucune recette du
+catalogue — jamais un statut `Infeasible` muet, même principe que
+`RecipeNotLockableError`.
+
+**Piège identifié et évité en conception** : `PUT /api/pantry` (quantité)
+est appelé par deux flux distincts — l'écran Garde-manger manuel et la
+confirmation en deux temps de la tranche précédente, qui n'envoie jamais de
+priorité. `priority` vit donc sur un endpoint **strictement séparé**
+(`PUT /api/pantry/{id}/priority`, `services/household.py::
+set_pantry_priority`) — sinon chaque confirmation de garde-manger aurait
+silencieusement écrasé un « doit être utilisé » déjà posé. Vérifié par un
+test de régression dédié (`test_update_pantry_never_resets_priority`).
+
+**Vérifié contre PostgreSQL réel** : cycle de migration
+`downgrade base` → `upgrade head` propre ; **103/103 tests passés, 0
+sauté** (96 avant ce chantier + 7 nouveaux — un test solveur qui construit
+un scénario discriminant où la contrainte *change* réellement la sélection
+(dahl_toy 2→3 portions, pas seulement trivialement satisfaite), le test de
+régression anti-écrasement, et la validation `PantryIngredientNotUsableError`
+sur un ingrédient synthétique qu'aucune recette ne référence). `tsc -b`/
+`vite build` propres. **Non vérifié dans un navigateur** au moment de ce
+commit (contrairement aux deux tranches précédentes, qui l'ont été
+séparément) — à faire avant de considérer l'écran Garde-manger terminé.
 
 ## Lancer / tester / seeder
 

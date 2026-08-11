@@ -47,3 +47,32 @@ def test_pantry_roundtrip_and_unknown_ingredient(db_session):
             db_session, PROFILE_ID,
             [{"canonical_ingredient_id": "inexistant", "quantity_base_unit": 1}],
         )
+
+
+def test_set_pantry_priority_and_unknown_ingredient(db_session):
+    line = household.set_pantry_priority(db_session, PROFILE_ID, "riz", "must_use")
+    assert line.priority == "must_use"
+    assert line.quantity_base_unit == "0.000"  # ligne neuve, quantité par défaut
+
+    with pytest.raises(household.UnknownIngredientError):
+        household.set_pantry_priority(db_session, PROFILE_ID, "inexistant", "must_use")
+
+
+def test_update_pantry_never_resets_priority(db_session):
+    """Piège identifié en conception : PUT /api/pantry (quantité) est aussi
+    appelé par la confirmation en deux temps de Génération, qui n'envoie
+    jamais de priorité — il ne doit jamais écraser un « doit être utilisé »
+    déjà posé."""
+    household.update_pantry(
+        db_session, PROFILE_ID,
+        [{"canonical_ingredient_id": "riz", "quantity_base_unit": 100}],
+    )
+    household.set_pantry_priority(db_session, PROFILE_ID, "riz", "must_use")
+
+    lines = household.update_pantry(
+        db_session, PROFILE_ID,
+        [{"canonical_ingredient_id": "riz", "quantity_base_unit": 250}],
+    )
+    riz = next(l for l in lines if l.canonical_ingredient_id == "riz")
+    assert riz.quantity_base_unit == "250.000"
+    assert riz.priority == "must_use"

@@ -31,7 +31,10 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
-from ..models import PantryStock, Plan, PlanStatus, Product, Recipe
+from ..models import (
+    CanonicalIngredient, PantryPriority, PantryStock, Plan, PlanStatus, Product,
+    Recipe,
+)
 from ..models.base import utcnow
 from ..services.appetence import RuleBasedAppetenceScorer
 from ..services.prefilter import prefilter_recipes
@@ -72,6 +75,11 @@ class RecipeNotInPlanError(LookupError):
 class RecipeNotLockableError(ValueError):
     """Recette verrouillée disparue du préfiltrage — ex. nouvelle allergie
     déclarée entre deux générations (l'API traduit en 422)."""
+
+
+class PantryIngredientNotUsableError(ValueError):
+    """Un ingrédient marqué « doit être utilisé » n'apparaît dans aucune
+    recette du catalogue (l'API traduit en 422)."""
 
 
 class ConflictingRecipeSelectionError(ValueError):
@@ -160,6 +168,7 @@ def generate_plan(
 ) -> PlanView:
     problem = load_problem_data(session, profile_id, on_date)
     pre = _run_prefilter(session, profile_id, problem)
+    config = _with_must_use_pantry(session, profile_id, problem, config)
     result = solver.solve(problem, pre, config)
     plan = _persist_plan(session, profile_id, on_date, config, problem, result)
     return _plan_view(session, plan)
@@ -230,6 +239,7 @@ def reoptimize_plan(
     reopt_config = config.model_copy(
         update={"locked_recipe_servings": locked_recipe_servings}
     )
+    reopt_config = _with_must_use_pantry(session, profile_id, problem, reopt_config)
     result = solver.solve(problem, pre, reopt_config)
     plan = _persist_plan(
         session, profile_id, previous.on_date, reopt_config, problem, result
@@ -326,6 +336,40 @@ def _run_prefilter(
         problem.recipes, problem.profile, scorer,
         force_keep_ids=force_keep_ids, exclude_ids=exclude_ids,
     )
+
+
+def _with_must_use_pantry(
+    session: Session, profile_id: str, problem, config: SolverConfig
+) -> SolverConfig:
+    """Périssables obligatoires (pilote, docs/product-pilot.md) : dérive
+    ``SolverConfig.must_use_pantry_ids`` depuis ``pantry_stock.priority`` —
+    jamais fourni à la main par l'appelant HTTP, même motif que
+    ``locked_recipe_servings``. Sans effet si ``enable_pantry_stock`` est
+    inactif (cohérent avec la garde de ``_add_must_use_pantry`` côté
+    solveur)."""
+    if not config.enable_pantry_stock:
+        return config
+    ids = tuple(session.scalars(
+        select(PantryStock.canonical_ingredient_id).where(
+            PantryStock.household_profile_id == profile_id,
+            PantryStock.priority == PantryPriority.must_use,
+        )
+    ).all())
+    if not ids:
+        return config
+    # Erreur explicite AVANT le solveur (jamais un statut Infeasible muet,
+    # même principe que RecipeNotLockableError) : un ingrédient « doit être
+    # utilisé » qu'aucune recette ne référence ne peut jamais être satisfait.
+    used_ids = {
+        ri.canonical_ingredient_id for r in problem.recipes for ri in r.ingredients
+    }
+    unusable = sorted(iid for iid in ids if iid not in used_ids)
+    if unusable:
+        raise PantryIngredientNotUsableError(
+            "Ingrédient(s) marqué(s) « doit être utilisé » sans aucune "
+            f"recette compatible dans le catalogue : {unusable}."
+        )
+    return config.model_copy(update={"must_use_pantry_ids": ids})
 
 
 def _persist_plan(
@@ -445,13 +489,26 @@ def _plan_view(session: Session, plan: Plan) -> PlanView:
 
 
 def _grocery_list(session: Session, plan: Plan) -> list[dict]:
-    """Liste d'épicerie groupée par magasin. Chaque ligne : produit, quantité,
-    prix unitaire, prix total taxé, et les recettes qui la consomment (celles
-    du menu utilisant l'ingrédient canonique du produit)."""
+    """Liste d'épicerie groupée par magasin. Chaque ligne : nom de
+    l'ingrédient canonique, marque/produit, quantité, prix unitaire, prix
+    total taxé, et les recettes qui la consomment (celles du menu utilisant
+    l'ingrédient canonique du produit). ``brand``/``package_unit`` seuls ne
+    disent pas *quel* aliment c'est (« Great Value, 900 g » sans plus de
+    contexte) — ``ingredient_name`` porte le type de produit."""
     product_ids = {p["product_id"] for p in plan.purchases}
     products = {
         p.id: p
         for p in session.scalars(select(Product).where(Product.id.in_(product_ids)))
+    }
+    ingredient_names = {
+        i.id: i.name
+        for i in session.scalars(
+            select(CanonicalIngredient).where(
+                CanonicalIngredient.id.in_(
+                    {p.canonical_ingredient_id for p in products.values()}
+                )
+            )
+        )
     }
     recipe_names = {
         r.id: r.name
@@ -479,6 +536,7 @@ def _grocery_list(session: Session, plan: Plan) -> list[dict]:
         taxed = Decimal(line["taxed_total_cents_cad"])
         store["lines"].append({
             "product_external_key": line["product_external_key"],
+            "ingredient_name": ingredient_names[prod.canonical_ingredient_id],
             "brand": prod.brand,
             "package_unit": prod.package_unit,
             "units": line["units"],

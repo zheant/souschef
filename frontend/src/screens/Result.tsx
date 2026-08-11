@@ -242,7 +242,7 @@ export default function ResultScreen(props: {
                 <tbody>
                   {g.lines.map((l) => (
                     <tr key={l.product_external_key}>
-                      <td>{l.brand} <span className="muted">{l.package_unit}</span></td>
+                      <td>{l.ingredient_name} <span className="muted">— {l.brand}, {l.package_unit}</span></td>
                       <td className="num">{l.units}</td>
                       <td className="num">{cents(l.unit_price_cents_cad)}</td>
                       <td className="num">{cents(l.taxed_total_cents_cad)}</td>

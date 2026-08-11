@@ -11,7 +11,8 @@ from decimal import Decimal
 
 import pytest
 
-from app.services import planning
+from app.models import CanonicalIngredient, UnitKind
+from app.services import household, planning
 from app.solver import PulpMenuSolver, SolverConfig
 from tests.db_fixtures import db_session, test_engine, toy_seeded  # noqa: F401
 
@@ -181,3 +182,42 @@ def test_pantry_prompt_is_scoped_to_its_owning_profile(db_session):
     )
     with pytest.raises(planning.PlanNotFound):
         planning.pantry_prompt(db_session, "un_autre_profil", view.id)
+
+
+# ---------------------------------------------------------------------------
+# Périssables prioritaires ou obligatoires (pilote, docs/product-pilot.md)
+# ---------------------------------------------------------------------------
+
+def test_generate_plan_respects_must_use_pantry(db_session):
+    household.update_pantry(
+        db_session, PROFILE_ID,
+        [{"canonical_ingredient_id": "lentille", "quantity_base_unit": 300}],
+    )
+    household.set_pantry_priority(db_session, PROFILE_ID, "lentille", "must_use")
+
+    view = planning.generate_plan(
+        db_session, PROFILE_ID, ON, SolverConfig(**ALL_ON), PulpMenuSolver()
+    )
+    assert view.solver_status == "Optimal"
+    dahl = next((m.servings for m in view.menu if m.recipe_id == "dahl_toy"), 0)
+    assert 70 * dahl >= 150  # 0,5 × 300 g déclarés
+
+
+def test_must_use_pantry_ingredient_with_no_compatible_recipe_is_rejected(db_session):
+    # Ingrédient synthétique qu'aucune recette du jouet ne référence.
+    db_session.add(CanonicalIngredient(
+        id="epice_test", name="Épice de test", unit_kind=UnitKind.mass,
+        base_unit="g", perishability=Decimal("0"),
+        salvage_value_cents_per_base_unit=Decimal("0"),
+    ))
+    db_session.flush()
+    household.update_pantry(
+        db_session, PROFILE_ID,
+        [{"canonical_ingredient_id": "epice_test", "quantity_base_unit": 50}],
+    )
+    household.set_pantry_priority(db_session, PROFILE_ID, "epice_test", "must_use")
+
+    with pytest.raises(planning.PantryIngredientNotUsableError):
+        planning.generate_plan(
+            db_session, PROFILE_ID, ON, SolverConfig(**ALL_ON), PulpMenuSolver()
+        )

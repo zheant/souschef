@@ -62,6 +62,14 @@ class PantryUpdate(BaseModel):
     lines: list[PantryLine]
 
 
+class SetPantryPriorityRequest(BaseModel):
+    """Périssables prioritaires ou obligatoires (pilote,
+    docs/product-pilot.md) — endpoint séparé de ``PUT /api/pantry`` à
+    dessein (voir ``services/household.py::update_pantry``)."""
+
+    priority: Literal["normal", "use_soon", "must_use"]
+
+
 class PlanRequest(BaseModel):
     """SolverConfig partielle — tout champ absent prend le défaut de
     développement (spec)."""

@@ -79,6 +79,14 @@ class SolverConfig(BaseModel):
     #: précédent, pas une valeur arbitraire).
     locked_recipe_servings: dict[str, int] = Field(default_factory=dict)
 
+    #: Ingrédients du garde-manger marqués « doit être utilisé » (pilote,
+    #: docs/product-pilot.md) — tuple vide = comportement inchangé, sa
+    #: présence EST le drapeau, même motif que locked_recipe_servings.
+    #: Alimenté par services/planning.py::_with_must_use_pantry depuis
+    #: pantry_stock.priority, jamais construit à la main par un appelant
+    #: HTTP. N'a d'effet que si enable_pantry_stock est actif.
+    must_use_pantry_ids: tuple[str, ...] = ()
+
     solver_time_limit_s: int = Field(default=60, ge=1)
     mip_gap: float = Field(default=0.001, ge=0)
 

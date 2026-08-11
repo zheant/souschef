@@ -1,8 +1,8 @@
 // Client API typé — seule porte vers le back-end.
 
 import type {
-  Household, PantryLine, PantryPromptLine, Plan, ReoptimizeResult,
-  SolverConfigInput, Store,
+  Household, PantryLine, PantryPriority, PantryPromptLine, Plan,
+  ReoptimizeResult, SolverConfigInput, Store,
 } from "./types";
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
@@ -24,6 +24,10 @@ export const api = {
   pantry: () => req<PantryLine[]>("/api/pantry"),
   updatePantry: (lines: { canonical_ingredient_id: string; quantity_base_unit: number }[]) =>
     req<PantryLine[]>("/api/pantry", { method: "PUT", body: JSON.stringify({ lines }) }),
+  setPantryPriority: (canonicalIngredientId: string, priority: PantryPriority) =>
+    req<PantryLine>(`/api/pantry/${canonicalIngredientId}/priority`, {
+      method: "PUT", body: JSON.stringify({ priority }),
+    }),
   createPlan: (config: SolverConfigInput) =>
     req<Plan>("/api/plan", { method: "POST", body: JSON.stringify({ config }) }),
   getPlan: (id: number) => req<Plan>(`/api/plan/${id}`),

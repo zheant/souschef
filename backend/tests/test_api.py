@@ -42,16 +42,63 @@ def test_pantry_roundtrip(api_client):
                          "quantity_base_unit": 120}]},
     )
     assert r.status_code == 200
-    assert {"canonical_ingredient_id": "riz", "quantity_base_unit": "120"} in [
-        {k: v.rstrip("0").rstrip(".") if k == "quantity_base_unit" else v
-         for k, v in row.items()}
-        for row in r.json()
-    ]
+    riz = next(row for row in r.json() if row["canonical_ingredient_id"] == "riz")
+    assert riz["quantity_base_unit"].rstrip("0").rstrip(".") == "120"
+    assert riz["priority"] == "normal"  # défaut, jamais touché par cet endpoint
+
     r = api_client.put(
         "/api/pantry",
         json={"lines": [{"canonical_ingredient_id": "inexistant",
                          "quantity_base_unit": 1}]},
     )
+    assert r.status_code == 422
+
+
+def test_pantry_priority_endpoint(api_client):
+    r = api_client.put("/api/pantry/riz/priority", json={"priority": "must_use"})
+    assert r.status_code == 200, r.text
+    assert r.json() == {
+        "canonical_ingredient_id": "riz", "quantity_base_unit": "0.000",
+        "priority": "must_use",
+    }
+
+    # PUT /api/pantry (quantité) ne doit jamais réinitialiser la priorité —
+    # piège identifié en conception (deux flux distincts appellent cet
+    # endpoint : Garde-manger manuel et la confirmation en deux temps de
+    # Génération, qui n'envoie jamais de priorité).
+    r = api_client.put(
+        "/api/pantry",
+        json={"lines": [{"canonical_ingredient_id": "riz",
+                         "quantity_base_unit": 300}]},
+    )
+    riz = next(row for row in r.json() if row["canonical_ingredient_id"] == "riz")
+    assert riz["priority"] == "must_use"
+
+    r = api_client.put(
+        "/api/pantry/inexistant/priority", json={"priority": "must_use"}
+    )
+    assert r.status_code == 422
+
+
+def test_generate_plan_rejects_unusable_must_use_ingredient(api_client, db_session):
+    from app.models import CanonicalIngredient, UnitKind
+
+    db_session.add(CanonicalIngredient(
+        id="epice_test", name="Épice de test", unit_kind=UnitKind.mass,
+        base_unit="g", perishability=Decimal("0"),
+        salvage_value_cents_per_base_unit=Decimal("0"),
+    ))
+    db_session.flush()
+    api_client.put(
+        "/api/pantry",
+        json={"lines": [{"canonical_ingredient_id": "epice_test",
+                         "quantity_base_unit": 50}]},
+    )
+    api_client.put(
+        "/api/pantry/epice_test/priority", json={"priority": "must_use"}
+    )
+
+    r = api_client.post("/api/plan", json={"config": ALL_ON, "on_date": ON})
     assert r.status_code == 422
 
 
@@ -67,6 +114,10 @@ def test_plan_create_fetch_and_grocery_grouping(api_client):
     assert len(groups) == 1 and groups[0]["store_external_key"] == "toy_store"
     line = groups[0]["lines"][0]
     assert line["product_external_key"] == "riz_400g"
+    # ingredient_name porte le type de produit (« Riz ») — brand/package_unit
+    # seuls ne le disent pas (ex. « Great Value, 900 g » sans plus de
+    # contexte), bug relevé en test manuel dans le navigateur.
+    assert line["ingredient_name"] == "Riz"
     assert line["consumed_by"] == ["Riz nature"]
     assert groups[0]["subtotal_cents_cad"] == "180.00"
     assert plan["diagnostic"]["objective_terms_cents"]["total"] == "-333.50"
