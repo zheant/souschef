@@ -1,7 +1,8 @@
 // Client API typé — seule porte vers le back-end.
 
 import type {
-  Household, PantryLine, Plan, ReoptimizeResult, SolverConfigInput, Store,
+  Household, PantryLine, PantryPromptLine, Plan, ReoptimizeResult,
+  SolverConfigInput, Store,
 } from "./types";
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
@@ -41,6 +42,8 @@ export const api = {
         excluded_recipe_ids: excludedRecipeIds,
       }),
     }),
+  pantryPrompt: (planId: number) =>
+    req<PantryPromptLine[]>(`/api/plan/${planId}/pantry_prompt`),
   stores: () => req<Store[]>("/api/stores"),
 };
 

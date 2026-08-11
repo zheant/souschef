@@ -140,6 +140,21 @@ def get_plan(
         raise HTTPException(404, str(exc)) from exc
 
 
+@router.get(
+    "/plan/{plan_id}/pantry_prompt", response_model=list[schemas.PantryPromptLineOut]
+)
+def get_pantry_prompt(
+    plan_id: int,
+    session: Session = Depends(get_session),
+    profile_id: str = Depends(get_profile_id),
+):
+    try:
+        lines = planning.pantry_prompt(session, profile_id, plan_id)
+    except planning.PlanNotFound as exc:
+        raise HTTPException(404, str(exc)) from exc
+    return [schemas.PantryPromptLineOut(**asdict(line)) for line in lines]
+
+
 @router.post("/plan/{plan_id}/commit")
 def post_commit(
     plan_id: int,

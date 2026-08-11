@@ -149,3 +149,35 @@ def test_reoptimize_is_scoped_to_its_owning_profile(db_session):
             db_session, "un_autre_profil", view.id,
             frozenset(), frozenset(), SolverConfig(**ALL_ON), PulpMenuSolver(),
         )
+
+
+# ---------------------------------------------------------------------------
+# Confirmation du garde-manger en deux temps (pilote, docs/product-pilot.md)
+# ---------------------------------------------------------------------------
+
+def test_pantry_prompt_prioritizes_ingredients_of_the_plan(db_session):
+    view = planning.generate_plan(
+        db_session, PROFILE_ID, ON, SolverConfig(**ALL_ON), PulpMenuSolver()
+    )
+    prompt = planning.pantry_prompt(db_session, PROFILE_ID, view.id)
+    assert prompt  # riz_nature + dahl_toy au menu : au moins riz et lentille
+
+    by_id = {l.canonical_ingredient_id: l for l in prompt}
+    assert "riz" in by_id
+    riz = by_id["riz"]
+    assert riz.name == "Riz"
+    assert riz.unit_kind == "mass" and riz.base_unit == "g"
+    assert Decimal(riz.needed_quantity_base_unit) > 0
+    assert Decimal(riz.estimated_cost_cents) > 0
+
+    # Trié par coût estimé décroissant.
+    costs = [Decimal(l.estimated_cost_cents) for l in prompt]
+    assert costs == sorted(costs, reverse=True)
+
+
+def test_pantry_prompt_is_scoped_to_its_owning_profile(db_session):
+    view = planning.generate_plan(
+        db_session, PROFILE_ID, ON, SolverConfig(**ALL_ON), PulpMenuSolver()
+    )
+    with pytest.raises(planning.PlanNotFound):
+        planning.pantry_prompt(db_session, "un_autre_profil", view.id)

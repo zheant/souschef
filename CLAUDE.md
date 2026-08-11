@@ -174,6 +174,54 @@ disponible dans cette session) — à faire manuellement via `docker compose
 up` avant de considérer l'écran Résultat terminé, en particulier
 l'enchaînement verrou → réoptimiser → nouveau plan affiché.
 
+## Pilote — confirmation du garde-manger en deux temps (2026-08-11)
+
+Deuxième tranche du pilote produit, construite sur la tranche précédente :
+génère d'abord un menu, propose une liste courte et priorisée d'ingrédients
+(`GET /api/plan/{id}/pantry_prompt`), laisse l'utilisateur répondre
+« aucun/un peu/assez » (quantité exacte facultative), puis réoptimise en
+tenant compte du stock déclaré et explique ce qui a changé — en réutilisant
+telle quelle la mécanique `reoptimize_plan`/`MenuChange` de la tranche
+précédente (aucun verrou/exclusion, juste `enable_pantry_stock=True`).
+
+`services/planning.py::pantry_prompt` n'invente aucun nouveau calcul : il
+assemble `Plan.ingredient_needs` (déjà stocké à la génération) avec
+`services/validation.py::min_taxed_price_per_base_unit` (déjà utilisé pour
+l'assertion 1) pour estimer un coût par ingrédient, et priorise par deux
+critères explicites additionnés (pas un score pondéré arbitraire) : top 5
+par coût estimé, top 3 par périssabilité ≥ 0,5 non déjà inclus.
+
+**Mapping assez/un peu → quantité, décision à retenir** : « assez » =
+besoin exact du plan actuel pour cet ingrédient, « un peu » = la moitié —
+jamais une valeur arbitrairement gonflée, qui fausserait la comptabilité de
+`_apply_commit` au commit suivant (le stock resterait « miraculeusement »
+élevé au lieu de se consommer réellement semaine après semaine).
+
+Portée volontairement restreinte, comme D15 le documentait déjà pour un cas
+voisin : pas de critère « requis en grande quantité » séparé (n'a pas de
+base objective pour normaliser g/ml/unité sans données réelles — capturé
+indirectement par le classement en coût) ; pas de niveau « doit être
+utilisé » (contrainte dure) sur les périssables — c'est la tranche
+« Périssables prioritaires ou obligatoires », explicitement écartée par
+l'utilisateur au profit de celle-ci.
+
+Front-end : `Generate.tsx` passe de un à trois écrans internes (`form` →
+`confirm-pantry` → `confirmed`) sans nouvel onglet ni routeur — juste un
+état local à trois phases, cohérent avec le modèle de navigation par
+onglets déjà en place. `describeChanges` (l'explication de réoptimisation)
+a été extrait de `Result.tsx` vers `frontend/src/changes.ts`, partagé entre
+les deux écrans plutôt que dupliqué.
+
+**Vérifié contre PostgreSQL réel** : **96/96 tests passés, 0 sauté** (93
+avant ce chantier + 3 nouveaux, dont un test bout en bout qui déclare
+« assez » de riz puis réoptimise et vérifie que le poste achats **baisse
+strictement** — pas seulement que les endpoints répondent). `tsc -b`/
+`vite build` propres. **Non vérifié, comme la tranche précédente** :
+interaction réelle dans un navigateur — à faire manuellement via
+`docker compose up`, en particulier l'enchaînement génération → liste
+priorisée → Continuer → Voir le résultat, et le bouton Passer qui doit
+laisser le plan initial intact.
+
 ## Lancer / tester / seeder
 
 ```bash

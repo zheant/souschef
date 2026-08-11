@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, cents } from "../api";
-import type { Household, MenuChange, Plan, SolverConfigInput, Store } from "../types";
+import { describeChanges } from "../changes";
+import type { Household, Plan, SolverConfigInput, Store } from "../types";
 
 /** Écran 3 — Résultat : menu, liste d'épicerie groupée par magasin avec
  *  sous-totaux et itinéraire suggéré, et la décomposition du coût en cinq
@@ -22,23 +23,6 @@ const TERM_LABELS: [key: "achats" | "deplacements" | "temps" | "recuperation" | 
   ["recuperation", "Récupération", true],
   ["appetence", "Appétence", true],
 ];
-
-/** Phrase d'explication après une réoptimisation (pilote,
- *  docs/product-pilot.md : « Deux recettes ont été remplacées... et
- *  économiser 4,80 $ »). Ne nomme pas les recettes (le plan précédent n'a
- *  plus ses noms sous la main ici) — compte + delta de coût suffisent. */
-function describeChanges(c: MenuChange): string {
-  const n = Math.max(c.added.length, c.removed.length);
-  const what =
-    n === 0 ? "Le menu n'a pas changé" :
-    n === 1 ? "Une recette a été remplacée" :
-    `${n} recettes ont été remplacées`;
-  const delta = Number(c.cost_delta_cents) / 100;
-  const fmt = (v: number) => Math.abs(v).toLocaleString("fr-CA", { style: "currency", currency: "CAD" });
-  if (delta < -0.005) return `${what}, pour économiser ${fmt(delta)}.`;
-  if (delta > 0.005) return `${what} — ${fmt(delta)} de plus.`;
-  return `${what}, sans changer le coût des achats.`;
-}
 
 export default function ResultScreen(props: {
   plan: Plan | null; household: Household; stores: Store[]; config: SolverConfigInput;

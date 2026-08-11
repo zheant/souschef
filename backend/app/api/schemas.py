@@ -89,6 +89,20 @@ class PlanOut(BaseModel):
     diagnostic: dict
 
 
+class PantryPromptLineOut(BaseModel):
+    """Confirmation du garde-manger en deux temps (pilote,
+    docs/product-pilot.md) : ligne d'ingrédient priorisée pour un plan
+    précis, pas un inventaire exhaustif."""
+
+    canonical_ingredient_id: str
+    name: str
+    unit_kind: str
+    base_unit: str
+    needed_quantity_base_unit: str
+    perishability: str
+    estimated_cost_cents: str
+
+
 class ReoptimizeRequest(BaseModel):
     """Verrouillage/remplacement de recette (pilote, docs/product-pilot.md).
     ``locked_recipe_ids`` doivent appartenir au plan visé ; leurs portions
