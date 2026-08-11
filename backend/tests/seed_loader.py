@@ -86,6 +86,7 @@ def problem_from_seed_dir(seed_dir: str | Path, on_date: date) -> ProblemData:
             store_id=store_id[o["store_external_key"]],
             price_cents_cad=o["price_cents_cad"],
             is_promo=o["is_promo"],
+            regular_price_cents_cad=o.get("regular_price_cents_cad"),
         )
         for o in load("raw_offers.json")
         if date.fromisoformat(o["valid_from"]) <= on_date

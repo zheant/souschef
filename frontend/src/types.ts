@@ -45,10 +45,17 @@ export interface GroceryLine {
   brand: string; package_unit: string;
   units: number; unit_price_cents_cad: number; taxed_total_cents_cad: string;
   consumed_by: string[];
+  // Rabais et économies (pilote, docs/product-pilot.md) — référence
+  // honnête : prix régulier du même produit. savings_cents_cad est null
+  // hors promo ou si le prix régulier n'est pas connu/supérieur.
+  is_promo: boolean;
+  regular_price_cents_cad: number | null;
+  savings_cents_cad: string | null;
 }
 
 export interface GroceryGroup {
   store_external_key: string; lines: GroceryLine[]; subtotal_cents_cad: string;
+  savings_cents_cad: string;
 }
 
 export interface ObjectiveTermsCents {

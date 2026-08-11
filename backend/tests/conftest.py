@@ -66,7 +66,8 @@ def make_problem(profile=None, ingredients=None, recipes=None, prices=None,
                     tax_rate=Decimal("0")),
     ]
     prices = prices if prices is not None else [
-        PriceData(product_id=1, store_id=1, price_cents_cad=300, is_promo=False),
+        PriceData(product_id=1, store_id=1, price_cents_cad=300, is_promo=False,
+                  regular_price_cents_cad=300),
     ]
     stores = stores if stores is not None else [
         StoreData(id=1, external_key="s1", banner="S1", lat=Decimal("45.5"),

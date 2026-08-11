@@ -328,8 +328,50 @@ réinitialisé à chaque nouveau plan (même motif que `lockedIds`).
   une case à cocher isolée.
 
 **Vérifié** : `tsc -b`/`vite build` propres, aucun fichier backend modifié
-(confirmé par `git status`). **Non encore vérifié dans un navigateur** au
-moment de ce commit.
+(confirmé par `git status`). Testé par l'utilisateur dans un navigateur —
+fonctionne.
+
+## Pilote — rabais et économies dans la liste d'épicerie (2026-08-11)
+
+Septième tranche, suivi direct de la précédente : `market.price` porte déjà
+`is_promo`/`regular_price_cents_cad` en base, mais aucune couche ne les
+faisait transiter jusqu'à la ligne d'épicerie — vérifié en lisant le code,
+pas supposé (`solver/model.py::_Ctx` construisait déjà `price_is_promo`
+depuis `problem.prices`, jamais relu ailleurs ; `.badge.promo` existait déjà
+dans `styles.css`, jamais référencé). Le champ manquant suit maintenant
+exactement le chemin déjà emprunté par le prix payé, un maillon de plus à
+chaque étape : `services/problem_data.py::PriceData` (nouveau champ) →
+`solver/model.py::_Ctx` (`self.regular_price_cents`, même boucle que
+`price_cents`/`price_is_promo`) → `solver/port.py::PurchaseLine` (deux
+nouveaux champs, avec défauts pour ne pas casser
+`tests/test_substitutability.py::FakeSolver`) →
+`services/planning.py::_persist_plan` (sérialisation JSONB) →
+`_grocery_list` (calcul de `savings_cents_cad`, taxé comme
+`taxed_total_cents_cad`, `None` sauf promo réelle avec prix régulier
+supérieur — jamais une valeur inventée).
+
+**Hors périmètre, volontairement** : seule la référence « prix régulier du
+même produit » est construite. La seconde référence honnête demandée par
+`docs/product-pilot.md` — « achat du même panier dans le magasin habituel »
+— exige de résoudre le même panier à un magasin de référence différent, un
+calcul à part, pas une lecture. Aucun sixième terme d'objectif non plus :
+les économies affichées sont une lecture du diagnostic déjà résolu, pas un
+facteur qui influence le choix du solveur (même limite déjà posée pour
+`use_soon`).
+
+**Vérifié contre PostgreSQL réel** : **105/105 tests passés, 0 sauté** (103
+avant ce chantier + 2 nouveaux — un test qui confirme l'absence d'effet sur
+le seed jouet, sans promo par construction, et un test discriminant qui
+mute directement une ligne `market.price` déjà chargée (pas d'insertion en
+conflit) pour vérifier le calcul taxé des économies). Correction en cours
+de route : deux sites de construction de `PriceData` en dehors de
+`load_problem_data` (`tests/seed_loader.py`, `tests/conftest.py::
+make_problem`) ignoraient déjà `regular_price_cents_cad` — le nouveau champ
+obligatoire les a fait échouer immédiatement, corrigés. `tsc -b`/
+`vite build` propres. Aucune migration (la donnée existait déjà en base,
+seule la lecture était incomplète). Testé par l'utilisateur dans un
+navigateur (avec `seed/main` — le seed jouet n'a aucune promo par
+construction) — fonctionne.
 
 ## Lancer / tester / seeder
 

@@ -298,15 +298,23 @@ export default function ResultScreen(props: {
               <h2>{store?.banner ?? g.store_external_key} <span className="sub">{store?.address}</span></h2>
               <table className="ledger">
                 <thead>
-                  <tr><th>Produit</th><th className="num">Qté</th><th className="num">Prix unit.</th><th className="num">Total taxé</th><th>Pour</th></tr>
+                  <tr>
+                    <th>Produit</th><th className="num">Qté</th>
+                    <th className="num">Prix unit.</th><th className="num">Total taxé</th>
+                    <th className="num">Économies</th><th>Pour</th>
+                  </tr>
                 </thead>
                 <tbody>
                   {g.lines.map((l) => (
                     <tr key={l.product_external_key}>
-                      <td>{l.ingredient_name} <span className="muted">— {l.brand}, {l.package_unit}</span></td>
+                      <td>
+                        {l.ingredient_name} <span className="muted">— {l.brand}, {l.package_unit}</span>
+                        {l.is_promo && <span className="badge promo" style={{ marginLeft: 6 }}>Rabais</span>}
+                      </td>
                       <td className="num">{l.units}</td>
                       <td className="num">{cents(l.unit_price_cents_cad)}</td>
                       <td className="num">{cents(l.taxed_total_cents_cad)}</td>
+                      <td className="num">{l.savings_cents_cad ? cents(l.savings_cents_cad) : "—"}</td>
                       <td className="muted">{l.consumed_by.join(", ")}</td>
                     </tr>
                   ))}
@@ -314,6 +322,9 @@ export default function ResultScreen(props: {
                     <td>Sous-total {store?.banner ?? g.store_external_key}</td>
                     <td colSpan={2} />
                     <td className="num">{cents(g.subtotal_cents_cad)}</td>
+                    <td className="num">
+                      {Number(g.savings_cents_cad) > 0 ? cents(g.savings_cents_cad) : "—"}
+                    </td>
                     <td />
                   </tr>
                 </tbody>

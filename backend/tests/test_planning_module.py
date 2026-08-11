@@ -11,7 +11,9 @@ from decimal import Decimal
 
 import pytest
 
-from app.models import CanonicalIngredient, UnitKind
+from sqlalchemy import select
+
+from app.models import CanonicalIngredient, Price, Product, UnitKind
 from app.services import household, planning
 from app.solver import PulpMenuSolver, SolverConfig
 from tests.db_fixtures import db_session, test_engine, toy_seeded  # noqa: F401
@@ -221,3 +223,56 @@ def test_must_use_pantry_ingredient_with_no_compatible_recipe_is_rejected(db_ses
         planning.generate_plan(
             db_session, PROFILE_ID, ON, SolverConfig(**ALL_ON), PulpMenuSolver()
         )
+
+
+# ---------------------------------------------------------------------------
+# Rabais et économies dans la liste d'épicerie (pilote,
+# docs/product-pilot.md)
+# ---------------------------------------------------------------------------
+
+def test_grocery_line_has_no_savings_without_a_promo(db_session):
+    """Le seed jouet n'a aucune promotion (vérifié : toutes les offres ont
+    is_promo=false, regular_price_cents_cad == price_cents_cad) — le
+    branchement ne doit rien changer par défaut."""
+    view = planning.generate_plan(
+        db_session, PROFILE_ID, ON, SolverConfig(), PulpMenuSolver()
+    )
+    line = view.grocery_list_by_store[0]["lines"][0]
+    assert line["is_promo"] is False
+    assert line["regular_price_cents_cad"] == line["unit_price_cents_cad"]
+    assert line["savings_cents_cad"] is None
+    assert Decimal(view.grocery_list_by_store[0]["savings_cents_cad"]) == 0
+
+
+def test_grocery_line_reports_savings_on_a_real_promo(db_session):
+    """Test discriminant : mute directement la ligne market.price déjà
+    chargée par le seed (pas d'insertion en conflit avec la contrainte
+    unique existante), régénère, vérifie le calcul taxé des économies."""
+    riz_id = db_session.scalar(
+        select(Product.id).where(Product.external_key == "riz_400g")
+    )
+    price_row = db_session.scalar(
+        select(Price).where(
+            Price.product_id == riz_id,
+            Price.valid_from <= ON, Price.valid_to >= ON,
+        )
+    )
+    price_row.is_promo = True
+    price_row.regular_price_cents_cad = price_row.price_cents_cad + 40
+    db_session.flush()
+
+    view = planning.generate_plan(
+        db_session, PROFILE_ID, ON, SolverConfig(), PulpMenuSolver()
+    )
+    line = next(
+        l for g in view.grocery_list_by_store for l in g["lines"]
+        if l["product_external_key"] == "riz_400g"
+    )
+    assert line["is_promo"] is True
+    assert line["regular_price_cents_cad"] == price_row.price_cents_cad + 40
+    expected = (
+        Decimal(40) * line["units"]
+        * (1 + db_session.get(Product, riz_id).tax_rate)
+    ).quantize(Decimal("0.01"))
+    assert Decimal(line["savings_cents_cad"]) == expected
+    assert Decimal(view.grocery_list_by_store[0]["savings_cents_cad"]) == expected

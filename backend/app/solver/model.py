@@ -65,10 +65,17 @@ class _Ctx:
         )
         self.price_cents: dict[tuple[int, int], int] = {}
         self.price_is_promo: dict[tuple[int, int], bool] = {}
+        #: Référence pour les économies affichées (pilote,
+        #: docs/product-pilot.md) — lu par _build_result, jamais par la
+        #: résolution elle-même (l'objectif ne connaît que price_cents).
+        self.regular_price_cents: dict[tuple[int, int], int | None] = {}
         for pr in problem.prices:
             if pr.store_id in store_ids:
                 self.price_cents[(pr.product_id, pr.store_id)] = pr.price_cents_cad
                 self.price_is_promo[(pr.product_id, pr.store_id)] = pr.is_promo
+                self.regular_price_cents[(pr.product_id, pr.store_id)] = (
+                    pr.regular_price_cents_cad
+                )
         self.products_by_id: dict[int, ProductData] = {
             p.id: p for p in self.products
         }
@@ -575,6 +582,8 @@ class PulpMenuSolver:
                     taxed_total_cents_cad=(
                         Decimal(units) * Decimal(cents) * (1 + p.tax_rate)
                     ).quantize(Decimal("0.01")),
+                    is_promo=c.price_is_promo.get((p.id, s.id), False),
+                    regular_price_cents_cad=c.regular_price_cents.get((p.id, s.id)),
                 )
             )
 

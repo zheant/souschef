@@ -90,6 +90,9 @@ class PriceData:
     store_id: int
     price_cents_cad: int                         # c_ps
     is_promo: bool
+    #: Référence honnête pour les économies affichées (pilote,
+    #: docs/product-pilot.md) — None si jamais annoncé au régulier.
+    regular_price_cents_cad: int | None
 
 
 @dataclass(frozen=True)
@@ -181,7 +184,8 @@ def load_problem_data(
     )
     prices = tuple(
         PriceData(product_id=pr.product_id, store_id=pr.store_id,
-                  price_cents_cad=pr.price_cents_cad, is_promo=pr.is_promo)
+                  price_cents_cad=pr.price_cents_cad, is_promo=pr.is_promo,
+                  regular_price_cents_cad=pr.regular_price_cents_cad)
         for pr in session.scalars(
             select(Price).where(
                 Price.valid_from <= on_date, Price.valid_to >= on_date

@@ -25,6 +25,11 @@ class PurchaseLine:
     units: int                       # n_ps
     unit_price_cents_cad: int        # c_ps
     taxed_total_cents_cad: Decimal   # n·c·(1+t)
+    #: Rabais et économies affichés (pilote, docs/product-pilot.md) — une
+    #: lecture du prix résolu, pas un facteur qui influence le choix du
+    #: solveur (l'objectif ne connaît que unit_price_cents_cad).
+    is_promo: bool = False
+    regular_price_cents_cad: int | None = None
 
 
 @dataclass(frozen=True)

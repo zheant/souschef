@@ -405,6 +405,8 @@ def _persist_plan(
                 "units": line.units,
                 "unit_price_cents_cad": line.unit_price_cents_cad,
                 "taxed_total_cents_cad": str(line.taxed_total_cents_cad),
+                "is_promo": line.is_promo,
+                "regular_price_cents_cad": line.regular_price_cents_cad,
             }
             for line in result.purchases
         ],
@@ -531,9 +533,26 @@ def _grocery_list(session: Session, plan: Plan) -> list[dict]:
         store = by_store.setdefault(
             line["store_external_key"],
             {"store_external_key": line["store_external_key"],
-             "lines": [], "subtotal_cents_cad": Decimal(0)},
+             "lines": [], "subtotal_cents_cad": Decimal(0),
+             "savings_cents_cad": Decimal(0)},
         )
         taxed = Decimal(line["taxed_total_cents_cad"])
+
+        # Rabais et économies (pilote, docs/product-pilot.md) : référence
+        # honnête = prix régulier du même produit, jamais une valeur
+        # inventée. .get(...) : plans persistés avant ce chantier n'ont pas
+        # ces clés dans leur JSONB figé — défaut sûr, pas de migration/
+        # backfill nécessaire pour une donnée qui n'existait pas encore.
+        is_promo = line.get("is_promo", False)
+        regular = line.get("regular_price_cents_cad")
+        savings = None
+        if is_promo and regular is not None:
+            delta = Decimal(regular) - Decimal(line["unit_price_cents_cad"])
+            if delta > 0:
+                savings = (
+                    delta * line["units"] * (1 + prod.tax_rate)
+                ).quantize(Decimal("0.01"))
+
         store["lines"].append({
             "product_external_key": line["product_external_key"],
             "ingredient_name": ingredient_names[prod.canonical_ingredient_id],
@@ -543,10 +562,19 @@ def _grocery_list(session: Session, plan: Plan) -> list[dict]:
             "unit_price_cents_cad": line["unit_price_cents_cad"],
             "taxed_total_cents_cad": str(taxed),
             "consumed_by": sorted(set(consumers.get(prod.canonical_ingredient_id, []))),
+            "is_promo": is_promo,
+            "regular_price_cents_cad": regular,
+            "savings_cents_cad": str(savings) if savings is not None else None,
         })
         store["subtotal_cents_cad"] += taxed
+        if savings is not None:
+            store["savings_cents_cad"] += savings
     return [
-        {**s, "subtotal_cents_cad": str(s["subtotal_cents_cad"])}
+        {
+            **s,
+            "subtotal_cents_cad": str(s["subtotal_cents_cad"]),
+            "savings_cents_cad": str(s["savings_cents_cad"]),
+        }
         for s in by_store.values()
     ]
 
