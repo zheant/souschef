@@ -373,6 +373,68 @@ seule la lecture était incomplète). Testé par l'utilisateur dans un
 navigateur (avec `seed/main` — le seed jouet n'a aucune promo par
 construction) — fonctionne.
 
+## Pilote — passe responsive (2026-08-11)
+
+Huitième tranche, purement CSS + un conteneur de défilement ajouté autour
+de chaque table (`Household.tsx`, `Pantry.tsx`, `Generate.tsx`,
+`Result.tsx` ×2, `Diagnostic.tsx`) — aucune restructuration de colonnes,
+aucun changement backend. Décidé explicitement avec l'utilisateur de
+séparer cette tranche d'une éventuelle refonte graphique (palette/
+typographie) : l'appli a déjà un thème délibéré (« grocery flyer »), pas un
+défaut non stylé.
+
+`frontend/index.html` avait déjà la balise viewport correcte (vérifié, pas
+un oubli fondamental) ; le vrai trou était l'absence de gestion de
+débordement sur les tables `.ledger`, plus `header.masthead` sans
+`flex-wrap` (titre + sous-titre pouvaient déborder sous ~375px). Nouvelle
+classe `.table-scroll` (`overflow-x: auto`), et une règle globale
+`input[type="checkbox"], input[type="radio"] { width: 18px; height: 18px;
+... }` qui remplace les surcharges locales dispersées
+(`.checklist`/`.flags` avaient chacune leur propre `width: auto` —
+supprimées, redondantes avec la règle globale).
+
+**Hors périmètre, volontairement, au premier passage** : pas de
+transformation des tables en cartes empilées sur mobile (jugée une vraie
+décision de design, pas une correction) ; pas de nouvelle navigation
+mobile (le défilement horizontal de `nav.tabs`, déjà présent à 640px,
+suffit — ça, ça tient toujours).
+
+**Correction après test réel par l'utilisateur** : le défilement
+horizontal seul restait pénible sur les tables à 4-6 colonnes (menu,
+épicerie détaillée) — sans contrainte de largeur, la table s'étire
+librement à son contenu non replié, donc `.table-scroll` fait exactement
+ce qu'il promet (contenir le débordement dans la carte) mais ne réduit
+jamais la largeur réelle à parcourir. Ce que j'avais mis « hors périmètre,
+volontairement » s'est donc avéré nécessaire dès le premier test — pas une
+extension de portée, une correction de ce qui avait été livré comme
+suffisant. Ajouté sous `@media (max-width: 640px)` : chaque `table.ledger`
+passe en empilement vertical (`display: block` sur `tr`/`td`, `thead`
+caché), un `data-label` posé sur les `<td>` des tables à en-tête
+(`Household.tsx`, `Pantry.tsx`, les deux tables de `Result.tsx`) restitue
+l'en-tête de colonne via `content: attr(data-label)`. La table
+`Diagnostic.tsx` n'a pas d'en-tête (déjà `libellé | valeur` en colonne 1)
+— pas besoin de `data-label`, l'empilement seul suffit à faire replier la
+valeur au lieu de forcer la largeur.
+
+**Deuxième correction, même test** : la table de confirmation du
+garde-manger (`Generate.tsx`) a trois colonnes radio « Aucun/Un peu/
+Assez » dont le libellé n'existait qu'au niveau du `<thead>` — invisible
+une fois `thead` caché en empilement mobile, et je n'avais pas pensé à y
+poser `data-label` (cette table n'avait pas été touchée par la passe
+`.table-scroll` initiale car elle n'a qu'une seule variante). Corrigé en
+mettant le libellé directement dans un `<label>` visible à côté de chaque
+bouton radio (`{optLabel}` après l'`<input>`), plutôt que via
+`data-label`/`::before` comme les autres tables — plus robuste ici
+(fonctionne identiquement en desktop et mobile, agrandit aussi la cible
+cliquable) et cohérent avec le principe qu'un contrôle de formulaire doit
+toujours avoir son libellé visible à côté de lui, pas seulement dans un
+en-tête de colonne qui peut disparaître.
+
+**Vérifié** : `tsc -b`/`vite build` propres, aucun fichier backend modifié
+(confirmé par `git status`). Les deux correctifs répondent à un test réel
+de l'utilisateur en navigateur mobile — pas encore re-testés par lui après
+ce second correctif.
+
 ## Lancer / tester / seeder
 
 ```bash

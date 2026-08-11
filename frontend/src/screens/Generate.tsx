@@ -146,43 +146,48 @@ export default function GenerateScreen(props: {
           {promptLines.length === 0 ? (
             <p className="muted">Rien de particulier à confirmer pour ce menu.</p>
           ) : (
-            <table className="ledger">
-              <thead>
-                <tr>
-                  <th>Ingrédient</th><th className="num">Aucun</th>
-                  <th className="num">Un peu</th><th className="num">Assez</th>
-                  <th>Quantité exacte (optionnel)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {promptLines.map((l) => (
-                  <tr key={l.canonical_ingredient_id}>
-                    <td>{l.name}</td>
-                    {(["none", "little", "enough"] as const).map((opt) => (
-                      <td className="num" key={opt}>
+            <div className="table-scroll">
+              <table className="ledger">
+                <thead>
+                  <tr>
+                    <th>Ingrédient</th><th className="num">Aucun</th>
+                    <th className="num">Un peu</th><th className="num">Assez</th>
+                    <th>Quantité exacte (optionnel)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {promptLines.map((l) => (
+                    <tr key={l.canonical_ingredient_id}>
+                      <td data-label="Ingrédient">{l.name}</td>
+                      {([["none", "Aucun"], ["little", "Un peu"], ["enough", "Assez"]] as const).map(([opt, optLabel]) => (
+                        <td className="num" key={opt}>
+                          <label style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                            <input
+                              type="radio"
+                              name={`pantry-${l.canonical_ingredient_id}`}
+                              checked={(answers[l.canonical_ingredient_id] ?? "none") === opt}
+                              onChange={() => setAnswer(l.canonical_ingredient_id, opt)}
+                            />
+                            {optLabel}
+                          </label>
+                        </td>
+                      ))}
+                      <td data-label="Quantité exacte">
                         <input
-                          type="radio"
-                          name={`pantry-${l.canonical_ingredient_id}`}
-                          checked={(answers[l.canonical_ingredient_id] ?? "none") === opt}
-                          onChange={() => setAnswer(l.canonical_ingredient_id, opt)}
+                          type="number" min={0}
+                          placeholder={l.base_unit}
+                          value={exactQty[l.canonical_ingredient_id] ?? ""}
+                          onChange={(e) =>
+                            setExactQty((prev) => ({ ...prev, [l.canonical_ingredient_id]: e.target.value }))
+                          }
+                          style={{ width: 90 }}
                         />
                       </td>
-                    ))}
-                    <td>
-                      <input
-                        type="number" min={0}
-                        placeholder={l.base_unit}
-                        value={exactQty[l.canonical_ingredient_id] ?? ""}
-                        onChange={(e) =>
-                          setExactQty((prev) => ({ ...prev, [l.canonical_ingredient_id]: e.target.value }))
-                        }
-                        style={{ width: 90 }}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
           <div className="row" style={{ marginTop: 10 }}>
             <button className="action" onClick={confirmPantry} disabled={continuing}>

@@ -108,45 +108,47 @@ export default function HouseholdScreen(props: {
       <p className="callout">{summary}</p>
 
       <div className="card">
-        <table className="ledger" aria-label="Membres du ménage">
-          <thead><tr><th>Membre</th><th>Appétit</th><th /></tr></thead>
-          <tbody>
-            {members.map((m, i) => {
-              const rho = Number(m.appetite_coefficient);
-              const preset = presetFor(rho);
-              return (
-                <tr key={i}>
-                  <td><input aria-label="nom" value={m.name}
-                    onChange={(e) => setMembers(members.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} /></td>
-                  <td>
-                    <select
-                      aria-label="appétit"
-                      value={preset ? preset.value : "other"}
-                      onChange={(e) => {
-                        if (e.target.value === "other") return;
-                        setMembers(members.map((x, j) => j === i ? { ...x, appetite_coefficient: Number(e.target.value) } : x));
-                      }}
-                    >
-                      {!preset && <option value="other">Autre ({rho.toFixed(2)})</option>}
-                      {APPETITE_LEVELS.map((l) => (
-                        <option key={l.value} value={l.value}>{l.label}</option>
-                      ))}
-                    </select>
-                  </td>
-                  <td><button className="action ghost" onClick={() => setMembers(members.filter((_, j) => j !== i))}>Retirer</button></td>
-                </tr>
-              );
-            })}
-            <tr className="total">
-              <td colSpan={2}>
-                <button className="action ghost" onClick={() => setMembers([...members, { name: "Nouveau", appetite_coefficient: 1.0 }])}>
-                  Ajouter un membre
-                </button>
-              </td>
-              <td />
-            </tr>
-          </tbody>
-        </table>
+        <div className="table-scroll">
+          <table className="ledger" aria-label="Membres du ménage">
+            <thead><tr><th>Membre</th><th>Appétit</th><th /></tr></thead>
+            <tbody>
+              {members.map((m, i) => {
+                const rho = Number(m.appetite_coefficient);
+                const preset = presetFor(rho);
+                return (
+                  <tr key={i}>
+                    <td data-label="Membre"><input aria-label="nom" value={m.name}
+                      onChange={(e) => setMembers(members.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} /></td>
+                    <td data-label="Appétit">
+                      <select
+                        aria-label="appétit"
+                        value={preset ? preset.value : "other"}
+                        onChange={(e) => {
+                          if (e.target.value === "other") return;
+                          setMembers(members.map((x, j) => j === i ? { ...x, appetite_coefficient: Number(e.target.value) } : x));
+                        }}
+                      >
+                        {!preset && <option value="other">Autre ({rho.toFixed(2)})</option>}
+                        {APPETITE_LEVELS.map((l) => (
+                          <option key={l.value} value={l.value}>{l.label}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td><button className="action ghost" onClick={() => setMembers(members.filter((_, j) => j !== i))}>Retirer</button></td>
+                  </tr>
+                );
+              })}
+              <tr className="total">
+                <td colSpan={2}>
+                  <button className="action ghost" onClick={() => setMembers([...members, { name: "Nouveau", appetite_coefficient: 1.0 }])}>
+                    Ajouter un membre
+                  </button>
+                </td>
+                <td />
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="card">

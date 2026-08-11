@@ -175,45 +175,47 @@ export default function ResultScreen(props: {
 
       <div className="card">
         <h2 style={{ marginTop: 0 }}>Menu <span className="sub">— {plan.menu.reduce((s, m) => s + m.servings, 0)} portions</span></h2>
-        <table className="ledger">
-          <thead>
-            <tr>
-              <th>Recette</th><th className="num">Portions</th>
-              <th className="num">Temps (h)</th><th className="num">Coût attribué</th>
-              <th>Verrou</th><th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {plan.menu.map((m) => (
-              <tr key={m.recipe_id}>
-                <td>{m.name}</td>
-                <td className="num">{m.servings}</td>
-                <td className="num">{Number(m.prep_time_h).toFixed(2)}</td>
-                <td className="num">{cents(m.attributed_cost_cents_cad)}</td>
-                <td>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={lockedIds.has(m.recipe_id)}
-                      disabled={reoptimizing}
-                      onChange={() => toggleLock(m.recipe_id)}
-                    />{" "}
-                    Garder
-                  </label>
-                </td>
-                <td>
-                  <button
-                    className="action"
-                    onClick={() => replace(m.recipe_id)}
-                    disabled={reoptimizing || lockedIds.has(m.recipe_id)}
-                  >
-                    {replacingId === m.recipe_id ? "Remplacement…" : "Remplacer"}
-                  </button>
-                </td>
+        <div className="table-scroll">
+          <table className="ledger">
+            <thead>
+              <tr>
+                <th>Recette</th><th className="num">Portions</th>
+                <th className="num">Temps (h)</th><th className="num">Coût attribué</th>
+                <th>Verrou</th><th></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {plan.menu.map((m) => (
+                <tr key={m.recipe_id}>
+                  <td data-label="Recette">{m.name}</td>
+                  <td className="num" data-label="Portions">{m.servings}</td>
+                  <td className="num" data-label="Temps (h)">{Number(m.prep_time_h).toFixed(2)}</td>
+                  <td className="num" data-label="Coût attribué">{cents(m.attributed_cost_cents_cad)}</td>
+                  <td data-label="Verrou">
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={lockedIds.has(m.recipe_id)}
+                        disabled={reoptimizing}
+                        onChange={() => toggleLock(m.recipe_id)}
+                      />{" "}
+                      Garder
+                    </label>
+                  </td>
+                  <td>
+                    <button
+                      className="action"
+                      onClick={() => replace(m.recipe_id)}
+                      disabled={reoptimizing || lockedIds.has(m.recipe_id)}
+                    >
+                      {replacingId === m.recipe_id ? "Remplacement…" : "Remplacer"}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         <div className="row" style={{ marginTop: 10 }}>
           <button
             className="action"
@@ -296,39 +298,41 @@ export default function ResultScreen(props: {
           return (
             <div key={g.store_external_key} style={{ marginBottom: 18 }}>
               <h2>{store?.banner ?? g.store_external_key} <span className="sub">{store?.address}</span></h2>
-              <table className="ledger">
-                <thead>
-                  <tr>
-                    <th>Produit</th><th className="num">Qté</th>
-                    <th className="num">Prix unit.</th><th className="num">Total taxé</th>
-                    <th className="num">Économies</th><th>Pour</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {g.lines.map((l) => (
-                    <tr key={l.product_external_key}>
-                      <td>
-                        {l.ingredient_name} <span className="muted">— {l.brand}, {l.package_unit}</span>
-                        {l.is_promo && <span className="badge promo" style={{ marginLeft: 6 }}>Rabais</span>}
-                      </td>
-                      <td className="num">{l.units}</td>
-                      <td className="num">{cents(l.unit_price_cents_cad)}</td>
-                      <td className="num">{cents(l.taxed_total_cents_cad)}</td>
-                      <td className="num">{l.savings_cents_cad ? cents(l.savings_cents_cad) : "—"}</td>
-                      <td className="muted">{l.consumed_by.join(", ")}</td>
+              <div className="table-scroll">
+                <table className="ledger">
+                  <thead>
+                    <tr>
+                      <th>Produit</th><th className="num">Qté</th>
+                      <th className="num">Prix unit.</th><th className="num">Total taxé</th>
+                      <th className="num">Économies</th><th>Pour</th>
                     </tr>
-                  ))}
-                  <tr className="total">
-                    <td>Sous-total {store?.banner ?? g.store_external_key}</td>
-                    <td colSpan={2} />
-                    <td className="num">{cents(g.subtotal_cents_cad)}</td>
-                    <td className="num">
-                      {Number(g.savings_cents_cad) > 0 ? cents(g.savings_cents_cad) : "—"}
-                    </td>
-                    <td />
-                  </tr>
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {g.lines.map((l) => (
+                      <tr key={l.product_external_key}>
+                        <td data-label="Produit">
+                          {l.ingredient_name} <span className="muted">— {l.brand}, {l.package_unit}</span>
+                          {l.is_promo && <span className="badge promo" style={{ marginLeft: 6 }}>Rabais</span>}
+                        </td>
+                        <td className="num" data-label="Qté">{l.units}</td>
+                        <td className="num" data-label="Prix unit.">{cents(l.unit_price_cents_cad)}</td>
+                        <td className="num" data-label="Total taxé">{cents(l.taxed_total_cents_cad)}</td>
+                        <td className="num" data-label="Économies">{l.savings_cents_cad ? cents(l.savings_cents_cad) : "—"}</td>
+                        <td className="muted" data-label="Pour">{l.consumed_by.join(", ")}</td>
+                      </tr>
+                    ))}
+                    <tr className="total">
+                      <td>Sous-total {store?.banner ?? g.store_external_key}</td>
+                      <td colSpan={2} />
+                      <td className="num" data-label="Total taxé">{cents(g.subtotal_cents_cad)}</td>
+                      <td className="num" data-label="Économies">
+                        {Number(g.savings_cents_cad) > 0 ? cents(g.savings_cents_cad) : "—"}
+                      </td>
+                      <td />
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           );
         })}

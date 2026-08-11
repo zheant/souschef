@@ -69,30 +69,32 @@ export default function DiagnosticScreen(props: {
       {!d && <p className="card muted">Générez un plan pour voir son rapport.</p>}
       {d && (
         <div className="card">
-          <table className="ledger">
-            <tbody>
-              <tr><td>Statut / temps</td><td className="num">{d.solver_status} en {d.solve_time_s}s</td></tr>
-              <tr><td>Gap MIP demandé / atteint</td>
-                <td className="num">{d.mip_gap_requested} / {d.mip_gap_attained ?? "non exposé par CBC"}</td></tr>
-              <tr><td>Demande</td>
-                <td className="num">{Object.entries(d.demand).map(([k, v]) => `${k}=${v}`).join("  ")}</td></tr>
-              <tr><td>Recettes distinctes / part max</td>
-                <td className="num">{d.distinct_recipes} / {d.max_share_of_demand ?? "—"}</td></tr>
-              <tr><td>Préfiltrage</td>
-                <td className="num">{Object.entries(d.prefilter_counts).map(([k, v]) => `${k}:${v}`).join(" → ")}</td></tr>
-              <tr><td>Paramètres effectifs</td>
-                <td className="num">
-                  {Object.entries(d.effective_params)
-                    .map(([k, v]) => `${k}=${v.valeur} (${v.provenance})`).join("  ·  ")}
-                </td></tr>
-              <tr><td>Drapeaux altérant les besoins</td>
-                <td className="num">{(d.flag_effects.alterent_les_besoins_en_ingredients ?? []).join(", ") || "aucun"}</td></tr>
-              <tr><td>Stock consommé (déjà payé)</td>
-                <td className="num">{(Number(d.pantry_consumed_value_cents) / 100).toFixed(2)} $</td></tr>
-              <tr><td>Assertions passées</td>
-                <td className="num">{d.assertions_passed.length}/7</td></tr>
-            </tbody>
-          </table>
+          <div className="table-scroll">
+            <table className="ledger">
+              <tbody>
+                <tr><td>Statut / temps</td><td className="num">{d.solver_status} en {d.solve_time_s}s</td></tr>
+                <tr><td>Gap MIP demandé / atteint</td>
+                  <td className="num">{d.mip_gap_requested} / {d.mip_gap_attained ?? "non exposé par CBC"}</td></tr>
+                <tr><td>Demande</td>
+                  <td className="num">{Object.entries(d.demand).map(([k, v]) => `${k}=${v}`).join("  ")}</td></tr>
+                <tr><td>Recettes distinctes / part max</td>
+                  <td className="num">{d.distinct_recipes} / {d.max_share_of_demand ?? "—"}</td></tr>
+                <tr><td>Préfiltrage</td>
+                  <td className="num">{Object.entries(d.prefilter_counts).map(([k, v]) => `${k}:${v}`).join(" → ")}</td></tr>
+                <tr><td>Paramètres effectifs</td>
+                  <td className="num">
+                    {Object.entries(d.effective_params)
+                      .map(([k, v]) => `${k}=${v.valeur} (${v.provenance})`).join("  ·  ")}
+                  </td></tr>
+                <tr><td>Drapeaux altérant les besoins</td>
+                  <td className="num">{(d.flag_effects.alterent_les_besoins_en_ingredients ?? []).join(", ") || "aucun"}</td></tr>
+                <tr><td>Stock consommé (déjà payé)</td>
+                  <td className="num">{(Number(d.pantry_consumed_value_cents) / 100).toFixed(2)} $</td></tr>
+                <tr><td>Assertions passées</td>
+                  <td className="num">{d.assertions_passed.length}/7</td></tr>
+              </tbody>
+            </table>
+          </div>
           <h2>Rapport brut</h2>
           <pre className="raw">{JSON.stringify(d, null, 2)}</pre>
         </div>

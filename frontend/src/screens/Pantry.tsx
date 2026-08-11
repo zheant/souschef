@@ -55,42 +55,44 @@ export default function PantryScreen() {
     <section>
       <h2>Garde-manger <span className="sub">— reporté d'une exécution à l'autre par le commit</span></h2>
       <div className="card">
-        <table className="ledger">
-          <thead>
-            <tr>
-              <th>Ingrédient canonique</th><th className="num">Quantité (unité de base)</th>
-              <th>Priorité</th>
-            </tr>
-          </thead>
-          <tbody>
-            {lines.map((l, i) => (
-              <tr key={l.id}>
-                <td className="mono">{l.id}</td>
-                <td className="num">
-                  <input type="number" min="0" step="1" value={l.qty}
-                    onChange={(e) => setLines(lines.map((x, j) => j === i ? { ...x, qty: e.target.value } : x))} />
-                </td>
-                <td>
-                  <select
-                    value={l.priority}
-                    onChange={(e) => changePriority(l.id, e.target.value as PantryPriority)}
-                  >
-                    {(Object.keys(PRIORITY_LABELS) as PantryPriority[]).map((p) => (
-                      <option key={p} value={p}>{PRIORITY_LABELS[p]}</option>
-                    ))}
-                  </select>
-                </td>
+        <div className="table-scroll">
+          <table className="ledger">
+            <thead>
+              <tr>
+                <th>Ingrédient canonique</th><th className="num">Quantité (unité de base)</th>
+                <th>Priorité</th>
               </tr>
-            ))}
-            <tr>
-              <td><input placeholder="identifiant canonique (ex. riz_basmati)" value={newId}
-                onChange={(e) => setNewId(e.target.value)} /></td>
-              <td className="num"><input type="number" min="0" value={newQty}
-                onChange={(e) => setNewQty(e.target.value)} /></td>
-              <td className="muted">déclarer d'abord, prioriser ensuite</td>
-            </tr>
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {lines.map((l, i) => (
+                <tr key={l.id}>
+                  <td className="mono" data-label="Ingrédient">{l.id}</td>
+                  <td className="num" data-label="Quantité">
+                    <input type="number" min="0" step="1" value={l.qty}
+                      onChange={(e) => setLines(lines.map((x, j) => j === i ? { ...x, qty: e.target.value } : x))} />
+                  </td>
+                  <td data-label="Priorité">
+                    <select
+                      value={l.priority}
+                      onChange={(e) => changePriority(l.id, e.target.value as PantryPriority)}
+                    >
+                      {(Object.keys(PRIORITY_LABELS) as PantryPriority[]).map((p) => (
+                        <option key={p} value={p}>{PRIORITY_LABELS[p]}</option>
+                      ))}
+                    </select>
+                  </td>
+                </tr>
+              ))}
+              <tr>
+                <td data-label="Ingrédient"><input placeholder="identifiant canonique (ex. riz_basmati)" value={newId}
+                  onChange={(e) => setNewId(e.target.value)} /></td>
+                <td className="num" data-label="Quantité"><input type="number" min="0" value={newQty}
+                  onChange={(e) => setNewQty(e.target.value)} /></td>
+                <td className="muted">déclarer d'abord, prioriser ensuite</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         <div className="row" style={{ marginTop: 14 }}>
           <button className="action" onClick={() => save(newId ? { id: newId, qty: newQty } : undefined)}>
             Enregistrer
