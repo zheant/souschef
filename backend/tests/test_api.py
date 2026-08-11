@@ -260,6 +260,49 @@ def test_commit_decrements_and_reports_to_pantry(api_client):
     assert api_client.post(f"/api/plan/{plan['id']}/commit").status_code == 409
 
 
+def test_pantry_lines_exposed_and_commit_accepts_buy_instead_ids(api_client):
+    """Round-trip HTTP des deux nouveautés (pilote, docs/product-pilot.md) :
+    ``pantry_lines`` sur ``GET /api/plan/{id}`` et ``POST .../commit`` avec
+    un corps ``buy_instead_ids`` — la résolution du magasin le moins cher et
+    la comptabilité elle-même sont déjà couvertes en profondeur par
+    ``tests/test_planning_module.py``, ce test-ci ne vérifie que le
+    branchement HTTP."""
+    api_client.put(
+        "/api/pantry",
+        json={"lines": [{"canonical_ingredient_id": "riz",
+                         "quantity_base_unit": 100}]},
+    )
+    r = api_client.post("/api/plan", json={"config": ALL_ON, "on_date": ON})
+    plan = r.json()
+    assert plan["solver_status"] == "Optimal"
+    assert any(l["canonical_ingredient_id"] == "riz" for l in plan["pantry_lines"])
+
+    r = api_client.post(
+        f"/api/plan/{plan['id']}/commit", json={"buy_instead_ids": ["riz"]}
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["status"] == "committed"
+
+    fetched = api_client.get(f"/api/plan/{plan['id']}").json()
+    riz_lines = [
+        l for g in fetched["grocery_list_by_store"] for l in g["lines"]
+        if l["ingredient_name"] == "Riz"
+    ]
+    assert riz_lines  # au moins une ligne riz ajoutée par « à acheter »
+
+    # Un appel sans corps continue de fonctionner (défaut buy_instead_ids=[]).
+    r2 = api_client.post("/api/plan", json={"config": ALL_ON, "on_date": ON})
+    assert api_client.post(f"/api/plan/{r2.json()['id']}/commit").status_code == 200
+
+
+def test_recipe_ingredients_endpoint(api_client):
+    r = api_client.get("/api/recipes/riz_nature/ingredients")
+    assert r.status_code == 200
+    assert [i["canonical_ingredient_id"] for i in r.json()] == ["riz"]
+
+    assert api_client.get("/api/recipes/inexistante/ingredients").status_code == 404
+
+
 def test_committed_plan_feeds_repetition_penalty(api_client):
     """Après un commit, les recettes du plan sont pénalisées : le menu suivant
     change (à données identiques, seule la pénalité de répétition bouge)."""

@@ -121,6 +121,7 @@ def _plan_out(view: planning.PlanView) -> schemas.PlanOut:
         on_date=view.on_date,
         menu=[schemas.MenuLine(**asdict(m)) for m in view.menu],
         grocery_list_by_store=view.grocery_list_by_store,
+        pantry_lines=[schemas.PlanPantryLineOut(**asdict(l)) for l in view.pantry_lines],
         stores_visited=view.stores_visited, diagnostic=view.diagnostic,
     )
 
@@ -177,15 +178,23 @@ def get_pantry_prompt(
 @router.post("/plan/{plan_id}/commit")
 def post_commit(
     plan_id: int,
+    body: schemas.CommitRequest = schemas.CommitRequest(),
     session: Session = Depends(get_session),
     profile_id: str = Depends(get_profile_id),
 ):
     try:
-        result = planning.commit_plan(session, profile_id, plan_id)
+        result = planning.commit_plan(
+            session, profile_id, plan_id, frozenset(body.buy_instead_ids)
+        )
     except planning.PlanNotFound as exc:
         raise HTTPException(404, str(exc)) from exc
     except planning.PlanNotCommittable as exc:
         raise HTTPException(409, str(exc)) from exc
+    except (
+        planning.NoProductForIngredientError,
+        planning.UnknownBuyInsteadIngredientError,
+    ) as exc:
+        raise HTTPException(422, str(exc)) from exc
     return {"plan_id": result.plan_id, "status": result.status,
             "pantry_after_commit": result.pantry_after_commit}
 
@@ -250,6 +259,20 @@ def get_recipes(
         "total": page.total, "limit": page.limit, "offset": page.offset,
         "items": [asdict(item) for item in page.items],
     }
+
+
+@router.get(
+    "/recipes/{recipe_id}/ingredients",
+    response_model=list[schemas.RecipeIngredientOut],
+)
+def get_recipe_ingredients(
+    recipe_id: str, session: Session = Depends(get_session)
+):
+    try:
+        lines = catalog.get_recipe_ingredients(session, recipe_id)
+    except catalog.RecipeNotFound as exc:
+        raise HTTPException(404, str(exc)) from exc
+    return [schemas.RecipeIngredientOut(**asdict(line)) for line in lines]
 
 
 @router.get("/stores")

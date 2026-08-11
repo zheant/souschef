@@ -80,9 +80,17 @@ export interface Diagnostic {
   infeasibility_note: string | null;
 }
 
+// Garde-manger itemisé pour ce plan précis (pilote, docs/product-pilot.md) —
+// distinct de PantryLine (l'inventaire déclaré côté ménage).
+export interface PlanPantryLine {
+  canonical_ingredient_id: string; name: string;
+  quantity_base_unit: string; base_unit: string; priority: PantryPriority;
+}
+
 export interface Plan {
   id: number; status: "proposed" | "committed"; solver_status: string;
   on_date: string; menu: MenuLine[]; grocery_list_by_store: GroceryGroup[];
+  pantry_lines: PlanPantryLine[];
   stores_visited: string[]; diagnostic: Diagnostic;
 }
 
@@ -113,4 +121,9 @@ export interface PantryPromptLine {
 export interface Store {
   external_key: string; banner: string; address: string;
   lat: number; lng: number; shopping_center_id: string | null;
+}
+
+// Détail recette (pilote, docs/product-pilot.md).
+export interface RecipeIngredientLine {
+  canonical_ingredient_id: string; name: string;
 }

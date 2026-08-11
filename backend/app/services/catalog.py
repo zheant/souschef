@@ -10,9 +10,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
-from ..models import Recipe, Store
+from ..models import Recipe, RecipeIngredient, Store
+
+
+class RecipeNotFound(LookupError):
+    """Aucune recette avec cet id (l'API traduit en 404)."""
 
 
 @dataclass(frozen=True)
@@ -44,6 +48,12 @@ class RecipePage:
     limit: int
     offset: int
     items: tuple[RecipeSummary, ...]
+
+
+@dataclass(frozen=True)
+class RecipeIngredientLine:
+    canonical_ingredient_id: str
+    name: str
 
 
 @dataclass(frozen=True)
@@ -81,6 +91,27 @@ def search_recipes(session: Session, query: RecipeQuery) -> RecipePage:
             )
             for r in rows
         ),
+    )
+
+
+def get_recipe_ingredients(
+    session: Session, recipe_id: str
+) -> tuple[RecipeIngredientLine, ...]:
+    """Ingrédients d'une seule recette (détail recette, pilote,
+    docs/product-pilot.md) — ``Recipe.ingredients`` existe en base depuis
+    l'étape 1 mais n'était exposé par aucune route jusqu'ici."""
+    recipe = session.get(
+        Recipe, recipe_id,
+        options=[selectinload(Recipe.ingredients).selectinload(RecipeIngredient.ingredient)],
+    )
+    if recipe is None:
+        raise RecipeNotFound(f"Recette '{recipe_id}' introuvable.")
+    return tuple(
+        RecipeIngredientLine(
+            canonical_ingredient_id=ri.canonical_ingredient_id,
+            name=ri.ingredient.name,
+        )
+        for ri in recipe.ingredients
     )
 
 

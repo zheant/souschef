@@ -435,6 +435,96 @@ en-tête de colonne qui peut disparaître.
 de l'utilisateur en navigateur mobile — pas encore re-testés par lui après
 ce second correctif.
 
+## Écran Résultat — refonte réelle, piste « circulaire du quartier » (2026-08-11)
+
+Neuvième tranche du pilote : implémentation en production de la
+disposition « P » convergée après six rounds de maquettes interactives
+(atelier visuel, artefacts séparés, non versionnés). `Result.tsx` est
+réécrit en profondeur — deux onglets internes (Cette semaine / Épicerie),
+coût simplifié (achats épicerie + temps de cuisine seulement, la
+décomposition en 5 termes devenant une vue optionnelle sans montant,
+accessible en touchant la barre), cartes recette glissables (Garder/
+Remplacer révélés au glissement, pas affichés par défaut), détail recette
+en pleine page avec bouton retour explicite, garde-manger avec « à
+acheter » résolu au moment d'accepter le plan, liste d'épicerie avec
+prix/marque/badge rabais et cases à cocher désactivées avant acceptation.
+Scopé à une nouvelle classe CSS `.result-v2` avec ses propres jetons de
+couleur/typographie (piste A) — **aucun autre écran n'est touché**,
+extension au reste de l'app volontairement hors périmètre (garde le
+thème « registre d'épicerie » existant partout ailleurs pour l'instant).
+
+**Décisions de conception à retenir** :
+- **Le glissement révèle en faisant grandir un vrai panneau flex, jamais
+  en translatant le contenu.** Un essai précédent (prototype) translatait
+  la carte entière pour révéler les actions en dessous — ça coupait le
+  début du nom de la recette dès que la largeur révélée dépassait
+  l'espace occupé par la photo. `SwipeRow` (composant interne à
+  `Result.tsx`) fait grandir `.rp-swipe-actions` (un vrai frère flex, pas
+  une superposition) : la carte rétrécit, le nom (sur sa propre ligne,
+  autorisé à se replier) reste toujours entièrement visible.
+- **« À acheter » ne touche rien au moment du clic.** Marquer un
+  ingrédient du garde-manger est un état local (React) jusqu'à
+  « Accepter » — c'est `commit_plan(..., buy_instead_ids)` qui résout le
+  magasin le moins cher et ajoute la ligne d'achat, une seule fois, au
+  moment où l'acceptation devient réelle. `services/planning.py::
+  _cheapest_purchase_for_ingredient` réutilise le critère de
+  `validation.py::min_taxed_price_per_base_unit` (assertion 1) mais
+  conserve l'identité du produit/magasin gagnant au lieu de la jeter.
+  `_apply_commit` force `consommé=0` pour ces ingrédients quel que soit
+  `enable_pantry_stock` — l'utilisateur dit explicitement ne pas avoir le
+  stock, il ne doit jamais être décrémenté pour lui.
+- **Remplacer appelle réellement `reoptimize_plan`**, pas une simulation
+  locale : la liste d'épicerie et le garde-manger affichés sont dérivés du
+  `plan` reçu en prop, jamais dupliqués en état local — un nouveau plan
+  après remplacement les régénère donc automatiquement, sans code
+  spécifique. `_grocery_list` le faisait déjà pour les achats ; le vrai
+  ajout de cette tranche est `_plan_pantry_lines` (nouveau), qui résout
+  enfin `diagnostic.pantry_consumed_by_ingredient` (id → quantité,
+  existait depuis l'étape 5) en nom — jamais fait nulle part avant.
+- **Limite connue, assumée** : après un commit avec `buy_instead_ids`, le
+  `diagnostic` persisté (donc `pantry_lines` à la relecture) n'est **pas**
+  recalculé — il reste un instantané de la résolution d'origine, qui
+  listera encore l'ingrédient comme « consommé du garde-manger » même s'il
+  vient d'être basculé vers un achat réel. La comptabilité réelle (stock
+  non décrémenté, ligne d'achat ajoutée) est correcte ; seul l'affichage
+  du garde-manger, si on rouvre l'onglet Épicerie après coup, peut
+  sembler périmé. Corriger ça demanderait de régénérer le diagnostic au
+  commit, hors périmètre de cette tranche.
+- **Photos de recette : dégradés de couleur dérivés de l'id**, pas de
+  vraies photos — aucune source d'images n'existe dans le modèle de
+  données. Chantier de données séparé, pas une question de disposition
+  (répété depuis le round 4 des maquettes).
+- Nouvelle route `GET /api/recipes/{id}/ingredients`
+  (`services/catalog.py::get_recipe_ingredients`) : `Recipe.ingredients`
+  existait en base depuis l'étape 1 mais n'était exposé par aucune route —
+  nécessaire pour que le détail recette en plein écran affiche de vrais
+  ingrédients.
+
+**Vérifié contre PostgreSQL réel** : **112/112 tests passés, 0 sauté**
+(105 avant ce chantier + 7 nouveaux — le choix du magasin/produit le
+moins cher testé sur un cas discriminant du seed jouet où riz a deux
+produits à des prix par unité différents, le fait que le stock n'est
+jamais décrémenté pour un ingrédient « à acheter », le rejet explicite
+d'un id absent des besoins du plan, `pantry_lines` résolu en nom, et les
+deux endpoints via le contrat HTTP). `tsc -b`/`vite build` propres. Un
+lissage de bord trouvé et corrigé en cours de route : le premier jet de
+`SwipeRow` exposait sa fonction `close()` via une propriété statique
+partagée sur le composant plutôt qu'un callback par instance — chaque
+carte aurait fermé la dernière carte rendue au lieu d'elle-même ; corrigé
+en passant `actions` comme fonction `(close) => ReactNode` plutôt que du
+JSX brut. Sondé en direct contre la pile de développement de
+l'utilisateur (`docker compose up`, pas seulement la base de test) :
+`GET /api/recipes/{id}/ingredients` et `pantry_lines` sur `POST
+/api/plan` répondent correctement contre `seed/main` (données réelles,
+pas le jouet) — un plan de test a été créé dans cette base au passage
+(id 237, non commis, aucune mutation de `pantry_stock`). **Non vérifié** :
+interaction réelle dans un navigateur — aucun affichage disponible dans
+cette session, à faire manuellement avant de considérer cette tranche
+terminée, en particulier le glissement tactile réel (testé ici seulement
+par la logique des événements pointeur, jamais au doigt), la bascule de
+la barre, le détail recette plein écran, et l'enchaînement marquer « à
+acheter » → Accepter → recharger le plan.
+
 ## Lancer / tester / seeder
 
 ```bash

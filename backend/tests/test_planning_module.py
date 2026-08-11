@@ -244,6 +244,77 @@ def test_grocery_line_has_no_savings_without_a_promo(db_session):
     assert Decimal(view.grocery_list_by_store[0]["savings_cents_cad"]) == 0
 
 
+def test_pantry_lines_resolved_with_name_and_priority(db_session):
+    """Garde-manger itemisé (pilote, docs/product-pilot.md) —
+    ``diagnostic.pantry_consumed_by_ingredient`` existait déjà mais n'était
+    jamais résolu en nom nulle part avant ce chantier."""
+    household.update_pantry(
+        db_session, PROFILE_ID,
+        [{"canonical_ingredient_id": "riz", "quantity_base_unit": 100}],
+    )
+    view = planning.generate_plan(
+        db_session, PROFILE_ID, ON, SolverConfig(**ALL_ON), PulpMenuSolver()
+    )
+    by_id = {l.canonical_ingredient_id: l for l in view.pantry_lines}
+    assert "riz" in by_id
+    riz = by_id["riz"]
+    assert riz.name == "Riz"
+    assert riz.base_unit == "g"
+    assert riz.priority == "normal"
+    assert Decimal(riz.quantity_base_unit) > 0
+    assert Decimal(riz.quantity_base_unit) <= 100  # jamais plus que le stock déclaré
+
+
+def test_commit_with_buy_instead_picks_cheapest_product_and_spares_stock(db_session):
+    """Test discriminant : riz a deux produits au jouet à des prix par unité
+    de base différents (riz_1kg = 0,30 ¢/g, riz_400g = 0,45 ¢/g) — la
+    résolution doit choisir riz_1kg, pas le premier trouvé. Construit un
+    ``Plan`` directement (pas via le solveur) pour isoler la comptabilité de
+    ``_apply_commit`` de la décision d'optimisation elle-même — même esprit
+    que les tests synthétiques de ``test_solver_toy.py``."""
+    from app.models import Plan, PlanStatus
+
+    household.update_pantry(
+        db_session, PROFILE_ID,
+        [{"canonical_ingredient_id": "riz", "quantity_base_unit": 100}],
+    )
+    plan = Plan(
+        household_profile_id=PROFILE_ID, status=PlanStatus.proposed,
+        on_date=ON, solver_status="Optimal",
+        config={"enable_pantry_stock": True},
+        servings={}, cooked={}, purchases=[],
+        ingredient_needs={"riz": "100"},
+        stores_visited=[], diagnostic={},
+    )
+    db_session.add(plan)
+    db_session.flush()
+
+    result = planning.commit_plan(
+        db_session, PROFILE_ID, plan.id, frozenset({"riz"})
+    )
+    assert result.status == "committed"
+    # « à acheter » force consommé=0 : 100 (stock, inchangé) + 1000 (le
+    # paquet riz_1kg acheté) − 100 (besoin) = 1000 — le stock déclaré n'est
+    # jamais décrémenté pour un ingrédient que l'utilisateur dit ne pas avoir.
+    assert Decimal(result.pantry_after_commit["riz"]) == Decimal(1000)
+
+    fetched = planning.get_plan(db_session, PROFILE_ID, plan.id)
+    lines = [l for g in fetched.grocery_list_by_store for l in g["lines"]]
+    assert len(lines) == 1
+    assert lines[0]["product_external_key"] == "riz_1kg"  # le moins cher, pas riz_400g
+    assert Decimal(lines[0]["taxed_total_cents_cad"]) == Decimal("300.00")
+
+
+def test_commit_buy_instead_rejects_unknown_ingredient(db_session):
+    view = planning.generate_plan(
+        db_session, PROFILE_ID, ON, SolverConfig(), PulpMenuSolver()
+    )
+    with pytest.raises(planning.UnknownBuyInsteadIngredientError):
+        planning.commit_plan(
+            db_session, PROFILE_ID, view.id, frozenset({"ingredient_inexistant"})
+        )
+
+
 def test_grocery_line_reports_savings_on_a_real_promo(db_session):
     """Test discriminant : mute directement la ligne market.price déjà
     chargée par le seed (pas d'insertion en conflit avec la contrainte

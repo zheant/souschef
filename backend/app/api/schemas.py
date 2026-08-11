@@ -86,6 +86,18 @@ class MenuLine(BaseModel):
     attributed_cost_cents_cad: str
 
 
+class PlanPantryLineOut(BaseModel):
+    """Garde-manger itemisé (pilote, docs/product-pilot.md) — distinct de
+    ``PantryLine`` (l'inventaire déclaré côté ménage) : ceci est ce que *ce
+    plan précis* consomme du stock."""
+
+    canonical_ingredient_id: str
+    name: str
+    quantity_base_unit: str
+    base_unit: str
+    priority: Literal["normal", "use_soon", "must_use"]
+
+
 class PlanOut(BaseModel):
     id: int
     status: Literal["proposed", "committed"]
@@ -93,6 +105,7 @@ class PlanOut(BaseModel):
     on_date: date
     menu: list[MenuLine]
     grocery_list_by_store: list[dict]
+    pantry_lines: list[PlanPantryLineOut]
     stores_visited: list[str]
     diagnostic: dict
 
@@ -109,6 +122,15 @@ class PantryPromptLineOut(BaseModel):
     needed_quantity_base_unit: str
     perishability: str
     estimated_cost_cents: str
+
+
+class CommitRequest(BaseModel):
+    """``buy_instead_ids`` (pilote, docs/product-pilot.md) : ingrédients du
+    garde-manger marqués « à acheter » — résolus au magasin le moins cher
+    seulement à l'acceptation (voir ``services/planning.py::_apply_commit``).
+    Défaut vide : un appel sans corps continue de fonctionner."""
+
+    buy_instead_ids: list[str] = Field(default_factory=list)
 
 
 class ReoptimizeRequest(BaseModel):
@@ -133,6 +155,13 @@ class ReoptimizeOut(BaseModel):
     plan: PlanOut
     #: None si le nouveau plan est infaisable — voir plan.diagnostic.
     changes: MenuChangeOut | None
+
+
+class RecipeIngredientOut(BaseModel):
+    """Détail recette (pilote, docs/product-pilot.md)."""
+
+    canonical_ingredient_id: str
+    name: str
 
 
 class NewProductIn(BaseModel):

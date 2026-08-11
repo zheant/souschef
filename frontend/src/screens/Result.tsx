@@ -1,12 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { api, cents } from "../api";
 import { describeChanges } from "../changes";
-import type { Household, Plan, SolverConfigInput, Store } from "../types";
+import type {
+  Household, Plan, RecipeIngredientLine, SolverConfigInput, Store,
+} from "../types";
 
-/** Écran 3 — Résultat : menu, liste d'épicerie groupée par magasin avec
- *  sous-totaux et itinéraire suggéré, et la décomposition du coût en cinq
- *  barres — la lecture la plus utile de tout le système (spec). La lecture
- *  D13 sépare décaissement et stock déjà payé. */
+/** Écran 3 — Résultat (piste « circulaire du quartier », disposition « P »,
+ *  docs/product-pilot.md) : deux onglets internes — Cette semaine (coût à
+ *  l'épicerie, temps de cuisine, menu) et Épicerie (garde-manger + listes
+ *  par magasin). Le détail de l'optimisation en 5 termes (5_essentiel au
+ *  mode développeur, cf. l'onglet Diagnostic) reste disponible mais replié
+ *  derrière la barre — l'usager courant n'a besoin que de ce qu'il dépense
+ *  à l'épicerie et du temps que ça lui prend.
+ *
+ *  Angle mort assumé : les photos de plat sont des dégradés de couleur
+ *  dérivés de l'id de la recette, pas de vraies photos — l'app n'a aucune
+ *  source d'images aujourd'hui (chantier séparé). */
 
 function haversineKm(aLat: number, aLng: number, bLat: number, bLng: number): number {
   const r = (x: number) => (x * Math.PI) / 180;
@@ -16,37 +25,138 @@ function haversineKm(aLat: number, aLng: number, bLat: number, bLng: number): nu
   return 2 * 6371 * Math.asin(Math.sqrt(h));
 }
 
-const TERM_LABELS: [key: "achats" | "deplacements" | "temps" | "recuperation" | "appetence", label: string, credit: boolean][] = [
-  ["achats", "Achats", false],
-  ["deplacements", "Déplacements", false],
-  ["temps", "Temps", false],
-  ["recuperation", "Récupération", true],
-  ["appetence", "Appétence", true],
+const PHOTO_CLASSES = ["rp-photo-a", "rp-photo-b", "rp-photo-c", "rp-photo-d", "rp-photo-e", "rp-photo-f"];
+function photoClassFor(recipeId: string): string {
+  let h = 0;
+  for (let i = 0; i < recipeId.length; i++) h = (h * 31 + recipeId.charCodeAt(i)) >>> 0;
+  return PHOTO_CLASSES[h % PHOTO_CLASSES.length];
+}
+
+const DISH_ICON = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={1.6} strokeLinecap="round">
+    <circle cx="12" cy="14" r="7" />
+    <path d="M9 4v4M12 3v5M15 4v4" />
+  </svg>
+);
+
+type TermKey = "achats" | "deplacements" | "temps" | "recuperation" | "appetence";
+const TERM_LABELS: [TermKey, string, boolean, number][] = [
+  // clé, libellé, crédit?, opacité du segment (même dégradé que le prototype)
+  ["achats", "Achats", false, 1],
+  ["deplacements", "Déplacements", false, 0.7],
+  ["temps", "Temps", false, 0.45],
+  ["recuperation", "Récupération", true, 0.6],
+  ["appetence", "Appétence", true, 1],
 ];
+
+/** Glissement à réserver d'espace réel plutôt que translater le contenu :
+ *  la carte rétrécit (flex) pour faire de la place aux actions au lieu de
+ *  glisser le nom hors-champ — c'est ce qui garde le nom entièrement
+ *  visible pendant le geste (leçon du prototype interactif). */
+function SwipeRow(props: {
+  revealWidth: number;
+  /** Fonction plutôt que ReactNode brut : chaque instance a son propre
+   *  `close`, pas un état partagé entre les cartes (une carte ouverte ne
+   *  doit fermer qu'elle-même). */
+  actions: (close: () => void) => React.ReactNode;
+  onTap?: () => void;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const actionsRef = useRef<HTMLDivElement>(null);
+  const state = useRef({ open: false, dragging: false, moved: false, startX: 0, startWidth: 0 });
+
+  function setWidth(w: number, animate: boolean) {
+    const el = actionsRef.current;
+    if (!el) return;
+    el.style.transition = animate ? "width 0.18s ease" : "none";
+    el.style.width = `${w}px`;
+  }
+
+  function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const s = state.current;
+    s.dragging = true; s.moved = false; s.startX = e.clientX;
+    s.startWidth = s.open ? props.revealWidth : 0;
+  }
+  function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    const s = state.current;
+    if (!s.dragging) return;
+    const dx = e.clientX - s.startX;
+    if (Math.abs(dx) > 6) s.moved = true;
+    if (!s.moved) return;
+    setWidth(Math.min(props.revealWidth, Math.max(0, s.startWidth - dx)), false);
+  }
+  function endDrag(e: React.PointerEvent<HTMLDivElement>) {
+    const s = state.current;
+    if (!s.dragging) return;
+    s.dragging = false;
+    if (!s.moved) return;
+    const dx = e.clientX - s.startX;
+    const w = s.startWidth - dx;
+    if (w > props.revealWidth / 2) { setWidth(props.revealWidth, true); s.open = true; }
+    else { setWidth(0, true); s.open = false; }
+  }
+  function onClick() {
+    const s = state.current;
+    if (s.moved) { s.moved = false; return; }
+    if (s.open) { setWidth(0, true); s.open = false; return; }
+    props.onTap?.();
+  }
+  function close() {
+    const s = state.current;
+    if (s.open) { setWidth(0, true); s.open = false; }
+  }
+
+  return (
+    <div className={`rp-swipe-row ${props.className ?? ""}`}>
+      <div
+        className="rp-swipe-content"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        onClick={onClick}
+      >
+        {props.children}
+      </div>
+      <div className="rp-swipe-actions" ref={actionsRef}>{props.actions(close)}</div>
+    </div>
+  );
+}
 
 export default function ResultScreen(props: {
   plan: Plan | null; household: Household; stores: Store[]; config: SolverConfigInput;
   onCommitted: (planId: number) => void;
 }) {
   const { plan, household, stores } = props;
-  const [committing, setCommitting] = useState(false);
-  const [commitMsg, setCommitMsg] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<"semaine" | "epicerie">("semaine");
+  const [barDetailed, setBarDetailed] = useState(false);
 
-  const [lockedIds, setLockedIds] = useState<Set<string>>(new Set());
   const [reoptimizing, setReoptimizing] = useState(false);
   const [replacingId, setReplacingId] = useState<string | null>(null);
   const [reoptimizeMsg, setReoptimizeMsg] = useState<string | null>(null);
   const [reoptimizeError, setReoptimizeError] = useState<string | null>(null);
 
-  const [groceryView, setGroceryView] = useState<"cocher" | "detaillee">("cocher");
-  const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const [openRecipeId, setOpenRecipeId] = useState<string | null>(null);
+  const [ingredients, setIngredients] = useState<RecipeIngredientLine[] | null>(null);
+  const [ingredientsError, setIngredientsError] = useState<string | null>(null);
 
-  // Nouveau plan chargé (génération, commit, réoptimisation) : les verrous
-  // et les coches ne s'appliquent qu'au plan qui les a vus posés — aucun
-  // concept « coché » n'existe côté serveur (pilote, docs/product-pilot.md),
-  // c'est un état local, réinitialisé à chaque nouveau plan.
-  useEffect(() => { setLockedIds(new Set()); setChecked({}); }, [plan?.id]);
+  const [buyInsteadIds, setBuyInsteadIds] = useState<Set<string>>(new Set());
+  const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const [accepted, setAccepted] = useState(false);
+  const [committing, setCommitting] = useState(false);
+  const [commitError, setCommitError] = useState<string | null>(null);
+
+  // Nouveau plan chargé (génération, remplacement) : rien de local ne
+  // survit à un plan différent — même motif que les tranches précédentes.
+  useEffect(() => {
+    setBuyInsteadIds(new Set());
+    setChecked({});
+    setAccepted(plan?.status === "committed");
+    setBarDetailed(false);
+    setOpenRecipeId(null);
+  }, [plan?.id]);
 
   const itinerary = useMemo(() => {
     if (!plan) return [];
@@ -60,44 +170,23 @@ export default function ResultScreen(props: {
 
   if (!plan) {
     return (
-      <section>
-        <h2>Résultat</h2>
-        <p className="card muted">Aucun plan pour l'instant — passez par l'onglet Génération.</p>
+      <section className="result-v2">
+        <h2 style={{ marginTop: 0 }}>Résultat</h2>
+        <p className="muted">Aucun plan pour l'instant — passez par l'onglet Génération.</p>
       </section>
     );
   }
 
-  const t = plan.diagnostic.objective_terms_cents;
-  const currentPlan = plan;  // non-nul ici : narrowing conservé dans commit()
-  const maxAbs = t
-    ? Math.max(...TERM_LABELS.map(([k]) => Math.abs(Number(t[k])))) || 1
-    : 1;
-  const disbursed = plan.grocery_list_by_store
+  const currentPlan = plan;
+  const groceryTotalCents = currentPlan.grocery_list_by_store
     .reduce((s, g) => s + Number(g.subtotal_cents_cad), 0);
-  const pantryValue = Number(plan.diagnostic.pantry_consumed_value_cents);
+  const totalTimeH = currentPlan.menu.reduce((s, m) => s + Number(m.prep_time_h), 0);
+  const pantryValueCents = Number(currentPlan.diagnostic.pantry_consumed_value_cents);
 
-  async function commit() {
-    setCommitting(true); setError(null);
-    try {
-      const r = await api.commitPlan(currentPlan.id);
-      setCommitMsg(
-        `Plan ${r.plan_id} commis : le stock consommé est décrémenté et les restes sont reportés au garde-manger (${Object.keys(r.pantry_after_commit).length} ingrédients mis à jour).`
-      );
-      props.onCommitted(currentPlan.id);
-    } catch (e) { setError(String(e)); } finally { setCommitting(false); }
-  }
-
-  function toggleLock(recipeId: string) {
-    setLockedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(recipeId)) next.delete(recipeId); else next.add(recipeId);
-      return next;
-    });
-  }
-
-  function toggleChecked(key: string) {
-    setChecked((prev) => ({ ...prev, [key]: !prev[key] }));
-  }
+  const t = currentPlan.diagnostic.objective_terms_cents;
+  const termAbsSum = t
+    ? TERM_LABELS.reduce((s, [k]) => s + Math.abs(Number(t[k])), 0) || 1
+    : 1;
 
   async function callReoptimize(lockedRecipeIds: string[], excludedRecipeIds: string[]) {
     setReoptimizing(true); setReoptimizeError(null); setReoptimizeMsg(null);
@@ -126,231 +215,273 @@ export default function ResultScreen(props: {
     await callReoptimize(others, [recipeId]);
   }
 
-  async function reoptimizeLockedOnly() {
-    await callReoptimize([...lockedIds], []);
+  async function openDetail(recipeId: string) {
+    setOpenRecipeId(recipeId);
+    setIngredients(null);
+    setIngredientsError(null);
+    try {
+      setIngredients(await api.recipeIngredients(recipeId));
+    } catch (e) {
+      setIngredientsError(String(e));
+    }
   }
 
-  return (
-    <section>
-      <h2>Résultat <span className="sub">— plan n°{plan.id} · {plan.status === "committed" ? "commis" : "proposé"}</span></h2>
+  function toggleBuyInstead(id: string) {
+    setBuyInsteadIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
 
-      <div className="card">
-        <h2 style={{ marginTop: 0 }}>Décomposition du coût</h2>
-        {t && (
-          <div className="decomp" role="img" aria-label="Décomposition du coût en cinq termes">
-            {TERM_LABELS.map(([key, label, credit]) => {
-              const v = Number(t[key]);
-              const w = (Math.abs(v) / maxAbs) * 50;
-              return (
-                <div className="bar-row" key={key}>
-                  <span className="bar-label">{label}</span>
-                  <span className="bar-track">
-                    <span className="bar-axis" aria-hidden />
-                    <span
-                      className={`bar-fill ${credit ? "credit" : "debit"}`}
-                      style={{ width: `${w}%` }}
-                    />
-                  </span>
-                  <span className="bar-amount">{credit ? "−" : ""}{cents(v)}</span>
-                </div>
-              );
-            })}
-            <div className="bar-row grand">
-              <span className="bar-label"><strong>Coût net</strong></span>
-              <span />
-              <span className="bar-amount"><strong>{cents(t.total)}</strong></span>
+  function toggleChecked(key: string) {
+    if (!accepted) return;
+    setChecked((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
+  async function accept() {
+    setCommitting(true); setCommitError(null);
+    try {
+      await api.commitPlan(currentPlan.id, [...buyInsteadIds]);
+      setAccepted(true);
+      props.onCommitted(currentPlan.id);
+    } catch (e) {
+      setCommitError(String(e));
+    } finally {
+      setCommitting(false);
+    }
+  }
+
+  const totalItems = currentPlan.grocery_list_by_store
+    .reduce((s, g) => s + g.lines.length, 0);
+  const checkedCount = Object.values(checked).filter(Boolean).length;
+
+  const openRecipe = openRecipeId
+    ? currentPlan.menu.find((m) => m.recipe_id === openRecipeId)
+    : undefined;
+
+  return (
+    <section className="result-v2">
+      <div className="rp-segmented">
+        <button className={tab === "semaine" ? "active" : ""} onClick={() => setTab("semaine")}>
+          Cette semaine
+        </button>
+        <button className={tab === "epicerie" ? "active" : ""} onClick={() => setTab("epicerie")}>
+          Épicerie
+        </button>
+      </div>
+
+      {tab === "semaine" && (
+        <>
+          <div className="rp-hero">
+            <div className="rp-hero-label">Coût à l'épicerie</div>
+            <div className="rp-hero-amount">
+              {cents(groceryTotalCents)} <span className="rp-time">· {totalTimeH.toFixed(2)} h de cuisine</span>
+            </div>
+            <div className="rp-bar-slot" onClick={() => setBarDetailed((v) => !v)} role="button" tabIndex={0}>
+              {!barDetailed && (
+                <>
+                  <div className="rp-splitbar">
+                    <span style={{
+                      width: `${pantryValueCents > 0 ? (groceryTotalCents / (groceryTotalCents + pantryValueCents)) * 100 : 100}%`,
+                      background: "var(--rp-deal)",
+                    }} />
+                    {pantryValueCents > 0 && (
+                      <span style={{
+                        width: `${(pantryValueCents / (groceryTotalCents + pantryValueCents)) * 100}%`,
+                        background: "var(--rp-pantry)",
+                      }} />
+                    )}
+                  </div>
+                  <div className="rp-legend">
+                    <span><span className="rp-sw" style={{ background: "var(--rp-deal)" }} />Acheté</span>
+                    {pantryValueCents > 0 && (
+                      <span><span className="rp-sw" style={{ background: "var(--rp-pantry)" }} />Garde-manger</span>
+                    )}
+                  </div>
+                  <div className="rp-bar-hint">Détail de l'optimisation ›</div>
+                </>
+              )}
+              {barDetailed && t && (
+                <>
+                  <div className="rp-bigbar">
+                    {TERM_LABELS.map(([key, , credit, opacity]) => (
+                      <span key={key} style={{
+                        width: `${(Math.abs(Number(t[key])) / termAbsSum) * 100}%`,
+                        background: credit ? "var(--rp-fresh)" : "var(--rp-deal)",
+                        opacity,
+                      }} />
+                    ))}
+                  </div>
+                  <div className="rp-legend">
+                    {TERM_LABELS.map(([key, label, credit, opacity]) => (
+                      <span key={key}>
+                        <span className="rp-sw" style={{
+                          background: credit ? "var(--rp-fresh)" : "var(--rp-deal)", opacity,
+                        }} />
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="rp-bar-hint">‹ Vue simple</div>
+                </>
+              )}
             </div>
           </div>
-        )}
-        <p className="callout" style={{ marginTop: 14 }}>
-          <strong>{cents(disbursed)} dépensés cette semaine</strong>
-          {pantryValue > 0 && (
-            <>, auxquels s'ajoutent <strong>{cents(pantryValue)}</strong> de
-            garde-manger déjà payé et consommé par ce plan — un décaissement
-            plus bas après un commit n'est pas une économie.</>
-          )}
-          {pantryValue === 0 && <> — aucun stock du garde-manger consommé.</>}
-        </p>
-      </div>
 
-      <div className="card">
-        <h2 style={{ marginTop: 0 }}>Menu <span className="sub">— {plan.menu.reduce((s, m) => s + m.servings, 0)} portions</span></h2>
-        <div className="table-scroll">
-          <table className="ledger">
-            <thead>
-              <tr>
-                <th>Recette</th><th className="num">Portions</th>
-                <th className="num">Temps (h)</th><th className="num">Coût attribué</th>
-                <th>Verrou</th><th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {plan.menu.map((m) => (
-                <tr key={m.recipe_id}>
-                  <td data-label="Recette">{m.name}</td>
-                  <td className="num" data-label="Portions">{m.servings}</td>
-                  <td className="num" data-label="Temps (h)">{Number(m.prep_time_h).toFixed(2)}</td>
-                  <td className="num" data-label="Coût attribué">{cents(m.attributed_cost_cents_cad)}</td>
-                  <td data-label="Verrou">
+          <div style={{ height: 8 }} />
+
+          {currentPlan.menu.map((m) => (
+            <SwipeRow
+              key={m.recipe_id}
+              className="rp-recipe-row"
+              revealWidth={148}
+              onTap={() => openDetail(m.recipe_id)}
+              actions={(close) => (
+                <>
+                  <button
+                    className="rp-keep"
+                    disabled={reoptimizing}
+                    onClick={(e) => { e.stopPropagation(); close(); }}
+                  >
+                    Garder
+                  </button>
+                  <button
+                    className="rp-replace"
+                    disabled={reoptimizing}
+                    onClick={(e) => { e.stopPropagation(); replace(m.recipe_id); }}
+                  >
+                    {replacingId === m.recipe_id ? "…" : "Remplacer"}
+                  </button>
+                </>
+              )}
+            >
+              <div className="rp-recipe-card">
+                <div className="rp-recipe-name">{m.name}</div>
+                <div className="rp-recipe-row2">
+                  <div className={`rp-photo ${photoClassFor(m.recipe_id)}`}>{DISH_ICON}</div>
+                  <div className="rp-recipe-meta">
+                    {m.servings} portions · {Number(m.prep_time_h).toFixed(2)} h · {cents(m.attributed_cost_cents_cad)}
+                  </div>
+                </div>
+              </div>
+            </SwipeRow>
+          ))}
+
+          {reoptimizeMsg && <p className="callout" style={{ margin: "10px 16px" }}>{reoptimizeMsg}</p>}
+          {reoptimizeError && <p className="callout error" style={{ margin: "10px 16px" }}>{reoptimizeError}</p>}
+        </>
+      )}
+
+      {tab === "epicerie" && (
+        <>
+          {currentPlan.pantry_lines.length > 0 && (
+            <>
+              <div className="rp-section-label">Garde-manger — à récupérer</div>
+              <div className="rp-store rp-pantry">
+                {currentPlan.pantry_lines.map((l) => (
+                  <div className="rp-pantry-row" key={l.canonical_ingredient_id}>
                     <label>
-                      <input
-                        type="checkbox"
-                        checked={lockedIds.has(m.recipe_id)}
-                        disabled={reoptimizing}
-                        onChange={() => toggleLock(m.recipe_id)}
-                      />{" "}
-                      Garder
+                      <input type="checkbox" />
+                      {l.name} — {Number(l.quantity_base_unit).toFixed(0)} {l.base_unit}
+                      {l.priority === "use_soon" && <span className="rp-tag">Bientôt</span>}
+                      {buyInsteadIds.has(l.canonical_ingredient_id) && (
+                        <span className="rp-tag rp-tag-buy">À acheter</span>
+                      )}
                     </label>
-                  </td>
-                  <td>
                     <button
-                      className="action"
-                      onClick={() => replace(m.recipe_id)}
-                      disabled={reoptimizing || lockedIds.has(m.recipe_id)}
+                      className="rp-buy-btn"
+                      disabled={accepted}
+                      onClick={() => toggleBuyInstead(l.canonical_ingredient_id)}
                     >
-                      {replacingId === m.recipe_id ? "Remplacement…" : "Remplacer"}
+                      {buyInsteadIds.has(l.canonical_ingredient_id) ? "Annuler" : "À acheter"}
                     </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="row" style={{ marginTop: 10 }}>
-          <button
-            className="action"
-            onClick={reoptimizeLockedOnly}
-            disabled={reoptimizing || lockedIds.size === 0}
-          >
-            {reoptimizing && !replacingId ? "Réoptimisation…" : "Réoptimiser le reste du menu"}
-          </button>
-          <span className="muted">
-            Cochez « Garder » sur les recettes à conserver, puis réoptimisez le reste —
-            ou remplacez une seule recette directement.
-          </span>
-        </div>
-        {reoptimizeMsg && <p className="callout" style={{ marginTop: 10 }}>{reoptimizeMsg}</p>}
-        {reoptimizeError && <p className="callout error">{reoptimizeError}</p>}
-      </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
 
-      <div className="card">
-        <h2 style={{ marginTop: 0 }}>Liste d'épicerie</h2>
-        {itinerary.length > 1 && (
-          <p className="muted">
-            Itinéraire suggéré :{" "}
-            {itinerary.map((s, i) => `${i + 1}. ${s.banner} (${s.km.toFixed(1)} km)`).join(" → ")}
-          </p>
-        )}
-
-        <div className="row" style={{ marginBottom: 14 }}>
-          <button
-            className={`action${groceryView === "cocher" ? "" : " ghost"}`}
-            onClick={() => setGroceryView("cocher")}
-          >
-            Liste à cocher
-          </button>
-          <button
-            className={`action${groceryView === "detaillee" ? "" : " ghost"}`}
-            onClick={() => setGroceryView("detaillee")}
-          >
-            Vue détaillée
-          </button>
-        </div>
-
-        {groceryView === "cocher" && plan.grocery_list_by_store.map((g) => {
-          const store = stores.find((s) => s.external_key === g.store_external_key);
-          const checkedCount = g.lines.filter(
-            (l) => checked[`${g.store_external_key}:${l.product_external_key}`]
-          ).length;
-          return (
-            <div key={g.store_external_key} style={{ marginBottom: 18 }}>
-              <h2>
-                {store?.banner ?? g.store_external_key} <span className="sub">{store?.address}</span>{" "}
-                <span className="muted">— {checkedCount}/{g.lines.length} cochés</span>
-              </h2>
-              <ul className="checklist">
+          <div className="rp-section-label">Épicerie</div>
+          {itinerary.length > 1 && (
+            <p className="muted" style={{ margin: "0 16px 10px" }}>
+              Itinéraire suggéré :{" "}
+              {itinerary.map((s, i) => `${i + 1}. ${s.banner} (${s.km.toFixed(1)} km)`).join(" → ")}
+            </p>
+          )}
+          {!accepted && (
+            <p className="rp-accept-note">Les articles se cochent une fois le plan accepté.</p>
+          )}
+          {currentPlan.grocery_list_by_store.map((g) => {
+            const store = stores.find((s) => s.external_key === g.store_external_key);
+            return (
+              <div className="rp-store" key={g.store_external_key}>
+                <div className="rp-store-head">
+                  <span className="rp-store-name">{store?.banner ?? g.store_external_key}</span>
+                  <span className="rp-store-sub">{cents(g.subtotal_cents_cad)}</span>
+                </div>
                 {g.lines.map((l) => {
                   const key = `${g.store_external_key}:${l.product_external_key}`;
-                  const isChecked = Boolean(checked[key]);
                   return (
-                    <li key={key}>
-                      <label>
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => toggleChecked(key)}
-                        />{" "}
-                        <span style={isChecked ? { textDecoration: "line-through" } : undefined}
-                          className={isChecked ? "muted" : undefined}>
+                    <div className="rp-item" key={key}>
+                      <input
+                        type="checkbox"
+                        checked={Boolean(checked[key])}
+                        disabled={!accepted}
+                        onChange={() => toggleChecked(key)}
+                      />
+                      <div className="rp-item-text">
+                        <div className="rp-item-name">
                           {l.ingredient_name} — {l.units} × {l.package_unit}
-                        </span>
-                      </label>
-                    </li>
+                          {l.is_promo && <span className="rp-promo-badge">Rabais</span>}
+                        </div>
+                        <div className="rp-item-brand">{l.brand}</div>
+                      </div>
+                      <div className="rp-item-price">{cents(l.unit_price_cents_cad)}</div>
+                    </div>
                   );
                 })}
-              </ul>
-            </div>
-          );
-        })}
-
-        {groceryView === "detaillee" && plan.grocery_list_by_store.map((g) => {
-          const store = stores.find((s) => s.external_key === g.store_external_key);
-          return (
-            <div key={g.store_external_key} style={{ marginBottom: 18 }}>
-              <h2>{store?.banner ?? g.store_external_key} <span className="sub">{store?.address}</span></h2>
-              <div className="table-scroll">
-                <table className="ledger">
-                  <thead>
-                    <tr>
-                      <th>Produit</th><th className="num">Qté</th>
-                      <th className="num">Prix unit.</th><th className="num">Total taxé</th>
-                      <th className="num">Économies</th><th>Pour</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {g.lines.map((l) => (
-                      <tr key={l.product_external_key}>
-                        <td data-label="Produit">
-                          {l.ingredient_name} <span className="muted">— {l.brand}, {l.package_unit}</span>
-                          {l.is_promo && <span className="badge promo" style={{ marginLeft: 6 }}>Rabais</span>}
-                        </td>
-                        <td className="num" data-label="Qté">{l.units}</td>
-                        <td className="num" data-label="Prix unit.">{cents(l.unit_price_cents_cad)}</td>
-                        <td className="num" data-label="Total taxé">{cents(l.taxed_total_cents_cad)}</td>
-                        <td className="num" data-label="Économies">{l.savings_cents_cad ? cents(l.savings_cents_cad) : "—"}</td>
-                        <td className="muted" data-label="Pour">{l.consumed_by.join(", ")}</td>
-                      </tr>
-                    ))}
-                    <tr className="total">
-                      <td>Sous-total {store?.banner ?? g.store_external_key}</td>
-                      <td colSpan={2} />
-                      <td className="num" data-label="Total taxé">{cents(g.subtotal_cents_cad)}</td>
-                      <td className="num" data-label="Économies">
-                        {Number(g.savings_cents_cad) > 0 ? cents(g.savings_cents_cad) : "—"}
-                      </td>
-                      <td />
-                    </tr>
-                  </tbody>
-                </table>
               </div>
-            </div>
-          );
-        })}
-        <div className="row">
-          <button
-            className="action"
-            onClick={commit}
-            disabled={committing || plan.status === "committed"}
-          >
-            {plan.status === "committed" ? "Déjà commis" : committing ? "Commit…" : "Commettre ce plan"}
-          </button>
-          <span className="muted">
-            Le commit décrémente le stock consommé et reporte les restes au garde-manger.
-          </span>
-        </div>
-        {commitMsg && <p className="callout" style={{ marginTop: 10 }}>{commitMsg}</p>}
-        {error && <p className="callout error">{error}</p>}
+            );
+          })}
+        </>
+      )}
+
+      <div className="rp-cta-bar">
+        <span className="rp-cta-count">
+          {accepted ? `${checkedCount}/${totalItems} cochés` : `${totalItems} article${totalItems > 1 ? "s" : ""}`}
+        </span>
+        <button onClick={accept} disabled={committing || accepted}>
+          {accepted ? "Accepté" : committing ? "…" : "Accepter"}
+        </button>
       </div>
+      {commitError && <p className="callout error" style={{ margin: "10px 16px" }}>{commitError}</p>}
+
+      {openRecipeId && (
+        <div className="rp-detail">
+          <div className="rp-detail-header">
+            <button className="rp-back-btn" onClick={() => setOpenRecipeId(null)}>‹ Retour</button>
+          </div>
+          <div className={`rp-detail-photo ${photoClassFor(openRecipeId)}`}>{DISH_ICON}</div>
+          <div className="rp-detail-body">
+            <div className="rp-detail-name">{openRecipe?.name ?? openRecipeId}</div>
+            {openRecipe && (
+              <div className="rp-detail-meta">
+                {openRecipe.servings} portions · {Number(openRecipe.prep_time_h).toFixed(2)} h de cuisine ·{" "}
+                {cents(openRecipe.attributed_cost_cents_cad)}
+              </div>
+            )}
+            <div className="rp-detail-sec">Ingrédients</div>
+            {ingredientsError && <p className="callout error">{ingredientsError}</p>}
+            {!ingredientsError && !ingredients && <p className="muted">Chargement…</p>}
+            {ingredients && (
+              <ul className="rp-detail-ing">
+                {ingredients.map((i) => <li key={i.canonical_ingredient_id}>{i.name}</li>)}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
     </section>
   );
 }

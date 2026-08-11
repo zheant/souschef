@@ -161,3 +161,153 @@ pre.raw {
     content: attr(data-label) ": "; font-weight: 600; color: var(--ink-soft);
   }
 }
+
+/* ============================================================
+   Écran Résultat — piste « circulaire du quartier » (pilote,
+   docs/product-pilot.md). Scopée à .result-v2 : redéfinit ses propres
+   jetons de couleur/typographie localement, n'affecte aucun autre écran
+   — la refonte visuelle du reste de l'app reste une tranche séparée,
+   volontairement hors périmètre ici.
+   ============================================================ */
+.result-v2 {
+  --rp-paper: #f4ecd5; --rp-card: #fffdf6; --rp-ink: #221b12;
+  --rp-ink-soft: #6e6249; --rp-rule: #d9cca0; --rp-deal: #a6321b;
+  --rp-fresh: #3e6b3a; --rp-pantry: #8a6a1f;
+  background: var(--rp-paper); color: var(--rp-ink);
+  font: 15px/1.5 Georgia, "Times New Roman", serif;
+  border: 1px solid var(--rp-rule); border-radius: 8px; margin-bottom: 24px;
+}
+.result-v2 input[type="checkbox"] { accent-color: var(--rp-deal); }
+.rp-disp {
+  font-family: Arial, "Helvetica Neue", sans-serif; font-weight: 800;
+  font-stretch: condensed; letter-spacing: 0.02em;
+}
+.rp-mono { font-family: "Courier New", monospace; font-variant-numeric: tabular-nums; }
+
+.rp-segmented {
+  position: sticky; top: 0; z-index: 4; background: var(--rp-paper);
+  border-bottom: 2px solid var(--rp-ink); display: flex; padding: 10px 20px 0;
+}
+.rp-segmented button {
+  flex: 1; appearance: none; border: none; background: none; cursor: pointer;
+  font: inherit; font-family: Arial, sans-serif; font-weight: 700; font-size: 12.5px;
+  letter-spacing: 0.02em; padding: 8px 4px 10px; color: var(--rp-ink-soft);
+  border-bottom: 3px solid transparent;
+}
+.rp-segmented button.active { color: var(--rp-ink); border-bottom-color: var(--rp-deal); }
+
+.rp-hero { padding: 18px 20px 4px; }
+.rp-hero-label { font-size: 12.5px; color: var(--rp-ink-soft); margin-bottom: 2px; }
+.rp-hero-amount {
+  font-size: 30px; font-weight: 800; font-family: Arial, sans-serif;
+  font-stretch: condensed;
+}
+.rp-hero-amount .rp-time { font-size: 14px; color: var(--rp-ink-soft); font-family: Georgia, serif; font-weight: 400; }
+
+.rp-bar-slot { cursor: pointer; user-select: none; margin-top: 12px; }
+.rp-splitbar, .rp-bigbar { display: flex; height: 11px; border-radius: 5px; overflow: hidden; }
+.rp-splitbar span, .rp-bigbar span { height: 100%; }
+.rp-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 7px; font-size: 11.5px; color: var(--rp-ink-soft); }
+.rp-legend .rp-sw { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.rp-bar-hint { font-family: Arial, sans-serif; font-size: 10.5px; font-weight: 700; color: var(--rp-deal); margin-top: 9px; letter-spacing: 0.02em; }
+
+.rp-swipe-row { display: flex; align-items: stretch; }
+.rp-recipe-row { margin: 0 20px 10px; border-radius: 8px; overflow: hidden; }
+.rp-recipe-card {
+  flex: 1 1 auto; min-width: 0; background: var(--rp-card);
+  border: 1px solid var(--rp-rule); padding: 11px; touch-action: pan-y; cursor: pointer;
+}
+.rp-recipe-name { font-weight: 700; font-size: 14px; line-height: 1.3; }
+.rp-recipe-row2 { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.rp-photo { width: 42px; height: 42px; border-radius: 6px; flex: none; display: flex; align-items: center; justify-content: center; }
+.rp-photo svg { width: 18px; height: 18px; opacity: 0.55; }
+.rp-photo-a { background: linear-gradient(135deg, #c15a34, #7a2418); }
+.rp-photo-b { background: linear-gradient(135deg, #d29a3c, #8a5b12); }
+.rp-photo-c { background: linear-gradient(135deg, #8a9a44, #4f5b22); }
+.rp-photo-d { background: linear-gradient(135deg, #b98a4a, #6b4a1f); }
+.rp-photo-e { background: linear-gradient(135deg, #839a5c, #43521f); }
+.rp-photo-f { background: linear-gradient(135deg, #d98a3a, #8a4a12); }
+.rp-recipe-meta { font-size: 12.5px; color: var(--rp-ink-soft); }
+
+.rp-swipe-actions { flex: 0 0 auto; width: 0; overflow: hidden; display: flex; }
+.rp-swipe-actions button {
+  flex: none; width: 74px; border: none; font-family: Arial, sans-serif;
+  font-weight: 700; font-size: 11px; letter-spacing: 0.02em; color: #fff; cursor: pointer;
+}
+.rp-swipe-actions .rp-keep { background: var(--rp-fresh); }
+.rp-swipe-actions .rp-replace { background: var(--rp-deal); }
+
+.rp-section-label {
+  font-family: Arial, sans-serif; font-weight: 800; font-size: 10.5px;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--rp-ink-soft);
+  padding: 16px 20px 7px;
+}
+.rp-accept-note { margin: 0 20px 10px; font-size: 12px; color: var(--rp-ink-soft); font-style: italic; }
+
+.rp-store { margin: 0 16px 12px; background: var(--rp-card); border: 1px solid var(--rp-rule); border-radius: 8px; padding: 12px 14px; }
+.rp-store.rp-pantry { background: #fbf1da; border-color: #e8d6a4; }
+.rp-store-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.rp-store-name { font-family: Arial, sans-serif; font-weight: 800; font-size: 13px; }
+.rp-store-sub { font-family: "Courier New", monospace; font-size: 12px; color: var(--rp-ink-soft); }
+
+.rp-pantry-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--rp-rule); }
+.rp-pantry-row:first-child { border-top: none; }
+.rp-pantry-row label { flex: 1; min-width: 0; font-size: 13px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; cursor: pointer; }
+.rp-buy-btn {
+  flex: none; font-family: Arial, sans-serif; font-weight: 700; font-size: 10.5px;
+  letter-spacing: 0.02em; color: #fff; background: var(--rp-deal); border: none;
+  padding: 7px 10px; border-radius: 5px; cursor: pointer;
+}
+.rp-buy-btn:disabled { opacity: 0.5; cursor: default; }
+.rp-tag {
+  display: inline-block; font-family: Arial, sans-serif; font-size: 9px; font-weight: 800;
+  letter-spacing: 0.03em; text-transform: uppercase; background: var(--rp-pantry);
+  color: #fff8e8; padding: 1px 6px; border-radius: 8px;
+}
+.rp-tag-buy { background: var(--rp-deal); }
+
+.rp-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-top: 1px solid var(--rp-rule); }
+.rp-item:first-of-type { border-top: none; }
+.rp-item-text { flex: 1; min-width: 0; }
+.rp-item-name { font-size: 13px; }
+.rp-item-brand { font-size: 11px; color: var(--rp-ink-soft); margin-top: 2px; }
+.rp-item-price { font-family: "Courier New", monospace; font-size: 13px; white-space: nowrap; padding-top: 1px; }
+.rp-promo-badge {
+  display: inline-block; background: #f3e2bd; color: var(--rp-pantry); font-family: Arial, sans-serif;
+  font-size: 10px; font-weight: 800; letter-spacing: 0.02em; padding: 2px 8px; border-radius: 20px; margin-left: 6px;
+}
+
+.rp-cta-bar {
+  position: sticky; bottom: 0; background: var(--rp-card); border-top: 2px solid var(--rp-ink);
+  padding: 12px 20px; display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; margin-top: 8px;
+}
+.rp-cta-count { font-family: "Courier New", monospace; font-size: 12.5px; color: var(--rp-ink-soft); }
+.rp-cta-bar button {
+  font-family: Arial, sans-serif; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.03em; font-size: 12px; background: var(--rp-ink); color: var(--rp-paper);
+  border: none; padding: 10px 18px; border-radius: 3px; cursor: pointer;
+}
+.rp-cta-bar button:disabled { opacity: 0.6; cursor: default; }
+
+.rp-detail {
+  position: fixed; inset: 0; background: var(--rp-paper); z-index: 20;
+  overflow-y: auto; color: var(--rp-ink); font: 15px/1.5 Georgia, "Times New Roman", serif;
+}
+.rp-detail-header {
+  position: sticky; top: 0; background: var(--rp-paper); border-bottom: 2px solid var(--rp-ink);
+  padding: 14px 20px;
+}
+.rp-back-btn {
+  appearance: none; border: none; background: none; font-family: Arial, sans-serif;
+  font-weight: 700; font-size: 14px; color: var(--rp-ink); cursor: pointer; padding: 4px 0;
+}
+.rp-detail-photo { height: 180px; display: flex; align-items: center; justify-content: center; }
+.rp-detail-photo svg { width: 48px; height: 48px; opacity: 0.55; }
+.rp-detail-body { max-width: 560px; margin: 0 auto; padding: 18px 20px 60px; }
+.rp-detail-name { font-family: Arial, sans-serif; font-weight: 800; font-size: 21px; text-transform: uppercase; font-stretch: condensed; }
+.rp-detail-meta { font-family: "Courier New", monospace; font-size: 13px; color: var(--rp-ink-soft); margin-top: 6px; }
+.rp-detail-sec { font-family: Arial, sans-serif; font-weight: 800; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--rp-ink-soft); margin: 20px 0 8px; }
+.rp-detail-ing { margin: 0; padding: 0; list-style: none; }
+.rp-detail-ing li { padding: 8px 0; border-bottom: 1px dashed var(--rp-rule); font-size: 14px; }
+.rp-detail-ing li:last-child { border-bottom: none; }

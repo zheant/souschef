@@ -2,7 +2,7 @@
 
 import type {
   Household, PantryLine, PantryPriority, PantryPromptLine, Plan,
-  ReoptimizeResult, SolverConfigInput, Store,
+  RecipeIngredientLine, ReoptimizeResult, SolverConfigInput, Store,
 } from "./types";
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
@@ -31,9 +31,11 @@ export const api = {
   createPlan: (config: SolverConfigInput) =>
     req<Plan>("/api/plan", { method: "POST", body: JSON.stringify({ config }) }),
   getPlan: (id: number) => req<Plan>(`/api/plan/${id}`),
-  commitPlan: (id: number) =>
+  commitPlan: (id: number, buyInsteadIds: string[] = []) =>
     req<{ plan_id: number; status: string; pantry_after_commit: Record<string, string> }>(
-      `/api/plan/${id}/commit`, { method: "POST" }),
+      `/api/plan/${id}/commit`, {
+        method: "POST", body: JSON.stringify({ buy_instead_ids: buyInsteadIds }),
+      }),
   reoptimizePlan: (
     id: number, config: SolverConfigInput,
     lockedRecipeIds: string[], excludedRecipeIds: string[],
@@ -49,6 +51,8 @@ export const api = {
   pantryPrompt: (planId: number) =>
     req<PantryPromptLine[]>(`/api/plan/${planId}/pantry_prompt`),
   stores: () => req<Store[]>("/api/stores"),
+  recipeIngredients: (recipeId: string) =>
+    req<RecipeIngredientLine[]>(`/api/recipes/${recipeId}/ingredients`),
 };
 
 export const cents = (v: string | number): string =>
