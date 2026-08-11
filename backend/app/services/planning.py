@@ -41,23 +41,12 @@ from ..services.appetence import RuleBasedAppetenceScorer
 from ..services.prefilter import prefilter_recipes
 from ..services.needs import ingredient_needs
 from ..services.problem_data import load_problem_data
-from ..services.validation import min_taxed_price_per_base_unit
 from ..solver.config import SolverConfig
 from ..solver.port import MenuSolver, SolveResult
 
 #: Nombre de plans commis récents alimentant la pénalité de répétition
 #: (aligné sur les deux niveaux de pénalité du scorer).
 RECENT_PLANS_FOR_REPETITION = 2
-
-#: Priorisation de la confirmation du garde-manger (pilote,
-#: docs/product-pilot.md) : deux critères explicites, additifs — pas un
-#: score pondéré arbitraire. « Requis en grande quantité » n'est pas un
-#: troisième critère séparé : il n'a pas de base objective pour normaliser
-#: g/ml/unité sans données réelles (même mise en garde que D15) ; le
-#: classement par coût estimé le capture indirectement la plupart du temps.
-PANTRY_PROMPT_TOP_BY_COST = 5
-PANTRY_PROMPT_PERISHABLE_THRESHOLD = Decimal("0.5")
-PANTRY_PROMPT_MAX_PERISHABLE = 3
 
 
 class PlanNotFound(LookupError):
@@ -157,17 +146,6 @@ class ReoptimizationResult:
     #: None si le nouveau plan est infaisable — le diagnostic d'infaisabilité
     #: porte déjà l'explication (même convention que l'écran Génération).
     changes: MenuChange | None
-
-
-@dataclass(frozen=True)
-class PantryPromptLine:
-    canonical_ingredient_id: str
-    name: str
-    unit_kind: str
-    base_unit: str
-    needed_quantity_base_unit: str
-    perishability: str
-    estimated_cost_cents: str
 
 
 def recent_committed_recipe_ids(
@@ -284,50 +262,6 @@ def reoptimize_plan(
             cost_delta_cents=str(new_achats - old_achats),
         )
     return ReoptimizationResult(plan=view, changes=changes)
-
-
-def pantry_prompt(
-    session: Session, profile_id: str, plan_id: int
-) -> tuple[PantryPromptLine, ...]:
-    """Confirmation du garde-manger en deux temps (pilote,
-    docs/product-pilot.md) : liste priorisée d'ingrédients à demander pour
-    ce plan précis — pas un inventaire exhaustif. Réutilise
-    ``plan.ingredient_needs`` (déjà calculé et stocké à la génération, pas
-    recalculé ici) et ``min_taxed_price_per_base_unit`` (déjà utilisé pour
-    l'assertion 1) pour estimer un coût par ingrédient.
-    """
-    plan = _load_owned_plan(session, profile_id, plan_id)
-    problem = load_problem_data(session, profile_id, plan.on_date)
-    min_price = min_taxed_price_per_base_unit(problem)
-
-    lines: list[PantryPromptLine] = []
-    for iid, need_str in plan.ingredient_needs.items():
-        need = Decimal(need_str)
-        ing = problem.ingredients.get(iid)
-        if ing is None or need <= 0:
-            continue
-        cost = (need * min_price.get(iid, Decimal(0))).quantize(Decimal("0.01"))
-        lines.append(PantryPromptLine(
-            canonical_ingredient_id=iid, name=ing.name, unit_kind=ing.unit_kind,
-            base_unit=ing.base_unit, needed_quantity_base_unit=str(need),
-            perishability=str(ing.perishability), estimated_cost_cents=str(cost),
-        ))
-
-    by_cost = sorted(lines, key=lambda l: -Decimal(l.estimated_cost_cents))
-    top_cost = by_cost[:PANTRY_PROMPT_TOP_BY_COST]
-    kept_ids = {l.canonical_ingredient_id for l in top_cost}
-    perishable = sorted(
-        (
-            l for l in lines
-            if l.canonical_ingredient_id not in kept_ids
-            and Decimal(l.perishability) >= PANTRY_PROMPT_PERISHABLE_THRESHOLD
-        ),
-        key=lambda l: -Decimal(l.perishability),
-    )[:PANTRY_PROMPT_MAX_PERISHABLE]
-
-    combined = top_cost + perishable
-    combined.sort(key=lambda l: -Decimal(l.estimated_cost_cents))
-    return tuple(combined)
 
 
 def get_plan(session: Session, profile_id: str, plan_id: int) -> PlanView:

@@ -178,44 +178,6 @@ def test_reoptimize_locks_replaces_and_explains(api_client):
     ).status_code == 404
 
 
-def test_pantry_prompt_then_reoptimize_reduces_purchases(api_client):
-    """Le scénario complet de la confirmation du garde-manger (pilote,
-    docs/product-pilot.md) : générer, lire la liste priorisée, déclarer
-    « assez » de riz, réoptimiser avec enable_pantry_stock=True → le poste
-    achats baisse strictement, preuve que le stock déclaré est bien pris en
-    compte, pas seulement que les endpoints répondent."""
-    r = api_client.post("/api/plan", json={"config": ALL_ON, "on_date": ON})
-    plan = r.json()
-    old_achats = Decimal(plan["diagnostic"]["objective_terms_cents"]["achats"])
-
-    r = api_client.get(f"/api/plan/{plan['id']}/pantry_prompt")
-    assert r.status_code == 200
-    prompt = r.json()
-    riz = next(l for l in prompt if l["canonical_ingredient_id"] == "riz")
-    assert riz["name"] == "Riz"
-
-    r = api_client.put(
-        "/api/pantry",
-        json={"lines": [{
-            "canonical_ingredient_id": "riz",
-            "quantity_base_unit": riz["needed_quantity_base_unit"],
-        }]},
-    )
-    assert r.status_code == 200
-
-    r = api_client.post(
-        f"/api/plan/{plan['id']}/reoptimize",
-        json={"config": {**ALL_ON, "enable_pantry_stock": True}},
-    )
-    assert r.status_code == 200, r.text
-    body = r.json()
-    assert body["plan"]["solver_status"] == "Optimal"
-    new_achats = Decimal(body["plan"]["diagnostic"]["objective_terms_cents"]["achats"])
-    assert new_achats < old_achats
-
-    assert api_client.get("/api/plan/999999/pantry_prompt").status_code == 404
-
-
 def test_commit_decrements_and_reports_to_pantry(api_client):
     """Comptabilité vérifiée à la main. Stock initial : 100 g de riz.
     Plan tous-drapeaux (diversité R_min=2) sur le jouet → x_riz + x_dahl.

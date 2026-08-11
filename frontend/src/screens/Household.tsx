@@ -1,18 +1,25 @@
 import { useState } from "react";
 import { api } from "../api";
 import type { Household, Member } from "../types";
+import { PantryPanel } from "./Pantry";
 
-/** Écran 1 — Ménage : membres et ρ_h, repas, κ, filtres durs, adresse,
- *  diversité. D est calculé EN DIRECT côté client au fil de la frappe, puis
- *  confirmé par le serveur à la sauvegarde.
+/** Écran 2 — Ménage : trois sous-sections (Garde-manger/Membres/
+ *  Préférences), fusion de ce qui était trois écrans séparés dans la
+ *  navigation à 5 onglets. D est calculé EN DIRECT côté client au fil de
+ *  la frappe, puis confirmé par le serveur à la sauvegarde.
  *
  *  Pilote (docs/product-pilot.md) : « les coefficients d'appétit ne sont pas
  *  exposés » — ρ_h se choisit par catégorie (petit/moyen/grand), pas par
  *  nombre libre. Le résumé en langage naturel ("4 personnes, 9 repas à
- *  prévoir...") est une approximation lisible, pas un calcul précis — κ, ε,
- *  K, R_min, α et l'adresse restent des champs numériques exacts, mais
- *  repliés sous « Paramètres avancés » (préférences non essentielles,
- *  complétables plus tard). */
+ *  prévoir...") reste visible quel que soit le sous-onglet actif — c'est un
+ *  aperçu du ménage dans son ensemble, pas propre à Membres ou Préférences.
+ *  κ, ε, K, R_min, α et l'adresse restent des champs numériques exacts,
+ *  repliés sous « Paramètres avancés » — déplacés dans Préférences (décision
+ *  explicite : ce sont des réglages du ménage, pas des outils de
+ *  développement, même si ce sont des chiffres exacts plutôt que des
+ *  préférences). */
+
+type SubTab = "garde-manger" | "membres" | "preferences";
 
 const APPETITE_LEVELS = [
   { value: 0.6, label: "Petit appétit" },
@@ -44,6 +51,7 @@ export default function HouseholdScreen(props: {
   household: Household; onSaved: (h: Household) => void;
 }) {
   const h = props.household;
+  const [subTab, setSubTab] = useState<SubTab>("membres");
   const [form, setForm] = useState({
     meals_per_horizon: h.meals_per_horizon,
     time_value_cents_per_hour: h.time_value_cents_per_hour,
@@ -104,102 +112,133 @@ export default function HouseholdScreen(props: {
   return (
     <section>
       <h2>Ménage <span className="sub">— la source de vérité des paramètres</span></h2>
-
       <p className="callout">{summary}</p>
 
-      <div className="card">
-        <div className="table-scroll">
-          <table className="ledger" aria-label="Membres du ménage">
-            <thead><tr><th>Membre</th><th>Appétit</th><th /></tr></thead>
-            <tbody>
-              {members.map((m, i) => {
-                const rho = Number(m.appetite_coefficient);
-                const preset = presetFor(rho);
-                return (
-                  <tr key={i}>
-                    <td data-label="Membre"><input aria-label="nom" value={m.name}
-                      onChange={(e) => setMembers(members.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} /></td>
-                    <td data-label="Appétit">
-                      <select
-                        aria-label="appétit"
-                        value={preset ? preset.value : "other"}
-                        onChange={(e) => {
-                          if (e.target.value === "other") return;
-                          setMembers(members.map((x, j) => j === i ? { ...x, appetite_coefficient: Number(e.target.value) } : x));
-                        }}
-                      >
-                        {!preset && <option value="other">Autre ({rho.toFixed(2)})</option>}
-                        {APPETITE_LEVELS.map((l) => (
-                          <option key={l.value} value={l.value}>{l.label}</option>
-                        ))}
-                      </select>
+      <div className="subnav">
+        <button className={subTab === "garde-manger" ? "active" : ""} onClick={() => setSubTab("garde-manger")}>
+          Garde-manger
+        </button>
+        <button className={subTab === "membres" ? "active" : ""} onClick={() => setSubTab("membres")}>
+          Membres
+        </button>
+        <button className={subTab === "preferences" ? "active" : ""} onClick={() => setSubTab("preferences")}>
+          Préférences
+        </button>
+      </div>
+
+      {subTab === "garde-manger" && <PantryPanel />}
+
+      {subTab === "membres" && (
+        <>
+          <div className="card">
+            <div className="table-scroll">
+              <table className="ledger" aria-label="Membres du ménage">
+                <thead><tr><th>Membre</th><th>Appétit</th><th /></tr></thead>
+                <tbody>
+                  {members.map((m, i) => {
+                    const rho = Number(m.appetite_coefficient);
+                    const preset = presetFor(rho);
+                    return (
+                      <tr key={i}>
+                        <td data-label="Membre"><input aria-label="nom" value={m.name}
+                          onChange={(e) => setMembers(members.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} /></td>
+                        <td data-label="Appétit">
+                          <select
+                            aria-label="appétit"
+                            value={preset ? preset.value : "other"}
+                            onChange={(e) => {
+                              if (e.target.value === "other") return;
+                              setMembers(members.map((x, j) => j === i ? { ...x, appetite_coefficient: Number(e.target.value) } : x));
+                            }}
+                          >
+                            {!preset && <option value="other">Autre ({rho.toFixed(2)})</option>}
+                            {APPETITE_LEVELS.map((l) => (
+                              <option key={l.value} value={l.value}>{l.label}</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td><button className="action ghost" onClick={() => setMembers(members.filter((_, j) => j !== i))}>Retirer</button></td>
+                      </tr>
+                    );
+                  })}
+                  <tr className="total">
+                    <td colSpan={2}>
+                      <button className="action ghost" onClick={() => setMembers([...members, { name: "Nouveau", appetite_coefficient: 1.0 }])}>
+                        Ajouter un membre
+                      </button>
                     </td>
-                    <td><button className="action ghost" onClick={() => setMembers(members.filter((_, j) => j !== i))}>Retirer</button></td>
+                    <td />
                   </tr>
-                );
-              })}
-              <tr className="total">
-                <td colSpan={2}>
-                  <button className="action ghost" onClick={() => setMembers([...members, { name: "Nouveau", appetite_coefficient: 1.0 }])}>
-                    Ajouter un membre
-                  </button>
-                </td>
-                <td />
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="card">
-        <div className="grid">
-          <label className="field"><span>Repas sur l'horizon</span>
-            <input type="number" min="1" value={form.meals_per_horizon} onChange={set("meals_per_horizon")} /></label>
-          <label className="field"><span>Séance de cuisine max. (h)</span>
-            <input type="number" min="0.25" step="0.25" value={form.max_prep_time_per_meal_h} onChange={set("max_prep_time_per_meal_h")} /></label>
-          <label className="field"><span>Régimes (séparés par des virgules)</span>
-            <input value={form.diet_flags} onChange={set("diet_flags")} placeholder="vegetarien" /></label>
-          <label className="field"><span>Allergènes à exclure</span>
-            <input value={form.allergen_flags} onChange={set("allergen_flags")} placeholder="arachide, lactose" /></label>
-          <label className="field"><span>Cuisines aimées</span>
-            <input value={form.liked} onChange={set("liked")} placeholder="tex-mex, asiatique" /></label>
-          <label className="field"><span>Cuisines évitées</span>
-            <input value={form.disliked} onChange={set("disliked")} /></label>
-        </div>
-
-        <details style={{ marginTop: 16 }}>
-          <summary className="muted" style={{ cursor: "pointer" }}>Paramètres avancés</summary>
-          <p className="callout" style={{ marginTop: 12 }}>
-            Demande de l'horizon : D = {form.meals_per_horizon} × {rhoSum.toFixed(2)} ={" "}
-            <strong className="mono">{D.toFixed(2)} portions</strong> — le solveur produira entre{" "}
-            <span className="mono">{low}</span> et <span className="mono">{high}</span> portions
-            (ε = {form.demand_slack_epsilon}).
-          </p>
-          <div className="grid" style={{ marginTop: 12 }}>
-            <label className="field"><span>Valeur du temps κ (cents/h)</span>
-              <input type="number" min="0" step="100" value={form.time_value_cents_per_hour} onChange={set("time_value_cents_per_hour")} /></label>
-            <label className="field"><span>Marge de demande ε</span>
-              <input type="number" min="0" max="0.9" step="0.05" value={form.demand_slack_epsilon} onChange={set("demand_slack_epsilon")} /></label>
-            <label className="field"><span>Arrêts maximum K</span>
-              <input type="number" min="1" value={form.max_store_visits} onChange={set("max_store_visits")} /></label>
-            <label className="field"><span>Recettes distinctes min. R_min</span>
-              <input type="number" min="1" value={form.min_distinct_recipes} onChange={set("min_distinct_recipes")} /></label>
-            <label className="field"><span>Part max. d'une recette α</span>
-              <input type="number" min="0.05" max="1" step="0.05" value={form.max_share_per_recipe} onChange={set("max_share_per_recipe")} /></label>
-            <label className="field"><span>Domicile — latitude</span>
-              <input type="number" step="0.0001" value={form.home_lat} onChange={set("home_lat")} /></label>
-            <label className="field"><span>Domicile — longitude</span>
-              <input type="number" step="0.0001" value={form.home_lng} onChange={set("home_lng")} /></label>
+                </tbody>
+              </table>
+            </div>
           </div>
-        </details>
+          <SaveBar saving={saving} error={error} onSave={save} />
+        </>
+      )}
 
-        <div className="row" style={{ marginTop: 16 }}>
-          <button className="action" onClick={save} disabled={saving}>
-            {saving ? "Enregistrement…" : "Enregistrer le profil"}
-          </button>
-          {error && <span className="callout error">{error}</span>}
-        </div>
-      </div>
+      {subTab === "preferences" && (
+        <>
+          <div className="card">
+            <div className="grid">
+              <label className="field"><span>Repas sur l'horizon</span>
+                <input type="number" min="1" value={form.meals_per_horizon} onChange={set("meals_per_horizon")} /></label>
+              <label className="field"><span>Séance de cuisine max. (h)</span>
+                <input type="number" min="0.25" step="0.25" value={form.max_prep_time_per_meal_h} onChange={set("max_prep_time_per_meal_h")} /></label>
+              <label className="field"><span>Régimes (séparés par des virgules)</span>
+                <input value={form.diet_flags} onChange={set("diet_flags")} placeholder="vegetarien" /></label>
+              <label className="field"><span>Allergènes à exclure</span>
+                <input value={form.allergen_flags} onChange={set("allergen_flags")} placeholder="arachide, lactose" /></label>
+              <label className="field"><span>Cuisines aimées</span>
+                <input value={form.liked} onChange={set("liked")} placeholder="tex-mex, asiatique" /></label>
+              <label className="field"><span>Cuisines évitées</span>
+                <input value={form.disliked} onChange={set("disliked")} /></label>
+            </div>
+
+            <details style={{ marginTop: 16 }}>
+              <summary className="muted" style={{ cursor: "pointer" }}>Paramètres avancés</summary>
+              <p className="callout" style={{ marginTop: 12 }}>
+                Demande de l'horizon : D = {form.meals_per_horizon} × {rhoSum.toFixed(2)} ={" "}
+                <strong className="mono">{D.toFixed(2)} portions</strong> — le solveur produira entre{" "}
+                <span className="mono">{low}</span> et <span className="mono">{high}</span> portions
+                (ε = {form.demand_slack_epsilon}).
+              </p>
+              <div className="grid" style={{ marginTop: 12 }}>
+                <label className="field"><span>Valeur du temps κ (cents/h)</span>
+                  <input type="number" min="0" step="100" value={form.time_value_cents_per_hour} onChange={set("time_value_cents_per_hour")} /></label>
+                <label className="field"><span>Marge de demande ε</span>
+                  <input type="number" min="0" max="0.9" step="0.05" value={form.demand_slack_epsilon} onChange={set("demand_slack_epsilon")} /></label>
+                <label className="field"><span>Arrêts maximum K</span>
+                  <input type="number" min="1" value={form.max_store_visits} onChange={set("max_store_visits")} /></label>
+                <label className="field"><span>Recettes distinctes min. R_min</span>
+                  <input type="number" min="1" value={form.min_distinct_recipes} onChange={set("min_distinct_recipes")} /></label>
+                <label className="field"><span>Part max. d'une recette α</span>
+                  <input type="number" min="0.05" max="1" step="0.05" value={form.max_share_per_recipe} onChange={set("max_share_per_recipe")} /></label>
+                <label className="field"><span>Domicile — latitude</span>
+                  <input type="number" step="0.0001" value={form.home_lat} onChange={set("home_lat")} /></label>
+                <label className="field"><span>Domicile — longitude</span>
+                  <input type="number" step="0.0001" value={form.home_lng} onChange={set("home_lng")} /></label>
+              </div>
+            </details>
+          </div>
+          <SaveBar saving={saving} error={error} onSave={save} />
+        </>
+      )}
     </section>
+  );
+}
+
+/** Barre d'action collante — visible sur Membres et Préférences puisque
+ *  les deux partagent le même appel api.updateHousehold et le même état de
+ *  formulaire ; Garde-manger a son propre bouton Enregistrer (PantryPanel),
+ *  indépendant. */
+function SaveBar(props: { saving: boolean; error: string | null; onSave: () => void }) {
+  return (
+    <div className="sticky-bar">
+      {props.error && <span className="callout error">{props.error}</span>}
+      <button className="action" onClick={props.onSave} disabled={props.saving}>
+        {props.saving ? "Enregistrement…" : "Enregistrer le profil"}
+      </button>
+    </div>
   );
 }

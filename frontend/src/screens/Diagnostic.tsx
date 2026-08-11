@@ -1,8 +1,10 @@
 import type { Plan, SolverConfigInput } from "../types";
 
-/** Écran 5 — Diagnostic (mode développeur) : le rapport complet et les
- *  drapeaux du SolverConfig modifiables. Outil de travail : exhaustif avant
- *  d'être joli (spec). */
+/** Écran 3 — Paramètres : pour l'instant, uniquement les fonctions
+ *  développeur (rapport complet + drapeaux du SolverConfig modifiables).
+ *  Outil de travail : exhaustif avant d'être joli (spec). Un vrai écran de
+ *  réglages utilisateur, distinct du mode développeur, reste un chantier
+ *  séparé. */
 
 const FLAGS: (keyof SolverConfigInput)[] = [
   "enable_multi_store", "enable_batch_fixed_cost", "enable_salvage",
@@ -31,7 +33,7 @@ export default function DiagnosticScreen(props: {
 
   return (
     <section>
-      <h2>Diagnostic <span className="sub">— mode développeur : on rallume un mécanisme à la fois</span></h2>
+      <h2>Paramètres <span className="sub">— mode développeur : on rallume un mécanisme à la fois</span></h2>
 
       <div className="card">
         <div className="flags">

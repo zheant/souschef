@@ -1,7 +1,7 @@
 // Client API typé — seule porte vers le back-end.
 
 import type {
-  Household, PantryLine, PantryPriority, PantryPromptLine, Plan,
+  Household, PantryLine, PantryPriority, Plan,
   RecipeIngredientLine, ReoptimizeResult, SolverConfigInput, Store,
 } from "./types";
 
@@ -48,8 +48,6 @@ export const api = {
         excluded_recipe_ids: excludedRecipeIds,
       }),
     }),
-  pantryPrompt: (planId: number) =>
-    req<PantryPromptLine[]>(`/api/plan/${planId}/pantry_prompt`),
   stores: () => req<Store[]>("/api/stores"),
   recipeIngredients: (recipeId: string) =>
     req<RecipeIngredientLine[]>(`/api/recipes/${recipeId}/ingredients`),

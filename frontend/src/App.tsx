@@ -2,23 +2,25 @@ import { useEffect, useState } from "react";
 import { api } from "./api";
 import type { Household, Plan, SolverConfigInput, Store } from "./types";
 import DiagnosticScreen from "./screens/Diagnostic";
-import GenerateScreen from "./screens/Generate";
 import HouseholdScreen from "./screens/Household";
-import PantryScreen from "./screens/Pantry";
-import ResultScreen from "./screens/Result";
+import PlanningScreen from "./screens/Planning";
 import "./styles.css";
 
-const TABS = ["Ménage", "Génération", "Résultat", "Garde-manger", "Diagnostic"] as const;
+// Trois onglets (pilote, docs/product-pilot.md) — fusion de ce qui était
+// cinq onglets séparés : Génération+Résultat -> Planification,
+// Ménage+Garde-manger -> Ménage (sous-onglets internes), Diagnostic ->
+// Paramètres (fonctions développeur, pour l'instant).
+const TABS = ["Planification", "Ménage", "Paramètres"] as const;
 type Tab = (typeof TABS)[number];
 
 // Défaut de développement (spec) : tout à false, un magasin, appétence en
-// objectif — on rallume un mécanisme à la fois depuis l'onglet Diagnostic.
+// objectif — on rallume un mécanisme à la fois depuis l'onglet Paramètres.
 const DEV_DEFAULT: SolverConfigInput = {
   appetence_mode: "objective", solver_time_limit_s: 120, mip_gap: 0.005,
 };
 
 export default function App() {
-  const [tab, setTab] = useState<Tab>("Ménage");
+  const [tab, setTab] = useState<Tab>("Planification");
   const [household, setHousehold] = useState<Household | null>(null);
   const [stores, setStores] = useState<Store[]>([]);
   const [plan, setPlan] = useState<Plan | null>(null);
@@ -52,18 +54,16 @@ export default function App() {
       {error && <p className="callout error" role="alert">{error} — l'API est-elle démarrée ?</p>}
       {!household && !error && <p className="muted"><span className="spin" aria-hidden />Chargement du profil…</p>}
 
+      {household && tab === "Planification" && (
+        <PlanningScreen
+          config={config} plan={plan} household={household} stores={stores}
+          onPlan={setPlan} onCommitted={refreshPlan}
+        />
+      )}
       {household && tab === "Ménage" && (
         <HouseholdScreen household={household} onSaved={setHousehold} />
       )}
-      {household && tab === "Génération" && (
-        <GenerateScreen config={config} onPlan={setPlan} goToResult={() => setTab("Résultat")} />
-      )}
-      {household && tab === "Résultat" && (
-        <ResultScreen plan={plan} household={household} stores={stores}
-          config={config} onCommitted={refreshPlan} />
-      )}
-      {household && tab === "Garde-manger" && <PantryScreen />}
-      {household && tab === "Diagnostic" && (
+      {household && tab === "Paramètres" && (
         <DiagnosticScreen config={config} setConfig={setConfig} plan={plan} />
       )}
     </div>

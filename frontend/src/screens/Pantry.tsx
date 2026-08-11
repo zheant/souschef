@@ -8,14 +8,20 @@ const PRIORITY_LABELS: Record<PantryPriority, string> = {
   must_use: "Doit être utilisé",
 };
 
-/** Écran 4 — Garde-manger : stock courant (g_i), édition manuelle, et
- *  périssables prioritaires ou obligatoires (pilote,
+/** Sous-section « Garde-manger » de l'écran Ménage : stock courant (g_i),
+ *  édition manuelle, et périssables prioritaires ou obligatoires (pilote,
  *  docs/product-pilot.md). La priorité change sur son propre appel API,
  *  immédiatement — endpoint volontairement séparé de l'enregistrement de
  *  quantité côté serveur (voir services/household.py::update_pantry) pour
  *  qu'un enregistrement de quantité ne réinitialise jamais un « doit être
- *  utilisé » déjà posé. */
-export default function PantryScreen() {
+ *  utilisé » déjà posé.
+ *
+ *  Sous-composant plutôt qu'écran de haut niveau depuis la fusion
+ *  Ménage/Garde-manger dans la navigation à 3 onglets — pas de <h2> propre,
+ *  le sous-onglet parent (Household.tsx) fait déjà ce travail ; garde son
+ *  propre bouton Enregistrer (appel API distinct de celui de Membres/
+ *  Préférences). */
+export function PantryPanel() {
   const [lines, setLines] = useState<{ id: string; qty: string; priority: PantryPriority }[]>([]);
   const [newId, setNewId] = useState("");
   const [newQty, setNewQty] = useState("0");
@@ -52,8 +58,10 @@ export default function PantryScreen() {
   }
 
   return (
-    <section>
-      <h2>Garde-manger <span className="sub">— reporté d'une exécution à l'autre par le commit</span></h2>
+    <>
+      <p className="muted" style={{ margin: "0 0 14px" }}>
+        Reporté d'une exécution à l'autre par le commit.
+      </p>
       <div className="card">
         <div className="table-scroll">
           <table className="ledger">
@@ -101,6 +109,6 @@ export default function PantryScreen() {
           {error && <span className="callout error">{error}</span>}
         </div>
       </div>
-    </section>
+    </>
   );
 }

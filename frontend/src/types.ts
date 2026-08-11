@@ -105,19 +105,6 @@ export interface ReoptimizeResult {
   changes: MenuChange | null;  // null si le nouveau plan est infaisable
 }
 
-// Confirmation du garde-manger en deux temps (pilote,
-// docs/product-pilot.md) — liste priorisée pour un plan précis, pas un
-// inventaire exhaustif.
-export interface PantryPromptLine {
-  canonical_ingredient_id: string;
-  name: string;
-  unit_kind: "mass" | "volume" | "count";
-  base_unit: string;
-  needed_quantity_base_unit: string;
-  perishability: string;
-  estimated_cost_cents: string;
-}
-
 export interface Store {
   external_key: string; banner: string; address: string;
   lat: number; lng: number; shopping_center_id: string | null;

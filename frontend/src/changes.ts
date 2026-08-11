@@ -1,8 +1,7 @@
 // Phrase d'explication après une réoptimisation (pilote,
 // docs/product-pilot.md : « Deux recettes ont été remplacées... et
-// économiser 4,80 $ »). Partagée entre Result.tsx (verrouillage/
-// remplacement) et Generate.tsx (confirmation du garde-manger) — les deux
-// passent par POST /api/plan/{id}/reoptimize et affichent la même phrase.
+// économiser 4,80 $ »). Utilisée par Result.tsx (verrouillage/
+// remplacement, POST /api/plan/{id}/reoptimize).
 
 import type { MenuChange } from "./types";
 

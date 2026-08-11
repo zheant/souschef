@@ -176,6 +176,15 @@ l'enchaînement verrou → réoptimiser → nouveau plan affiché.
 
 ## Pilote — confirmation du garde-manger en deux temps (2026-08-11)
 
+**Retirée depuis** (section « Implémentation mobile du reste de l'app »
+plus bas dans ce fichier) : ce mécanisme faisait double emploi avec
+« à acheter » dans la sous-catégorie garde-manger de la liste d'épicerie
+(tranche « Écran Résultat — refonte réelle ») — un mécanisme réactif
+(corriger après coup, une fois le menu déjà connu) a remplacé le
+mécanisme proactif décrit ci-dessous (déclarer avant même de voir le
+menu). Laissé ici tel quel comme trace de l'état au moment de cette
+session historique, même convention que D15/D18 plus haut.
+
 Deuxième tranche du pilote produit, construite sur la tranche précédente :
 génère d'abord un menu, propose une liste courte et priorisée d'ingrédients
 (`GET /api/plan/{id}/pantry_prompt`), laisse l'utilisateur répondre
@@ -524,6 +533,99 @@ terminée, en particulier le glissement tactile réel (testé ici seulement
 par la logique des événements pointeur, jamais au doigt), la bascule de
 la barre, le détail recette plein écran, et l'enchaînement marquer « à
 acheter » → Accepter → recharger le plan.
+
+## Implémentation mobile du reste de l'app — 3 onglets, piste A partout (2026-08-11)
+
+Dixième tranche : la structure de navigation à 5 onglets devient 3
+onglets (**Planification** / **Ménage** / **Paramètres**), et la piste
+visuelle A (papier chamois, encre brique, `Result.tsx`) devient le thème
+global de toute l'app plutôt que scopée à un seul écran — décision
+explicite de l'utilisateur (« étendre piste A partout maintenant »
+plutôt que « structure seulement »).
+
+- **Planification** (`screens/Planning.tsx`, nouveau, remplace
+  `Generate.tsx`) : orchestrateur mince entre la génération et le
+  résultat — bouton Générer seul au départ, puis rend `Result.tsx`
+  directement une fois un plan obtenu (ses sous-onglets « Cette semaine »/
+  « Épicerie » existaient déjà, exactement ce qui était demandé). Piège
+  identifié et évité : Génération et Résultat étaient deux onglets
+  distincts, donc toujours accessibles séparément ; fusionnés en un seul
+  écran qui affiche automatiquement le résultat dès qu'un plan existe,
+  il n'y avait plus moyen de revenir au formulaire pour un nouveau plan —
+  ajouté un bouton « ‹ Générer un nouveau plan » qui force l'affichage du
+  formulaire même quand `plan` est déjà présent.
+- **Confirmation du garde-manger en deux temps retirée** (décision de
+  l'utilisateur, pas une simplification silencieuse) : faisait double
+  emploi avec « à acheter » de la tranche précédente. Retrait complet,
+  pas un contournement — `services/planning.py::pantry_prompt`,
+  `PantryPromptLine`, les constantes `PANTRY_PROMPT_*`, la route `GET
+  /api/plan/{id}/pantry_prompt`, `PantryPromptLineOut`, et leurs
+  équivalents front-end (`api.pantryPrompt`, type `PantryPromptLine`)
+  sont supprimés, pas laissés en code mort. Le mécanisme sous-jacent
+  (stock déclaré + `enable_pantry_stock` réduisant les achats) reste
+  couvert par `test_commit_decrements_and_reports_to_pantry` et
+  `test_generate_plan_respects_must_use_pantry` — `reoptimize_plan` et
+  `generate_plan` partagent le même appel solveur/persistance, retirer le
+  test qui passait spécifiquement par `reoptimize` ne perd donc pas de
+  couverture réelle sur le mécanisme lui-même. `docs/product-pilot.md`
+  (le brief produit d'origine) **n'est pas modifié** — la divergence est
+  documentée ici, jamais dans le document source (même règle que pour
+  `docs/spec.md`, appliquée par analogie).
+- **Ménage** (`screens/Household.tsx`, réécrit) : trois sous-sections
+  (Garde-manger/Membres/Préférences) via un nouveau composant global
+  `.subnav`, réutilisable (généralisé depuis `.rp-segmented` de
+  `Result.tsx`). Les paramètres avancés (κ/ε/K/R_min/α/latitude/
+  longitude) rejoignent Préférences plutôt que Paramètres — décision
+  explicite de l'utilisateur : ce sont des réglages du ménage, pas des
+  outils de développement, même si ce sont des champs numériques exacts.
+  `screens/Pantry.tsx` exporte maintenant `PantryPanel` (sous-composant,
+  plus d'écran de haut niveau à lui seul) — logique interne inchangée,
+  garde son propre bouton Enregistrer (appel API distinct de celui de
+  Membres/Préférences, qui partagent un seul `api.updateHousehold` via
+  une nouvelle barre d'action collante globale `.sticky-bar`).
+- **Paramètres** (`screens/Diagnostic.tsx`) : renommage du titre
+  seulement (« Diagnostic » → « Paramètres »), aucun changement de
+  logique — « pour l'instant, les fonctions développement » (mot de
+  l'utilisateur), un vrai écran de réglages utilisateur reste un chantier
+  séparé, non commencé.
+- **Thème global** (`styles.css`) : les *valeurs* des jetons `:root`
+  changent (pas les noms — `--leek` reste `--leek` mais devient la
+  brique de la piste A, `--cranberry` devient un bordeaux plus sombre
+  pour rester visuellement distinct comme couleur de danger), `body`
+  passe en Georgia, `--mono` en Courier New, et `h2`/`.masthead h1`/
+  `nav.tabs button`/`button.action` gagnent le traitement « display »
+  (Arial condensé gras) déjà défini pour `.rp-disp` dans `Result.tsx` —
+  copié, pas réinventé. `.result-v2` et ses jetons `--rp-*` locaux ne
+  sont **pas** retirés : redondants avec `:root` maintenant, mais les
+  toucher pour « nettoyer » aurait été un risque de régression sur un
+  écran déjà vérifié en navigateur pour un gain cosmétique nul.
+
+**Hors périmètre, volontairement** : reconstruire les tables Membres/
+Garde-manger en cartes glissables façon `Result.tsx` — glisser une
+recette a un sens produit (Garder/Remplacer) que glisser une ligne de
+garde-manger n'a pas eu de demande explicite ; `.table-scroll` +
+empilement mobile (passe responsive) reste le traitement de ces tables.
+
+**Vérifié contre PostgreSQL réel** : **109/109 tests passés, 0 sauté**
+(112 avant ce chantier − 3 retirés avec `pantry_prompt`, aucun nouveau
+test ajouté — tranche de retrait/réorganisation, pas de nouvelle
+logique métier). `tsc -b`/`vite build` propres. `git status` confirme
+que seuls les fichiers listés ci-dessus ont changé côté backend.
+**Sondage en direct contre la pile de développement de l'utilisateur
+incomplet cette fois** : `GET /api/plan/{id}/pantry_prompt` répond
+encore 200 sur leur conteneur en cours d'exécution (openapi.json
+confirmé) — le processus `uvicorn --reload` de leur pile n'a
+apparemment pas rechargé ce changement précis, contrairement au sondage
+réussi de la tranche précédente. Un redémarrage (`docker compose up
+--build`) est nécessaire avant le test manuel. **Non vérifié** :
+interaction réelle dans un navigateur — aucun affichage disponible dans
+cette session. À faire manuellement après redémarrage : les 3 onglets,
+Planification (bouton → résultat direct, sans étape de confirmation
+garde-manger, et le nouveau bouton « Générer un nouveau plan » depuis un
+résultat déjà affiché), Ménage (bascule entre les 3 sous-sections,
+sauvegarde Membres/Préférences, garde-manger inchangé), Paramètres
+(drapeaux/rapport inchangés), et que le nouveau thème s'affiche
+correctement partout.
 
 ## Lancer / tester / seeder
 
