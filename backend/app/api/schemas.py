@@ -110,15 +110,6 @@ class PlanOut(BaseModel):
     diagnostic: dict
 
 
-class CommitRequest(BaseModel):
-    """``buy_instead_ids`` (pilote, docs/product-pilot.md) : ingrédients du
-    garde-manger marqués « à acheter » — résolus au magasin le moins cher
-    seulement à l'acceptation (voir ``services/planning.py::_apply_commit``).
-    Défaut vide : un appel sans corps continue de fonctionner."""
-
-    buy_instead_ids: list[str] = Field(default_factory=list)
-
-
 class ReoptimizeRequest(BaseModel):
     """Verrouillage/remplacement de recette (pilote, docs/product-pilot.md).
     ``locked_recipe_ids`` doivent appartenir au plan visé ; leurs portions

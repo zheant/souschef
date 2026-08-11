@@ -233,53 +233,19 @@ def test_pantry_lines_resolved_with_name_and_priority(db_session):
     assert Decimal(riz.quantity_base_unit) <= 100  # jamais plus que le stock déclaré
 
 
-def test_commit_with_buy_instead_picks_cheapest_product_and_spares_stock(db_session):
-    """Test discriminant : riz a deux produits au jouet à des prix par unité
-    de base différents (riz_1kg = 0,30 ¢/g, riz_400g = 0,45 ¢/g) — la
-    résolution doit choisir riz_1kg, pas le premier trouvé. Construit un
-    ``Plan`` directement (pas via le solveur) pour isoler la comptabilité de
-    ``_apply_commit`` de la décision d'optimisation elle-même — même esprit
-    que les tests synthétiques de ``test_solver_toy.py``."""
-    from app.models import Plan, PlanStatus
-
-    household.update_pantry(
-        db_session, PROFILE_ID,
-        [{"canonical_ingredient_id": "riz", "quantity_base_unit": 100}],
-    )
-    plan = Plan(
-        household_profile_id=PROFILE_ID, status=PlanStatus.proposed,
-        on_date=ON, solver_status="Optimal",
-        config={"enable_pantry_stock": True},
-        servings={}, cooked={}, purchases=[],
-        ingredient_needs={"riz": "100"},
-        stores_visited=[], diagnostic={},
-    )
-    db_session.add(plan)
-    db_session.flush()
-
-    result = planning.commit_plan(
-        db_session, PROFILE_ID, plan.id, frozenset({"riz"})
-    )
-    assert result.status == "committed"
-    # « à acheter » force consommé=0 : 100 (stock, inchangé) + 1000 (le
-    # paquet riz_1kg acheté) − 100 (besoin) = 1000 — le stock déclaré n'est
-    # jamais décrémenté pour un ingrédient que l'utilisateur dit ne pas avoir.
-    assert Decimal(result.pantry_after_commit["riz"]) == Decimal(1000)
-
-    fetched = planning.get_plan(db_session, PROFILE_ID, plan.id)
-    lines = [l for g in fetched.grocery_list_by_store for l in g["lines"]]
-    assert len(lines) == 1
-    assert lines[0]["product_external_key"] == "riz_1kg"  # le moins cher, pas riz_400g
-    assert Decimal(lines[0]["taxed_total_cents_cad"]) == Decimal("300.00")
-
-
-def test_commit_buy_instead_rejects_unknown_ingredient(db_session):
+def test_reoptimize_rejects_an_already_committed_plan(db_session):
+    """Une fois accepté, le menu ne doit plus pouvoir changer — sinon le
+    stock du garde-manger déjà ajusté pour ce menu se désynchronise
+    silencieusement du nouveau menu."""
     view = planning.generate_plan(
-        db_session, PROFILE_ID, ON, SolverConfig(), PulpMenuSolver()
+        db_session, PROFILE_ID, ON, SolverConfig(**ALL_ON), PulpMenuSolver()
     )
-    with pytest.raises(planning.UnknownBuyInsteadIngredientError):
-        planning.commit_plan(
-            db_session, PROFILE_ID, view.id, frozenset({"ingredient_inexistant"})
+    planning.commit_plan(db_session, PROFILE_ID, view.id)
+    rid = view.menu[0].recipe_id
+    with pytest.raises(planning.PlanAlreadyCommittedError):
+        planning.reoptimize_plan(
+            db_session, PROFILE_ID, view.id,
+            frozenset(), frozenset({rid}), SolverConfig(**ALL_ON), PulpMenuSolver(),
         )
 
 

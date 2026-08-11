@@ -163,23 +163,15 @@ def get_plan(
 @router.post("/plan/{plan_id}/commit")
 def post_commit(
     plan_id: int,
-    body: schemas.CommitRequest = schemas.CommitRequest(),
     session: Session = Depends(get_session),
     profile_id: str = Depends(get_profile_id),
 ):
     try:
-        result = planning.commit_plan(
-            session, profile_id, plan_id, frozenset(body.buy_instead_ids)
-        )
+        result = planning.commit_plan(session, profile_id, plan_id)
     except planning.PlanNotFound as exc:
         raise HTTPException(404, str(exc)) from exc
     except planning.PlanNotCommittable as exc:
         raise HTTPException(409, str(exc)) from exc
-    except (
-        planning.NoProductForIngredientError,
-        planning.UnknownBuyInsteadIngredientError,
-    ) as exc:
-        raise HTTPException(422, str(exc)) from exc
     return {"plan_id": result.plan_id, "status": result.status,
             "pantry_after_commit": result.pantry_after_commit}
 
@@ -207,6 +199,8 @@ def post_reoptimize(
         raise HTTPException(404, str(exc)) from exc
     except planning.RecipeNotInPlanError as exc:
         raise HTTPException(404, str(exc)) from exc
+    except planning.PlanAlreadyCommittedError as exc:
+        raise HTTPException(409, str(exc)) from exc
     except (
         planning.RecipeNotLockableError, planning.ConflictingRecipeSelectionError,
         planning.PantryIngredientNotUsableError,

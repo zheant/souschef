@@ -143,6 +143,7 @@ export default function ResultScreen(props: {
   const [ingredientsError, setIngredientsError] = useState<string | null>(null);
 
   const [buyInsteadIds, setBuyInsteadIds] = useState<Set<string>>(new Set());
+  const [fixRecipes, setFixRecipes] = useState(true);
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [accepted, setAccepted] = useState(false);
   const [committing, setCommitting] = useState(false);
@@ -152,6 +153,7 @@ export default function ResultScreen(props: {
   // survit à un plan différent — même motif que les tranches précédentes.
   useEffect(() => {
     setBuyInsteadIds(new Set());
+    setFixRecipes(true);
     setChecked({});
     setAccepted(plan?.status === "committed");
     setBarDetailed(false);
@@ -188,11 +190,13 @@ export default function ResultScreen(props: {
     ? TERM_LABELS.reduce((s, [k]) => s + Math.abs(Number(t[k])), 0) || 1
     : 1;
 
-  async function callReoptimize(lockedRecipeIds: string[], excludedRecipeIds: string[]) {
+  async function callReoptimize(
+    lockedRecipeIds: string[], excludedRecipeIds: string[], configOverride?: SolverConfigInput
+  ) {
     setReoptimizing(true); setReoptimizeError(null); setReoptimizeMsg(null);
     try {
       const r = await api.reoptimizePlan(
-        currentPlan.id, props.config, lockedRecipeIds, excludedRecipeIds
+        currentPlan.id, configOverride ?? props.config, lockedRecipeIds, excludedRecipeIds
       );
       if (r.changes) {
         setReoptimizeMsg(describeChanges(r.changes));
@@ -234,6 +238,27 @@ export default function ResultScreen(props: {
     });
   }
 
+  /** « Replanifier » (pilote, docs/product-pilot.md) : corrige réellement
+   *  le garde-manger (met les ingrédients marqués « à acheter » à 0 dans
+   *  pantry_stock — pas seulement au commit) puis relance une vraie
+   *  réoptimisation. Remplace une tentative précédente qui recalculait un
+   *  achat de remplacement au moment d'accepter — fragile en pratique
+   *  (double-achat, quantités qui ne collaient jamais à ce qu'un panier
+   *  optimal aurait choisi). Laisser le solveur décider, comme pour
+   *  Remplacer, est la version solide. */
+  async function replan() {
+    try {
+      await api.updatePantry(
+        [...buyInsteadIds].map((id) => ({ canonical_ingredient_id: id, quantity_base_unit: 0 }))
+      );
+    } catch (e) {
+      setReoptimizeError(String(e));
+      return;
+    }
+    const lockedRecipeIds = fixRecipes ? currentPlan.menu.map((m) => m.recipe_id) : [];
+    await callReoptimize(lockedRecipeIds, [], { ...props.config, enable_pantry_stock: true });
+  }
+
   function toggleChecked(key: string) {
     if (!accepted) return;
     setChecked((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -242,7 +267,7 @@ export default function ResultScreen(props: {
   async function accept() {
     setCommitting(true); setCommitError(null);
     try {
-      await api.commitPlan(currentPlan.id, [...buyInsteadIds]);
+      await api.commitPlan(currentPlan.id);
       setAccepted(true);
       props.onCommitted(currentPlan.id);
     } catch (e) {
@@ -331,6 +356,13 @@ export default function ResultScreen(props: {
 
           <div style={{ height: 8 }} />
 
+          {accepted && (
+            <p className="rp-accept-note">
+              Menu verrouillé — plan déjà accepté, le stock du garde-manger a
+              été ajusté en fonction de ce menu.
+            </p>
+          )}
+
           {currentPlan.menu.map((m) => (
             <SwipeRow
               key={m.recipe_id}
@@ -341,14 +373,14 @@ export default function ResultScreen(props: {
                 <>
                   <button
                     className="rp-keep"
-                    disabled={reoptimizing}
+                    disabled={reoptimizing || accepted}
                     onClick={(e) => { e.stopPropagation(); close(); }}
                   >
                     Garder
                   </button>
                   <button
                     className="rp-replace"
-                    disabled={reoptimizing}
+                    disabled={reoptimizing || accepted}
                     onClick={(e) => { e.stopPropagation(); replace(m.recipe_id); }}
                   >
                     {replacingId === m.recipe_id ? "…" : "Remplacer"}
@@ -367,9 +399,6 @@ export default function ResultScreen(props: {
               </div>
             </SwipeRow>
           ))}
-
-          {reoptimizeMsg && <p className="callout" style={{ margin: "10px 16px" }}>{reoptimizeMsg}</p>}
-          {reoptimizeError && <p className="callout error" style={{ margin: "10px 16px" }}>{reoptimizeError}</p>}
         </>
       )}
 
@@ -400,6 +429,26 @@ export default function ResultScreen(props: {
                 ))}
               </div>
             </>
+          )}
+
+          {buyInsteadIds.size > 0 && !accepted && (
+            <div className="rp-store rp-replan">
+              <p className="rp-replan-note">
+                {buyInsteadIds.size} ingrédient{buyInsteadIds.size > 1 ? "s" : ""} marqué
+                {buyInsteadIds.size > 1 ? "s" : ""} « à acheter » — le garde-manger sera mis
+                à 0 pour {buyInsteadIds.size > 1 ? "eux" : "lui"} et le plan sera réoptimisé.
+              </p>
+              <label className="rp-replan-check">
+                <input
+                  type="checkbox" checked={fixRecipes}
+                  onChange={(e) => setFixRecipes(e.target.checked)}
+                />
+                Fixer les recettes de la semaine
+              </label>
+              <button className="rp-replan-btn" onClick={replan} disabled={reoptimizing}>
+                {reoptimizing ? "Replanification…" : "Replanifier"}
+              </button>
+            </div>
           )}
 
           <div className="rp-section-label">Épicerie</div>
@@ -446,6 +495,9 @@ export default function ResultScreen(props: {
           })}
         </>
       )}
+
+      {reoptimizeMsg && <p className="callout" style={{ margin: "10px 16px" }}>{reoptimizeMsg}</p>}
+      {reoptimizeError && <p className="callout error" style={{ margin: "10px 16px" }}>{reoptimizeError}</p>}
 
       <div className="rp-cta-bar">
         <span className="rp-cta-count">

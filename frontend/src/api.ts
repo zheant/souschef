@@ -31,11 +31,9 @@ export const api = {
   createPlan: (config: SolverConfigInput) =>
     req<Plan>("/api/plan", { method: "POST", body: JSON.stringify({ config }) }),
   getPlan: (id: number) => req<Plan>(`/api/plan/${id}`),
-  commitPlan: (id: number, buyInsteadIds: string[] = []) =>
+  commitPlan: (id: number) =>
     req<{ plan_id: number; status: string; pantry_after_commit: Record<string, string> }>(
-      `/api/plan/${id}/commit`, {
-        method: "POST", body: JSON.stringify({ buy_instead_ids: buyInsteadIds }),
-      }),
+      `/api/plan/${id}/commit`, { method: "POST" }),
   reoptimizePlan: (
     id: number, config: SolverConfigInput,
     lockedRecipeIds: string[], excludedRecipeIds: string[],

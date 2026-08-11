@@ -490,15 +490,122 @@ thème « registre d'épicerie » existant partout ailleurs pour l'instant).
   ajout de cette tranche est `_plan_pantry_lines` (nouveau), qui résout
   enfin `diagnostic.pantry_consumed_by_ingredient` (id → quantité,
   existait depuis l'étape 5) en nom — jamais fait nulle part avant.
-- **Limite connue, assumée** : après un commit avec `buy_instead_ids`, le
-  `diagnostic` persisté (donc `pantry_lines` à la relecture) n'est **pas**
-  recalculé — il reste un instantané de la résolution d'origine, qui
-  listera encore l'ingrédient comme « consommé du garde-manger » même s'il
-  vient d'être basculé vers un achat réel. La comptabilité réelle (stock
-  non décrémenté, ligne d'achat ajoutée) est correcte ; seul l'affichage
-  du garde-manger, si on rouvre l'onglet Épicerie après coup, peut
-  sembler périmé. Corriger ça demanderait de régénérer le diagnostic au
-  commit, hors périmètre de cette tranche.
+- **Bug trouvé et corrigé après coup (2026-08-11, question directe de
+  l'utilisateur)** : la phrase ci-dessous affirmait « la comptabilité
+  réelle est correcte » — elle ne l'était qu'à moitié. `_apply_commit`
+  forçait bien `consommé=0` pour un ingrédient « à acheter » (le stock
+  n'était pas décrémenté), mais le calcul du nouveau stock partait quand
+  même de l'ancienne quantité déclarée (`qty = stock_déclaré + (acheté −
+  besoin)`) — si le ménage avait déclaré à tort 500 g d'un ingrédient
+  qu'il marque ensuite « à acheter », les 500 g fautifs survivaient tels
+  quels après le commit, avec le reliquat du nouvel achat ajouté par-dessus.
+  L'utilisateur a demandé explicitement : « il faudrait mettre la quantité
+  à 0 ». Corrigé — `stock` est maintenant traité comme 0 (pas seulement
+  `consommé`) pour ces ingrédients dans `_apply_commit` ; le nouveau
+  stock devient `0 + (acheté − besoin)`, c'est-à-dire uniquement le
+  reliquat du paquet réellement acheté cette fois, jamais l'ancienne
+  valeur fausse. Test `test_commit_with_buy_instead_picks_cheapest_product_and_spares_stock`
+  renforcé avec une valeur de stock initial délibérément fausse et
+  distinctive (500 g) pour prouver qu'elle est écartée, pas seulement
+  « non décrémentée » — **109/109 tests passés** après correction.
+- **Limite restante, assumée** : après un commit avec `buy_instead_ids`,
+  le `diagnostic` persisté (donc `pantry_lines` à la relecture) n'est
+  **pas** recalculé — il reste un instantané de la résolution d'origine,
+  qui listera encore l'ingrédient comme « consommé du garde-manger » même
+  s'il vient d'être basculé vers un achat réel. Seul l'affichage du
+  garde-manger, si on rouvre l'onglet Épicerie après coup, peut sembler
+  périmé — la comptabilité réelle de `pantry_stock`, elle, est maintenant
+  correcte (voir ci-dessus). Corriger l'affichage demanderait de
+  régénérer le diagnostic au commit, hors périmètre.
+- **Deuxième bug trouvé et corrigé (2026-08-11, test réel de
+  l'utilisateur — « pourquoi acheter 2×1 L de bouillon ? »)** : la
+  quantité résolue pour un ingrédient « à acheter » était
+  `plan.ingredient_needs[iid]`, le **besoin total** du plan pour cet
+  ingrédient — pas ce qui manquait réellement. Si le plan achetait déjà
+  une partie de l'ingrédient normalement (le complément au-delà de ce que
+  le garde-manger était censé couvrir), « à acheter » rachetait le besoin
+  entier par-dessus, doublant l'achat. Corrigé : nouvelle fonction
+  `_purchased_by_ingredient` calcule ce qui est déjà dans
+  `plan.purchases` **avant** d'ajouter les lignes de remplacement ;
+  seul le manque (`besoin_total − déjà_acheté`, jamais négatif) est
+  acheté en plus, arrondi en paquets entiers du produit le moins cher.
+  Nouveau test discriminant
+  `test_commit_buy_instead_does_not_rebuy_what_is_already_in_the_grocery_list`
+  (400 g déjà achetés, besoin 500 g → seulement 100 g de plus, pas 500 g
+  par-dessus). Le contrôle de validité de `buy_instead_ids` change aussi
+  de base : il vérifie maintenant l'appartenance à
+  `diagnostic.pantry_consumed_by_ingredient` (ce qui apparaît réellement
+  dans « Garde-manger — à récupérer ») plutôt qu'à `ingredient_needs`
+  (tout ingrédient du plan, y compris ceux jamais destinés à venir du
+  garde-manger) — plus fidèle à ce que l'écran propose réellement de
+  marquer.
+- **Troisième correctif, demandé dans la même session** : une fois un
+  plan accepté, ses recettes ne peuvent plus être remplacées —
+  `reoptimize_plan` lève `PlanAlreadyCommittedError` (409) si
+  `previous.status == PlanStatus.committed`, avant même de toucher le
+  solveur. Sans ce garde-fou, remplacer une recette après acceptation
+  produirait un nouveau plan dont le menu ne correspond plus à ce que la
+  comptabilité de `pantry_stock`/achats a déjà enregistré comme
+  définitif — désynchronisation silencieuse entre le stock réel et le
+  menu affiché. Boutons Garder/Remplacer désactivés côté front-end
+  (`Result.tsx`, `disabled={reoptimizing || accepted}`) avec une note
+  explicative (« Menu verrouillé — plan déjà accepté ») — le 409 côté
+  serveur reste la garantie réelle, le front-end n'est qu'une prévention
+  d'UX.
+- **Vérifié contre PostgreSQL réel après ces trois correctifs** :
+  **112/112 tests passés, 0 sauté** (109 avant cette session + 3
+  nouveaux). `tsc -b`/`vite build` propres.
+
+**Pivot architectural (même session, après un nouveau test réel — « ça ne
+fonctionne toujours pas, des ingrédients restent dans la liste
+d'épicerie »)** : le mécanisme de correction du garde-manger « à
+acheter » au moment du commit (les deux correctifs ci-dessus) est
+**retiré entièrement**, pas re-corrigé une troisième fois. Décision de
+l'utilisateur, après avoir vu la deuxième panne : résoudre un achat de
+remplacement après coup, avec une heuristique séparée
+(`_cheapest_purchase_for_ingredient`), s'est avéré structurellement
+fragile — deux bugs réels trouvés en test manuel en une seule session,
+chacun corrigé en ajoutant une couche de calcul supplémentaire par-dessus
+la précédente. Plutôt que d'empiler un troisième correctif, la
+correction se fait maintenant **avant** la résolution, avec le vrai
+solveur :
+
+- Marquer un ingrédient « à acheter » reste un état local (React,
+  `buyInsteadIds`) — inchangé.
+- Un nouveau bouton **« Replanifier »** (visible dès qu'au moins un
+  ingrédient est marqué, tant que le plan n'est pas accepté) apparaît
+  avec une case à cocher **« Fixer les recettes de la semaine »**
+  (cochée par défaut — même défaut que « Remplacer » : ne pas changer le
+  menu sans qu'on le demande explicitement).
+- Au clic : `PUT /api/pantry` met réellement `pantry_stock` à 0 pour
+  le(s) ingrédient(s) marqué(s) (persisté immédiatement, pas différé au
+  commit), puis `POST /api/plan/{id}/reoptimize` est appelé avec
+  `enable_pantry_stock: true` et, si la case est cochée,
+  `locked_recipe_ids` = toutes les recettes du plan courant (sinon
+  liste vide — réoptimisation libre). C'est le solveur, pas une
+  heuristique séparée, qui décide alors du panier réellement optimal —
+  le même mécanisme déjà éprouvé pour « Remplacer ».
+- **Retiré du backend** : `_cheapest_purchase_for_ingredient`,
+  `NoProductForIngredientError`, `UnknownBuyInsteadIngredientError`, le
+  paramètre `buy_instead_ids` de `commit_plan`/`_apply_commit`,
+  `CommitRequest` (schéma). `commit_plan`/`POST /api/plan/{id}/commit`
+  redeviennent sans paramètre, comme avant l'introduction de « à
+  acheter ». `_purchased_by_ingredient` (le calcul factoré de la
+  quantité déjà achetée par ingrédient) est **conservé** — c'est un
+  nettoyage de `_apply_commit` indépendant du mécanisme retiré. Les 3
+  tests spécifiques à l'ancien mécanisme sont supprimés (pas laissés en
+  l'état) ; le test de `pantry_lines` (toujours valide, sans rapport
+  avec le retrait) est conservé séparément.
+- `PlanAlreadyCommittedError`/le verrouillage du menu après acceptation
+  (troisième correctif ci-dessus) **reste inchangé** — toujours
+  nécessaire, `Replanifier` appelle le même `reoptimize_plan` désormais
+  gardé.
+- **Vérifié contre PostgreSQL réel** : **109/109 tests passés, 0
+  sauté** (112 − 3 retirés avec le mécanisme, aucun nouveau test —
+  tranche de retrait/redirection vers un mécanisme déjà testé, pas de
+  nouvelle logique métier côté solveur). `tsc -b`/`vite build` propres.
+  **Non vérifié** : interaction réelle en navigateur — aucun affichage
+  disponible dans cette session.
 - **Photos de recette : dégradés de couleur dérivés de l'id**, pas de
   vraies photos — aucune source d'images n'existe dans le modèle de
   données. Chantier de données séparé, pas une question de disposition
@@ -626,6 +733,48 @@ résultat déjà affiché), Ménage (bascule entre les 3 sous-sections,
 sauvegarde Membres/Préférences, garde-manger inchangé), Paramètres
 (drapeaux/rapport inchangés), et que le nouveau thème s'affiche
 correctement partout.
+
+## Nettoyage — code mort (2026-08-11)
+
+Audit demandé explicitement par l'utilisateur (« parcourir l'entièreté du
+codebase et retirer toutes les fonctions inutiles »), rapport présenté et
+approuvé avant toute suppression. Conclusion principale : **le backend
+n'a aucune fonction morte** (156 définitions passées en revue, grep de
+chaque nom dans tout le dépôt — tout ce qui semblait sans appelant est en
+fait une route FastAPI, un validateur Pydantic, ou une implémentation
+injectée délibérément substituable) et **le frontend non plus**
+(`tsc --noUnusedLocals --noUnusedParameters` ne relève rien). Le seul
+gisement réel était du **CSS mort** — des styles jamais nettoyés après
+que les écrans qui les utilisaient aient été remplacés :
+
+- `.decomp` et ses 9 sous-règles + son override en media query — l'ancienne
+  barre de décomposition en 5 termes, remplacée par `.rp-bigbar`/
+  `.rp-splitbar` lors de la refonte mobile de l'écran Résultat.
+- `.checklist` (3 règles) — l'ancienne vue « liste à cocher », remplacée
+  par `.rp-item`.
+- `.badge.promo` — remplacée par `.rp-promo-badge`.
+- `button.danger` — jamais câblée à un bouton nulle part (aucune action
+  destructive n'existe dans l'app).
+- `.rp-disp`/`.rp-mono` — utilitaires créés pendant la refonte piste A,
+  jamais appliqués via `className`.
+
+Retirées (~17 règles). Vérifié par script (chaque classe CSS vs. chaque
+`className` du code, aucune classe orpheline restante) puis par
+`tsc -b`/`vite build` propres — bundle CSS 14,85 kB → 13,61 kB.
+
+Cinq fonctions longues (`reoptimize_plan`, `_grocery_list`,
+`_apply_commit`, `_build_result`, `_objective_terms`) ont été identifiées
+comme candidates à la simplification puis **délibérément écartées** :
+leur longueur reflète la complexité réelle du domaine (comptabilité
+garde-manger, décomposition en 5 termes, résolution multi-magasin) et
+plusieurs touchent directement la section « INVARIANTS — ne jamais
+simplifier » plus haut dans ce fichier — aucune simplification proposée
+sans la confiance qu'elle préserve la correction.
+
+En cours de route : une affirmation périmée dans « Évaluation franche »
+(un `print()` de debug jamais retiré de `demand.py`) s'est révélée
+inexacte — corrigée (voir plus haut), avec sa mention dans « Leçon de
+méthode » annotée en conséquence plutôt que réécrite.
 
 ## Lancer / tester / seeder
 
@@ -887,11 +1036,14 @@ avec ses conséquences propagées listées explicitement (assertion 6, capacité
 Big-M) plutôt que corrigées en silence ailleurs.
 
 **Fragile ou limite.**
-- Le `print()` de debug dans `demand.py` (toujours présent, non corrigé —
-  hors mandat de cette session) est le genre de chose qui aurait dû être
-  attrapée par une revue avant l'étape 5 — ce n'est pas grave en soi, mais
-  c'est un signal que le dernier passage sur les services de base (avant que
-  le solveur et l'API ne s'en emparent) n'a pas été relu ligne à ligne.
+- ~~Le `print()` de debug dans `demand.py`~~ — **affirmation périmée,
+  corrigée le 2026-08-11** : un audit dédié (grep systématique + historique
+  git complet du fichier) n'a trouvé aucune trace d'un `print()` dans
+  `demand.py`, ni aujourd'hui ni à aucun commit passé. L'affirmation
+  ci-dessus semble avoir été inexacte dès l'origine, pas « depuis corrigée
+  en silence ». Laissée biffée ici plutôt que supprimée, pour ne pas
+  effacer la trace de l'erreur — voir aussi la « Leçon de méthode »
+  plus bas, qui citait ce même exemple.
 - `pip install -e .` était cassé (corrigé en D14) et contredisait directement
   le README censé le documenter. Personne n'avait testé le chemin « sans
   Docker » tel qu'il était écrit — seul le chemin Docker (qui contourne le
@@ -942,7 +1094,10 @@ corrobore la leçon de méthode ci-dessous plutôt que de la contredire.
 
 ## Leçon de méthode pour les sessions futures
 
-Le `print()` de debug dans `demand.py` et le `pyproject.toml` cassé ont tous
+Le `print()` de debug dans `demand.py` (affirmation qui s'est révélée
+elle-même périmée le 2026-08-11 — voir « Évaluation franche » ci-dessus ;
+la leçon de méthode reste valable, l'exemple précis, lui, ne l'était pas)
+et le `pyproject.toml` cassé (celui-là bien réel, corrigé en D14) ont tous
 les deux survécu à 64 tests verts — aucun des deux n'a jamais fait échouer
 la moindre assertion. Ce n'est pas une coïncidence : `pytest` s'exécute
 toujours depuis `backend/` avec le code source déjà sur `sys.path`, donc la

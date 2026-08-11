@@ -23,7 +23,6 @@ pénalité de répétition du scoring d'appétence.
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
@@ -76,14 +75,12 @@ class ConflictingRecipeSelectionError(ValueError):
     """Une recette à la fois verrouillée et exclue (l'API traduit en 422)."""
 
 
-class NoProductForIngredientError(ValueError):
-    """Aucun produit ne couvre cet ingrédient — impossible de le marquer
-    « à acheter » (l'API traduit en 422)."""
-
-
-class UnknownBuyInsteadIngredientError(ValueError):
-    """Un ingrédient marqué « à acheter » n'apparaît pas dans les besoins de
-    ce plan (l'API traduit en 422)."""
+class PlanAlreadyCommittedError(ValueError):
+    """Un plan déjà commis ne peut plus être réoptimisé (verrouiller/
+    remplacer une recette) — le stock du garde-manger et les achats ont
+    déjà été ajustés pour le menu tel qu'accepté ; le modifier après coup
+    désynchroniserait cette comptabilité du menu réellement suivi (l'API
+    traduit en 409)."""
 
 
 @dataclass(frozen=True)
@@ -196,6 +193,10 @@ def reoptimize_plan(
     ensembles différemment — pas à ce module.
     """
     previous = _load_owned_plan(session, profile_id, plan_id)
+    if previous.status == PlanStatus.committed:
+        raise PlanAlreadyCommittedError(
+            f"Plan {plan_id} déjà commis : le menu ne peut plus être modifié."
+        )
 
     if not locked_recipe_ids <= previous.servings.keys():
         missing = locked_recipe_ids - previous.servings.keys()
@@ -268,18 +269,9 @@ def get_plan(session: Session, profile_id: str, plan_id: int) -> PlanView:
     return _plan_view(session, _load_owned_plan(session, profile_id, plan_id))
 
 
-def commit_plan(
-    session: Session,
-    profile_id: str,
-    plan_id: int,
-    buy_instead_ids: frozenset[str] = frozenset(),
-) -> CommitResult:
-    """``buy_instead_ids`` (pilote, docs/product-pilot.md) : ingrédients que
-    l'utilisateur a marqués « à acheter » dans le garde-manger (l'app
-    présumait à tort qu'il les avait) — résolus au magasin le moins cher
-    seulement ici, à l'acceptation, jamais avant (voir ``_apply_commit``)."""
+def commit_plan(session: Session, profile_id: str, plan_id: int) -> CommitResult:
     plan = _load_owned_plan(session, profile_id, plan_id)
-    new_stock = _apply_commit(session, plan, buy_instead_ids)
+    new_stock = _apply_commit(session, plan)
     return CommitResult(
         plan_id=plan.id, status=plan.status.value, pantry_after_commit=new_stock
     )
@@ -549,55 +541,6 @@ def _grocery_list(session: Session, plan: Plan) -> list[dict]:
     ]
 
 
-def _cheapest_purchase_for_ingredient(
-    problem, iid: str, need_base_unit: Decimal
-) -> dict:
-    """Résout le produit/magasin le moins cher pour combler ``need_base_unit``
-    de ``iid`` — même critère que ``validation.py::min_taxed_price_per_base_unit``
-    (assertion 1), mais conserve l'identité du produit/magasin gagnant au lieu
-    de ne garder que le prix. Retourne un dict au **même schéma** que les
-    lignes de ``plan.purchases`` (voir ``_persist_plan`` ci-dessus) : aucun
-    format supplémentaire à gérer en aval (``_grocery_list`` le lit tel quel).
-    """
-    products_by_id = {p.id: p for p in problem.products}
-    stores_by_id = {s.id: s for s in problem.stores}
-    best = None  # (prix taxé par unité de base, PriceData)
-    for price in problem.prices:
-        prod = products_by_id[price.product_id]
-        if prod.canonical_ingredient_id != iid:
-            continue
-        per_unit = (
-            Decimal(price.price_cents_cad)
-            * (1 + prod.tax_rate)
-            / prod.package_qty_in_base_unit
-        )
-        if best is None or per_unit < best[0]:
-            best = (per_unit, price)
-    if best is None:
-        raise NoProductForIngredientError(
-            f"Aucun produit ne couvre l'ingrédient '{iid}' — impossible de "
-            "le marquer « à acheter »."
-        )
-    _, price = best
-    prod = products_by_id[price.product_id]
-    store = stores_by_id[price.store_id]
-    units = int(math.ceil(need_base_unit / prod.package_qty_in_base_unit))
-    taxed_total = (
-        Decimal(price.price_cents_cad) * units * (1 + prod.tax_rate)
-    ).quantize(Decimal("0.01"))
-    return {
-        "product_id": prod.id,
-        "product_external_key": prod.external_key,
-        "store_id": store.id,
-        "store_external_key": store.external_key,
-        "units": units,
-        "unit_price_cents_cad": price.price_cents_cad,
-        "taxed_total_cents_cad": str(taxed_total),
-        "is_promo": price.is_promo,
-        "regular_price_cents_cad": price.regular_price_cents_cad,
-    }
-
-
 def _plan_pantry_lines(session: Session, plan: Plan) -> list[PlanPantryLine]:
     """Garde-manger itemisé (pilote, docs/product-pilot.md) : joint
     ``diagnostic.pantry_consumed_by_ingredient`` (id → quantité/valeur,
@@ -639,9 +582,35 @@ def _plan_pantry_lines(session: Session, plan: Plan) -> list[PlanPantryLine]:
     ]
 
 
-def _apply_commit(
-    session: Session, plan: Plan, buy_instead_ids: frozenset[str] = frozenset()
-) -> dict[str, str]:
+def _purchased_by_ingredient(
+    session: Session, purchases: list[dict]
+) -> dict[str, Decimal]:
+    """Quantité totale déjà achetée par ingrédient canonique (base_unit),
+    depuis des lignes d'achat sérialisées — factoré parce que
+    ``_apply_commit`` en a besoin deux fois : une fois avant d'ajouter les
+    lignes « à acheter » (pour calculer ce qui manque réellement), une fois
+    après (pour la comptabilité finale du stock)."""
+    if not purchases:
+        return {}
+    products = {
+        p.id: p
+        for p in session.scalars(
+            select(Product).where(
+                Product.id.in_({l["product_id"] for l in purchases})
+            )
+        )
+    }
+    result: dict[str, Decimal] = {}
+    for line in purchases:
+        prod = products[line["product_id"]]
+        result[prod.canonical_ingredient_id] = (
+            result.get(prod.canonical_ingredient_id, Decimal(0))
+            + prod.package_qty_in_base_unit * line["units"]
+        )
+    return result
+
+
+def _apply_commit(session: Session, plan: Plan) -> dict[str, str]:
     """Décrémente le stock consommé et reporte les restes vers pantry_stock.
 
     Comptabilité par ingrédient (déterministe depuis les données figées du
@@ -651,12 +620,16 @@ def _apply_commit(
     exactement le w_i du solveur quand la récupération était active — c'est ce
     report qui rend σ_i honnête : la valeur résiduelle promise est réalisée.
 
-    ``buy_instead_ids`` court-circuite ce calcul pour les ingrédients que
-    l'utilisateur a explicitement marqués « à acheter » (pilote,
-    docs/product-pilot.md) : une ligne d'achat réelle (magasin le moins cher)
-    est ajoutée à ``plan.purchases`` et ``consommé`` est forcé à 0 pour eux,
-    quel que soit ``enable_pantry_stock`` — l'utilisateur dit explicitement ne
-    pas avoir cet ingrédient, le stock réel ne doit pas être décrémenté.
+    Correction d'un ingrédient déclaré à tort au garde-manger (« à
+    acheter ») : ce n'est **plus** géré ici. Une tentative de le corriger au
+    moment du commit (résoudre un achat de remplacement après coup) s'est
+    avérée fragile en pratique — double-achat, quantités qui ne collaient
+    jamais exactement à ce qu'un vrai panier optimal aurait choisi. La bonne
+    correction, plus solide, se fait *avant* le commit : mettre
+    ``pantry_stock`` à 0 pour l'ingrédient concerné puis relancer une vraie
+    réoptimisation (``reoptimize_plan``) — le solveur, pas une heuristique
+    séparée, décide alors du panier réellement optimal. Voir Result.tsx
+    (« Replanifier ») et CLAUDE.md pour l'historique de cette décision.
     """
     if plan.status != PlanStatus.proposed:
         raise PlanNotCommittable(f"Plan {plan.id} déjà '{plan.status.value}'.")
@@ -665,39 +638,7 @@ def _apply_commit(
             f"Plan {plan.id} non commis : statut solveur '{plan.solver_status}'."
         )
 
-    if buy_instead_ids:
-        missing = buy_instead_ids - plan.ingredient_needs.keys()
-        if missing:
-            raise UnknownBuyInsteadIngredientError(
-                f"Ingrédient(s) marqué(s) « à acheter » absent(s) des besoins "
-                f"du plan {plan.id} : {sorted(missing)}."
-            )
-        problem = load_problem_data(session, plan.household_profile_id, plan.on_date)
-        new_lines = [
-            _cheapest_purchase_for_ingredient(
-                problem, iid, Decimal(plan.ingredient_needs[iid])
-            )
-            for iid in sorted(buy_instead_ids)
-        ]
-        # Réassignation (pas de mutation in-place) : c'est ce qui marque la
-        # colonne JSONB comme modifiée pour SQLAlchemy.
-        plan.purchases = plan.purchases + new_lines
-
-    products = {
-        p.id: p
-        for p in session.scalars(
-            select(Product).where(
-                Product.id.in_({l["product_id"] for l in plan.purchases})
-            )
-        )
-    }
-    purchased: dict[str, Decimal] = {}
-    for line in plan.purchases:
-        prod = products[line["product_id"]]
-        purchased[prod.canonical_ingredient_id] = (
-            purchased.get(prod.canonical_ingredient_id, Decimal(0))
-            + prod.package_qty_in_base_unit * line["units"]
-        )
+    purchased = _purchased_by_ingredient(session, plan.purchases)
 
     pantry = {
         ps.canonical_ingredient_id: ps
@@ -713,10 +654,7 @@ def _apply_commit(
         need = Decimal(plan.ingredient_needs.get(iid, "0"))
         bought = purchased.get(iid, Decimal(0))
         stock = pantry[iid].quantity_base_unit if iid in pantry else Decimal(0)
-        if iid in buy_instead_ids:
-            consumed = Decimal(0)
-        else:
-            consumed = min(stock, need) if used_pantry else Decimal(0)
+        consumed = min(stock, need) if used_pantry else Decimal(0)
         leftover = bought + consumed - need
         if leftover < 0:
             raise PlanNotCommittable(
