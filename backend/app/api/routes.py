@@ -1,8 +1,12 @@
 """Routes de l'API v1 — la couche expose des résultats calculés par les
-services ; aucune logique métier ici, aucun accès aux ports d'ingestion."""
+modules applicatifs (``services/planning.py``, ``services/household.py``,
+``services/catalog.py``) ; aucune logique métier ici, aucun accès direct à
+SQLAlchemy/aux modèles ORM, aucun accès aux ports d'ingestion — **sauf**
+``get_unmapped``/``post_map``, en attente de D15 (voir leur commentaire)."""
 
 from __future__ import annotations
 
+from dataclasses import asdict
 from datetime import date
 from decimal import Decimal
 
@@ -11,14 +15,8 @@ from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
-from ..models import (
-    CanonicalIngredient, HouseholdMember, HouseholdProfile, MappingStatus,
-    PantryStock, Plan, ProductMapping, RawOffer, Recipe, Store,
-)
-from ..services.demand import compute_demand_bounds
-from ..services.plan_service import (
-    PlanNotCommittable, commit_plan, create_plan, grocery_list,
-)
+from ..models import CanonicalIngredient, MappingStatus, ProductMapping, RawOffer
+from ..services import catalog, household, planning
 from ..solver import MenuSolver, SolverConfig
 from . import schemas
 from .deps import get_profile_id, get_session, get_solver
@@ -30,43 +28,21 @@ router = APIRouter(prefix="/api")
 # Ménage
 # ---------------------------------------------------------------------------
 
-def _load_profile(session: Session, profile_id: str) -> HouseholdProfile:
-    profile = session.get(HouseholdProfile, profile_id)
-    if profile is None:
-        raise HTTPException(404, f"Profil '{profile_id}' introuvable.")
-    return profile
-
-
-def _household_out(profile: HouseholdProfile) -> schemas.HouseholdOut:
-    bounds = compute_demand_bounds(
-        profile.meals_per_horizon,
-        [m.appetite_coefficient for m in profile.members],
-        profile.demand_slack_epsilon,
-    )
+def _household_out(view: household.HouseholdView) -> schemas.HouseholdOut:
     return schemas.HouseholdOut(
-        id=profile.id, home_lat=float(profile.home_lat),
-        home_lng=float(profile.home_lng),
-        time_value_cents_per_hour=profile.time_value_cents_per_hour,
-        meals_per_horizon=profile.meals_per_horizon,
-        demand_slack_epsilon=float(profile.demand_slack_epsilon),
-        max_store_visits=profile.max_store_visits,
-        min_distinct_recipes=profile.min_distinct_recipes,
-        max_share_per_recipe=float(profile.max_share_per_recipe),
-        diet_flags=profile.diet_flags, allergen_flags=profile.allergen_flags,
-        taste_preferences=profile.taste_preferences,
-        available_equipment=profile.available_equipment,
-        max_prep_time_per_meal_h=float(profile.max_prep_time_per_meal_h),
-        members=[
-            schemas.MemberOut(
-                name=m.name, appetite_coefficient=float(m.appetite_coefficient)
-            )
-            for m in profile.members
-        ],
-        demand={
-            "D_exact": str(bounds.exact),
-            "borne_basse": bounds.low,
-            "borne_haute": bounds.high,
-        },
+        id=view.id, home_lat=view.home_lat, home_lng=view.home_lng,
+        time_value_cents_per_hour=view.time_value_cents_per_hour,
+        meals_per_horizon=view.meals_per_horizon,
+        demand_slack_epsilon=view.demand_slack_epsilon,
+        max_store_visits=view.max_store_visits,
+        min_distinct_recipes=view.min_distinct_recipes,
+        max_share_per_recipe=view.max_share_per_recipe,
+        diet_flags=view.diet_flags, allergen_flags=view.allergen_flags,
+        taste_preferences=view.taste_preferences,
+        available_equipment=view.available_equipment,
+        max_prep_time_per_meal_h=view.max_prep_time_per_meal_h,
+        members=[schemas.MemberOut(**asdict(m)) for m in view.members],
+        demand=view.demand,
     )
 
 
@@ -75,7 +51,10 @@ def get_household(
     session: Session = Depends(get_session),
     profile_id: str = Depends(get_profile_id),
 ):
-    return _household_out(_load_profile(session, profile_id))
+    try:
+        return _household_out(household.get_profile(session, profile_id))
+    except household.ProfileNotFound as exc:
+        raise HTTPException(404, str(exc)) from exc
 
 
 @router.put("/household", response_model=schemas.HouseholdOut)
@@ -84,23 +63,13 @@ def put_household(
     session: Session = Depends(get_session),
     profile_id: str = Depends(get_profile_id),
 ):
-    profile = _load_profile(session, profile_id)
-    data = body.model_dump(exclude_unset=True)
-    members = data.pop("members", None)
-    for field, value in data.items():
-        setattr(profile, field, value)
-    if members is not None:
-        profile.members.clear()
-        session.flush()
-        for m in members:
-            profile.members.append(
-                HouseholdMember(
-                    name=m["name"],
-                    appetite_coefficient=Decimal(str(m["appetite_coefficient"])),
-                )
-            )
-    session.flush()
-    return _household_out(profile)
+    try:
+        view = household.update_profile(
+            session, profile_id, body.model_dump(exclude_unset=True)
+        )
+    except household.ProfileNotFound as exc:
+        raise HTTPException(404, str(exc)) from exc
+    return _household_out(view)
 
 
 # ---------------------------------------------------------------------------
@@ -112,14 +81,7 @@ def get_pantry(
     session: Session = Depends(get_session),
     profile_id: str = Depends(get_profile_id),
 ):
-    rows = session.scalars(
-        select(PantryStock).where(PantryStock.household_profile_id == profile_id)
-    ).all()
-    return [
-        {"canonical_ingredient_id": r.canonical_ingredient_id,
-         "quantity_base_unit": str(r.quantity_base_unit)}
-        for r in rows
-    ]
+    return [asdict(line) for line in household.get_pantry(session, profile_id)]
 
 
 @router.put("/pantry")
@@ -128,63 +90,26 @@ def put_pantry(
     session: Session = Depends(get_session),
     profile_id: str = Depends(get_profile_id),
 ):
-    known = set(session.scalars(select(CanonicalIngredient.id)).all())
-    for line in body.lines:
-        if line.canonical_ingredient_id not in known:
-            raise HTTPException(
-                422, f"Ingrédient inconnu : '{line.canonical_ingredient_id}'."
-            )
-        stmt = (
-            pg_insert(PantryStock)
-            .values(
-                household_profile_id=profile_id,
-                canonical_ingredient_id=line.canonical_ingredient_id,
-                quantity_base_unit=Decimal(str(line.quantity_base_unit)),
-            )
-            .on_conflict_do_update(
-                index_elements=["household_profile_id", "canonical_ingredient_id"],
-                set_={"quantity_base_unit": Decimal(str(line.quantity_base_unit))},
-            )
+    try:
+        lines = household.update_pantry(
+            session, profile_id, [line.model_dump() for line in body.lines]
         )
-        session.execute(stmt)
-    return get_pantry(session=session, profile_id=profile_id)
+    except household.UnknownIngredientError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    return [asdict(line) for line in lines]
 
 
 # ---------------------------------------------------------------------------
 # Plans
 # ---------------------------------------------------------------------------
 
-def _plan_out(session: Session, plan: Plan) -> schemas.PlanOut:
-    recipes = {
-        r.id: r
-        for r in session.scalars(
-            select(Recipe).where(Recipe.id.in_(list(plan.servings.keys())))
-        )
-    }
-    total_cents = sum(
-        (Decimal(l["taxed_total_cents_cad"]) for l in plan.purchases), Decimal(0)
-    )
-    total_servings = sum(plan.servings.values()) or 1
-    menu = []
-    for rid, x in sorted(plan.servings.items(), key=lambda kv: -kv[1]):
-        r = recipes[rid]
-        prep = r.prep_time_fixed_h + r.prep_time_marginal_h * x
-        # Coût attribué : part des achats au prorata des portions (lecture
-        # simple pour l'écran Résultat ; la vraie décomposition est dans le
-        # diagnostic).
-        attributed = (total_cents * x / total_servings).quantize(Decimal("0.01"))
-        menu.append(
-            schemas.MenuLine(
-                recipe_id=rid, name=r.name, servings=x,
-                prep_time_h=str(prep),
-                attributed_cost_cents_cad=str(attributed),
-            )
-        )
+def _plan_out(view: planning.PlanView) -> schemas.PlanOut:
     return schemas.PlanOut(
-        id=plan.id, status=plan.status.value, solver_status=plan.solver_status,
-        on_date=plan.on_date, menu=menu,
-        grocery_list_by_store=grocery_list(session, plan),
-        stores_visited=plan.stores_visited, diagnostic=plan.diagnostic,
+        id=view.id, status=view.status, solver_status=view.solver_status,
+        on_date=view.on_date,
+        menu=[schemas.MenuLine(**asdict(m)) for m in view.menu],
+        grocery_list_by_store=view.grocery_list_by_store,
+        stores_visited=view.stores_visited, diagnostic=view.diagnostic,
     )
 
 
@@ -199,14 +124,12 @@ def post_plan(
         config = SolverConfig(**body.config)
     except ValueError as exc:
         raise HTTPException(422, f"SolverConfig invalide : {exc}") from exc
-    plan, result = create_plan(
+    # Un plan infaisable (statut solveur != Optimal) est aussi persisté et
+    # retourné : l'écran Génération affiche le message du diagnostic.
+    view = planning.generate_plan(
         session, profile_id, body.on_date or date.today(), config, solver
     )
-    if result.status != "Optimal":
-        # Le plan (avec son diagnostic d'infaisabilité) est persisté et
-        # retourné : l'écran Génération affiche le message du diagnostic.
-        return _plan_out(session, plan)
-    return _plan_out(session, plan)
+    return _plan_out(view)
 
 
 @router.get("/plan/{plan_id}", response_model=schemas.PlanOut)
@@ -215,10 +138,10 @@ def get_plan(
     session: Session = Depends(get_session),
     profile_id: str = Depends(get_profile_id),
 ):
-    plan = session.get(Plan, plan_id)
-    if plan is None or plan.household_profile_id != profile_id:
-        raise HTTPException(404, f"Plan {plan_id} introuvable.")
-    return _plan_out(session, plan)
+    try:
+        return _plan_out(planning.get_plan(session, profile_id, plan_id))
+    except planning.PlanNotFound as exc:
+        raise HTTPException(404, str(exc)) from exc
 
 
 @router.post("/plan/{plan_id}/commit")
@@ -227,15 +150,14 @@ def post_commit(
     session: Session = Depends(get_session),
     profile_id: str = Depends(get_profile_id),
 ):
-    plan = session.get(Plan, plan_id)
-    if plan is None or plan.household_profile_id != profile_id:
-        raise HTTPException(404, f"Plan {plan_id} introuvable.")
     try:
-        new_stock = commit_plan(session, plan)
-    except PlanNotCommittable as exc:
+        result = planning.commit_plan(session, profile_id, plan_id)
+    except planning.PlanNotFound as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except planning.PlanNotCommittable as exc:
         raise HTTPException(409, str(exc)) from exc
-    return {"plan_id": plan.id, "status": plan.status.value,
-            "pantry_after_commit": new_stock}
+    return {"plan_id": result.plan_id, "status": result.status,
+            "pantry_after_commit": result.pantry_after_commit}
 
 
 # ---------------------------------------------------------------------------
@@ -251,44 +173,30 @@ def get_recipes(
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
 ):
-    stmt = select(Recipe).order_by(Recipe.id)
-    if q:
-        stmt = stmt.where(Recipe.name.ilike(f"%{q}%"))
-    if diet:
-        stmt = stmt.where(Recipe.diet_flags.contains([diet]))
-    if tag_cuisine:
-        stmt = stmt.where(Recipe.tags["cuisine"].astext == tag_cuisine)
-    total = session.scalar(select(func.count()).select_from(stmt.subquery()))
-    rows = session.scalars(stmt.limit(limit).offset(offset)).all()
+    page = catalog.search_recipes(
+        session,
+        catalog.RecipeQuery(
+            q=q, diet=diet, tag_cuisine=tag_cuisine, limit=limit, offset=offset
+        ),
+    )
     return {
-        "total": total, "limit": limit, "offset": offset,
-        "items": [
-            {
-                "id": r.id, "name": r.name,
-                "original_servings": r.original_servings,
-                "prep_time_fixed_h": str(r.prep_time_fixed_h),
-                "prep_time_marginal_h": str(r.prep_time_marginal_h),
-                "min_batch_servings": r.min_batch_servings,
-                "max_batch_servings": r.max_batch_servings,
-                "tags": r.tags, "diet_flags": r.diet_flags,
-                "allergen_flags": r.allergen_flags,
-            }
-            for r in rows
-        ],
+        "total": page.total, "limit": page.limit, "offset": page.offset,
+        "items": [asdict(item) for item in page.items],
     }
 
 
 @router.get("/stores")
 def get_stores(session: Session = Depends(get_session)):
-    return [
-        {
-            "external_key": s.external_key, "banner": s.banner,
-            "address": s.address, "lat": float(s.lat), "lng": float(s.lng),
-            "shopping_center_id": s.shopping_center_id,
-        }
-        for s in session.scalars(select(Store).order_by(Store.external_key))
-    ]
+    return [asdict(s) for s in catalog.list_stores(session)]
 
+
+# ---------------------------------------------------------------------------
+# Mapping produit — en attente de D15 (docs/deviations.md). Ces deux routes
+# touchent SQLAlchemy directement, volontairement : le plan de refactor
+# interdit de les cacher derrière un ProductMappingRepository avant que la
+# résolution raw_text -> product -> ingrédient soit conçue contre de vraies
+# données scrapées (docs/architecture-refactoring-plan.md).
+# ---------------------------------------------------------------------------
 
 @router.get("/ingredients/unmapped")
 def get_unmapped(session: Session = Depends(get_session)):

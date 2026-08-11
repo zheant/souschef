@@ -1,8 +1,19 @@
-"""Service de plan — le consommateur de l'interface ``MenuSolver``.
+"""``PlanningModule`` — génération, consultation et commit d'un plan.
 
 Le solveur, comme le scorer, est **injecté** : brancher une autre
-implémentation (HiGHS, modèle appris, faux de test) ne touche ni ce service,
+implémentation (HiGHS, modèle appris, faux de test) ne touche ni ce module,
 ni l'API, ni le front-end.
+
+Interface publique (``docs/architecture-refactoring-plan.md``) :
+``generate_plan`` / ``get_plan`` / ``commit_plan``. Chaque fonction garde
+``session: Session`` en premier paramètre explicite — pas de session ouverte
+en interne : ``tests/db_fixtures.py::api_client`` override la dépendance
+FastAPI ``get_session`` pour injecter une session de test partagée, et
+n'a aucune prise sur une session que ce module ouvrirait lui-même. Les routes
+transmettent la session sans jamais l'utiliser pour une requête — c'est la
+règle réelle de ``CLAUDE.md`` (« l'API ne touche jamais SQLAlchemy
+directement pour de la logique métier »), pas la formulation littérale du
+document de refactor source.
 
 Le ``commit`` est ce qui rend le terme de récupération honnête (docs/spec.md,
 section API) : il décrémente le stock consommé et reporte les restes vers
@@ -12,6 +23,7 @@ pénalité de répétition du scoring d'appétence.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 
@@ -33,6 +45,44 @@ from ..solver.port import MenuSolver, SolveResult
 RECENT_PLANS_FOR_REPETITION = 2
 
 
+class PlanNotFound(LookupError):
+    """Aucun plan avec cet id pour ce profil (l'API traduit en 404)."""
+
+
+class PlanNotCommittable(ValueError):
+    """Le plan n'est pas dans un état commitable (l'API traduit en 409)."""
+
+
+@dataclass(frozen=True)
+class MenuLine:
+    recipe_id: str
+    name: str
+    servings: int
+    prep_time_h: str
+    attributed_cost_cents_cad: str
+
+
+@dataclass(frozen=True)
+class PlanView:
+    id: int
+    status: str
+    solver_status: str
+    on_date: date
+    menu: list[MenuLine]
+    #: Groupée par magasin ; structure documentée dans docs/spec.md (section
+    #: API), pas re-typée ici — même choix que ``diagnostic`` ci-dessous.
+    grocery_list_by_store: list[dict]
+    stores_visited: list[str]
+    diagnostic: dict
+
+
+@dataclass(frozen=True)
+class CommitResult:
+    plan_id: int
+    status: str
+    pantry_after_commit: dict[str, str]
+
+
 def recent_committed_recipe_ids(
     session: Session, profile_id: str, limit: int = RECENT_PLANS_FOR_REPETITION
 ) -> tuple[tuple[str, ...], ...]:
@@ -48,7 +98,37 @@ def recent_committed_recipe_ids(
     return tuple(tuple(p.servings.keys()) for p in plans)
 
 
-def create_plan(
+def generate_plan(
+    session: Session,
+    profile_id: str,
+    on_date: date,
+    config: SolverConfig,
+    solver: MenuSolver,
+) -> PlanView:
+    plan, _ = _solve_and_persist(session, profile_id, on_date, config, solver)
+    return _plan_view(session, plan)
+
+
+def get_plan(session: Session, profile_id: str, plan_id: int) -> PlanView:
+    return _plan_view(session, _load_owned_plan(session, profile_id, plan_id))
+
+
+def commit_plan(session: Session, profile_id: str, plan_id: int) -> CommitResult:
+    plan = _load_owned_plan(session, profile_id, plan_id)
+    new_stock = _apply_commit(session, plan)
+    return CommitResult(
+        plan_id=plan.id, status=plan.status.value, pantry_after_commit=new_stock
+    )
+
+
+def _load_owned_plan(session: Session, profile_id: str, plan_id: int) -> Plan:
+    plan = session.get(Plan, plan_id)
+    if plan is None or plan.household_profile_id != profile_id:
+        raise PlanNotFound(f"Plan {plan_id} introuvable.")
+    return plan
+
+
+def _solve_and_persist(
     session: Session,
     profile_id: str,
     on_date: date,
@@ -135,7 +215,41 @@ def _diagnostic_json(result: SolveResult) -> dict:
     }
 
 
-def grocery_list(session: Session, plan: Plan) -> list[dict]:
+def _plan_view(session: Session, plan: Plan) -> PlanView:
+    recipes = {
+        r.id: r
+        for r in session.scalars(
+            select(Recipe).where(Recipe.id.in_(list(plan.servings.keys())))
+        )
+    }
+    total_cents = sum(
+        (Decimal(l["taxed_total_cents_cad"]) for l in plan.purchases), Decimal(0)
+    )
+    total_servings = sum(plan.servings.values()) or 1
+    menu = []
+    for rid, x in sorted(plan.servings.items(), key=lambda kv: -kv[1]):
+        r = recipes[rid]
+        prep = r.prep_time_fixed_h + r.prep_time_marginal_h * x
+        # Coût attribué : part des achats au prorata des portions (lecture
+        # simple pour l'écran Résultat ; la vraie décomposition est dans le
+        # diagnostic).
+        attributed = (total_cents * x / total_servings).quantize(Decimal("0.01"))
+        menu.append(
+            MenuLine(
+                recipe_id=rid, name=r.name, servings=x,
+                prep_time_h=str(prep),
+                attributed_cost_cents_cad=str(attributed),
+            )
+        )
+    return PlanView(
+        id=plan.id, status=plan.status.value, solver_status=plan.solver_status,
+        on_date=plan.on_date, menu=menu,
+        grocery_list_by_store=_grocery_list(session, plan),
+        stores_visited=plan.stores_visited, diagnostic=plan.diagnostic,
+    )
+
+
+def _grocery_list(session: Session, plan: Plan) -> list[dict]:
     """Liste d'épicerie groupée par magasin. Chaque ligne : produit, quantité,
     prix unitaire, prix total taxé, et les recettes qui la consomment (celles
     du menu utilisant l'ingrédient canonique du produit)."""
@@ -184,11 +298,7 @@ def grocery_list(session: Session, plan: Plan) -> list[dict]:
     ]
 
 
-class PlanNotCommittable(ValueError):
-    pass
-
-
-def commit_plan(session: Session, plan: Plan) -> dict[str, str]:
+def _apply_commit(session: Session, plan: Plan) -> dict[str, str]:
     """Décrémente le stock consommé et reporte les restes vers pantry_stock.
 
     Comptabilité par ingrédient (déterministe depuis les données figées du

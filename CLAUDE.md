@@ -44,12 +44,59 @@ adapters/     implémentations JSON v1 des ports (seul point qu'un vrai scraper 
 ingestion/    normalize.py — staging → market, idempotent
 models/       SQLAlchemy — schémas catalog, market, household, staging
 services/     appetence, prefilter, demand (D9), validation, params, travel,
-              units, needs, problem_data, plan_service
+              units, needs, problem_data, planning/household/catalog
+              (modules applicatifs — voir « Refactor architecture » ci-dessous)
 solver/       config.py (SolverConfig), port.py (interface MenuSolver + DTOs
               résultat), model.py (implémentation PuLP/CBC)
-api/          routes.py, schemas.py, deps.py (injection)
+api/          routes.py (transport HTTP seulement, appelle les modules
+              applicatifs de services/), schemas.py, deps.py (injection)
 seeding/      seed.py — commande idempotente, ports injectables
 ```
+
+## Refactor architecture — modules applicatifs (2026-08-10)
+
+`api/routes.py` contournait la couche services (requêtes SQLAlchemy directes,
+mutations, calcul de coût attribué) malgré son en-tête l'affirmant. Corrigé :
+la logique a été déplacée dans trois modules de `services/` —
+`planning.py` (ex-`plan_service.py` ; `generate_plan`/`get_plan`/
+`commit_plan`), `household.py` (`get_profile`/`update_profile`/`get_pantry`/
+`update_pantry`), `catalog.py` (`search_recipes`/`list_stores`). Chaque
+module expose des DTO typés (dataclasses) et des exceptions typées
+(`PlanNotFound`, `PlanNotCommittable`, `ProfileNotFound`,
+`UnknownIngredientError`) que `routes.py` traduit en `HTTPException` — c'est
+la seule logique qui reste dans les routes. `routes.py` n'importe plus
+`sqlalchemy` ni `..models` **sauf** dans `get_unmapped`/`post_map`, laissés
+tels quels volontairement (D15, non résolu — voir plus bas).
+
+**Décision de conception à retenir** : les fonctions de module gardent
+`session: Session` en premier paramètre explicite (pas de session ouverte en
+interne). Une session interne casserait `tests/db_fixtures.py::api_client`,
+qui fonctionne en overridant la dépendance FastAPI `get_session` pour
+injecter une session de test partagée par requêtes d'un même test — un
+module ouvrant sa propre session n'aurait plus cette prise et se
+connecterait à la mauvaise base. Détail dans
+`docs/architecture-refactoring-plan.md` (qui suggérait des interfaces sans
+paramètre `Session` — corrigé en pratique lors de l'implémentation).
+
+**Vérification : 82/82 tests passés contre PostgreSQL réel**, dont
+`tests/test_api.py` **non modifié** et 7 nouveaux tests de module directs
+(`tests/test_planning_module.py`, `tests/test_household_module.py`,
+`tests/test_catalog_module.py`). Vérifié en deux temps : le bac à sable de
+la session de refactor n'avait initialement pas accès à PostgreSQL/Docker
+(63 tests sans base passaient, le reste sautait proprement) ; l'utilisateur
+a ensuite démarré sa base pendant la même session, ce qui a permis un run
+complet réel — un seul défaut trouvé, dans un des nouveaux tests
+(`test_household_module.py` comparait une valeur `Decimal` sérialisée à
+`"6"` au lieu de `"6.000"`), corrigé, aucun défaut dans le code de
+production. Point de méthode confirmé au passage : lancer `pytest`
+(sans `-m`) depuis un environnement conda `base` sans venv dédié échoue sur
+`ModuleNotFoundError: No module named 'tests'` même après `pip install -e
+".[dev]"` — utiliser un venv isolé (`python3 -m venv .venv`) et `python -m
+pytest`, comme documenté dans « Sans Docker » ci-dessous.
+
+**Hors périmètre, volontairement** (voir `docs/architecture-refactoring-plan.md`) :
+D15/`OfferResolutionModule`, refactor du solveur, fonctionnalités du pilote
+produit (`docs/product-pilot.md`).
 
 ## Lancer / tester / seeder
 

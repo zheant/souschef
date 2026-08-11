@@ -117,11 +117,15 @@ backend/
     adapters/     # implémentations JSON v1 des ports
     ingestion/    # atterrissage staging + normalisation vers market
     services/     # units, demand (D9), travel, params, appetence, prefilter,
-                  # validation, plan_service (création, épicerie, commit)
+                  # validation, planning/household/catalog (modules
+                  # applicatifs — routes.py n'appelle qu'eux, jamais
+                  # SQLAlchemy directement, sauf le mapping produit, D15)
     solver/       # SolverConfig, interface MenuSolver, modèle PuLP/CBC
-    api/          # routes FastAPI, schémas, dépendances injectables
+    api/          # routes FastAPI (transport HTTP seulement), schémas,
+                  # dépendances injectables
     seeding/      # commande de seeding idempotente (ports injectables)
-  tests/          # pytest — 64 tests : optima manuels, API, substituabilité
+  tests/          # pytest — 82 tests : optima manuels, API, substituabilité,
+                  # modules applicatifs (planning/household/catalog)
   alembic/        # migrations (0001 : schéma initial complet)
 docs/             # spec.md (versionnée, intouchée) + deviations.md
 frontend/         # SPA Vite + React + TS — cinq écrans, client API typé
