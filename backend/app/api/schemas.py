@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Literal
 from decimal import Decimal
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class MemberOut(BaseModel):
@@ -89,7 +89,34 @@ class PlanOut(BaseModel):
     diagnostic: dict
 
 
-class MapRequest(BaseModel):
-    raw_text: str
+class NewProductIn(BaseModel):
+    """Spécification d'un nouveau produit à créer (D18) — saisie manuelle,
+    aucune extraction automatique depuis ``raw_text``."""
+
     canonical_ingredient_id: str
+    brand: str
+    package_qty_in_base_unit: Decimal = Field(gt=0)
+    package_unit: str
+    tax_rate: Decimal = Field(ge=0, lt=1)
+
+
+class MapRequest(BaseModel):
+    """Confirmation d'une offre non résolue : attacher un produit existant
+    (``product_id``) ou en créer un nouveau (``new_product``) — exactement
+    l'un des deux. La clé de résolution est (magasin, texte brut), pas le
+    texte brut seul (D18) : un même libellé désigne des produits différents
+    d'une bannière à l'autre."""
+
+    store_external_key: str
+    raw_text: str
     confirmed_by: str
+    product_id: int | None = None
+    new_product: NewProductIn | None = None
+
+    @model_validator(mode="after")
+    def _exactly_one_target(self) -> "MapRequest":
+        if (self.product_id is None) == (self.new_product is None):
+            raise ValueError(
+                "Fournir exactement un de product_id ou new_product."
+            )
+        return self

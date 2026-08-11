@@ -260,8 +260,9 @@ comme paquet-espace-de-noms implicite depuis la racine `backend/`, sans
 complète (64 tests) passe en l'utilisant.
 
 ## D15 — `product_mapping` inerte face à la résolution
-*(OPEN DESIGN — pas un écart assumé ; consigné lors d'une session de
-vérification, 2026-08-10 ; **volontairement non résolu**)*
+*(OPEN DESIGN au moment de la rédaction ; **résolu en D18**, même journée —
+voir D18 pour la conception retenue et sa vérification. Le constat ci-dessous
+est conservé tel quel, comme trace du diagnostic qui a mené au correctif.)*
 
 **Statut.** Contrairement aux entrées D1–D14, ceci n'est pas une décision de
 conception prise et justifiée : c'est un vide qu'aucune décision n'a encore
@@ -515,3 +516,114 @@ format familial pèse proportionnellement moins pour lui, et son seuil de
 bascule est plus bas). Chaque paire régulier/familial a vraisemblablement
 son propre point de croisement économique ; le dériver précisément pour
 les 20 paires n'a pas été fait ici.
+
+## D18 — Résolution de D15 : `product_mapping` clé sur `(store_id, raw_text)`, résout vers `product_id`
+*(corrigé lors d'une session de conception dédiée, 2026-08-10, à la demande
+explicite de l'utilisateur — « démarrer D15 »)*
+
+**Portée volontairement restreinte.** Comme D15 le mettait en garde, un
+appariement flou/heuristique `raw_text → produit` (NLP, extraction
+marque/format) exige de vraies données scrapées pour être conçu sans risquer
+de figer une hypothèse fausse — **non traité ici**. Ce correctif ne touche
+que la plomberie structurelle : rendre une confirmation manuelle réellement
+effective. Restent hors périmètre, sciemment : appariement automatique,
+écran de curation front-end dédié (aucun code front-end n'appelle les deux
+endpoints de mapping aujourd'hui — vérifié), flux de rejet
+(`MappingStatus.rejected`, jamais référencé dans le code).
+
+**Trois défauts corrigés, pas un seul.**
+
+1. **Le bug documenté par D15** : `normalize_offers` ne consultait jamais
+   `product_mapping`.
+2. **Un second bug, trouvé en lisant `routes.py::post_map`** : la route
+   mettait à jour `staging.raw_offer.mapping_status` directement, sans
+   jamais créer de ligne `market.price` — un raccourci contournant
+   l'ingestion en lot (interdit par `CLAUDE.md` : « Chemin port → staging →
+   normalisation, jamais de raccourci »).
+3. **Un troisième défaut, relevé par l'utilisateur en revue du plan avant
+   implémentation** : la clé `raw_text` seule suppose qu'un libellé
+   identifie un produit *globalement*. Faux en circulaire réelle : un même
+   libellé (« Poulet, format familial ») désigne des produits différents
+   (marque, format, prix) d'une bannière à l'autre. Un mapping confirmé
+   s'appliquerait silencieusement à la mauvaise offre chez une autre
+   bannière.
+
+**Schéma.** `market.product_mapping` (migration `9a2f6e1c4b7d`, chaînée
+après `371e4b5dbcf8`) :
+- supprime `canonical_ingredient_id` et la contrainte unique sur `raw_text`
+  seul ;
+- ajoute `store_id` (FK `market.store`, `NOT NULL`) et `product_id` (FK
+  `market.product`, nullable) ;
+- unique sur `(store_id, raw_text)`.
+
+Le chemin réel devient `raw_text → product (marque, format) → ingrédient`,
+jamais `raw_text → ingrédient` directement — une confirmation peut
+**attacher un produit existant** ou **en créer un nouveau**, le cas normal
+en circulaire réelle (formats/marques changent d'une semaine et d'une
+bannière à l'autre).
+
+**Garde de migration.** Aucune donnée de seed ne peuple jamais cette table
+avec un mapping réel (vérifié par grep — le seed résout toujours via
+`product_external_key`), donc pas de backfill : la migration supprime les
+lignes existantes avant d'ajouter `store_id NOT NULL`. Mais avant de
+supprimer, elle compte les lignes `confirmed_by IS NOT NULL` et **lève une
+exception explicite** si ce compte est > 0 (une base de dev où quelqu'un
+aurait confirmé des mappings à la main via l'ancienne API) — exactement le
+travail que D15 existe pour protéger ; ne jamais le détruire silencieusement
+au nom du correctif lui-même. Sur la base de test utilisée pour cette
+session, le compte était 0 (aucun effet).
+
+**Découverte en lisant `solver/model.py`, qui a changé la conception
+retenue.** `ProductData.external_key` servait de composant de nom de
+variable/contrainte PuLP (`f"n_{p.external_key}_{s.external_key}"`, etc.).
+Un id synthétique (`manual-{id}`) pour les produits créés manuellement
+aurait garanti l'unicité (traiter le symptôme) sans corriger le vrai
+problème : coupler le solveur — un composant interne stable — à
+`external_key`, un concept de couche d'ingestion que D15 qualifie lui-même
+d'instable par nature. Correction retenue : le solveur nomme désormais ses
+variables et contraintes depuis les clés de substitution (`p.id`, `s.id`,
+uniques par construction PostgreSQL), jamais depuis `external_key`.
+`external_key` reste utilisé uniquement là où c'est une règle métier
+documentée — le tri du bris de symétrie lexicographique
+(`docs/spec.md`) — jamais comme identifiant interne. `Product.external_key`
+reste `NOT NULL` ; un produit créé manuellement reçoit toujours
+`manual-{id}` après insertion, mais **comme convention d'ingestion**
+(traçabilité, affichage), plus comme contrainte imposée par le solveur.
+Confirmé sans régression : aucun test n'inspecte de nom de variable/
+contrainte PuLP, et le rapport de diagnostic (`_saturated`) ne lit que les
+préfixes `couverture_`/`plafond_arrets`/`diversite_r_min`/`part_max_`/
+`exclusion_variante_`/`demande_` — jamais `lien_`/`sortie_`/`symetrie_`.
+
+**`services/offer_resolution.py` (nouveau) — `OfferResolutionModule`.**
+Même convention que `planning.py`/`household.py`/`catalog.py` : fonctions à
+`session: Session` explicite, DTO dataclasses, exceptions typées
+(`UnknownStoreError`, `UnknownProductError`,
+`UnknownCanonicalIngredientError`). `attach_existing_product` et
+`create_and_attach_product` upsertent `product_mapping` avec
+`on_conflict_do_update` — **pas** `do_nothing` : un humain doit pouvoir
+corriger une confirmation erronée. `do_nothing` reste réservé au seul upsert
+automatique de `normalize_offers` à l'atterrissage, qui ne doit jamais
+écraser une confirmation. **Ni l'une ni l'autre ne touche
+`staging.raw_offer`** — correctif du deuxième bug ; c'est le prochain
+passage en lot de `normalize_offers` qui reconsulte `product_mapping` et
+résout les offres, historiques *et* futures, portant ce `(store_id,
+raw_text)`. `ResolutionResult` porte `pending_offers` (compte en lecture
+seule des offres `unmapped` en attente) pour que l'appelant sache combien
+seront résolues au prochain passage, sans prétendre qu'elles le sont déjà.
+
+**API.** `POST /api/ingredients/map` : nouveau corps
+(`store_external_key`, `raw_text`, `confirmed_by`, et exactement un de
+`product_id` ou `new_product`) — contrat changé intentionnellement, l'ancien
+n'avait jamais d'effet réel. Après ce correctif, `api/routes.py` ne touche
+plus SQLAlchemy/ORM nulle part (fermeture de la dernière exception laissée
+par le refactor architectural précédent).
+
+**Vérifié contre PostgreSQL réel** : cycle `alembic upgrade head` →
+`downgrade -1` → `upgrade head` propre ; suite complète —
+**86/86 tests passés, 0 sauté** (contre 82 avant ce chantier : +4 nouveaux
+tests directs de `tests/test_offer_resolution_module.py` prouvant chacun
+des trois défauts corrigés — dont le scénario exact décrit dans D15 comme
+cassé, rejoué et confirmé résolu — plus `tests/test_api.py` mis à jour pour
+le nouveau contrat). `tests/test_solver_toy.py`/`tests/test_solver_flags.py`
+inchangés dans leurs assertions malgré le renommage des variables PuLP,
+confirmant que c'est un pur changement de label.

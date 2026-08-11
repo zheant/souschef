@@ -120,24 +120,33 @@ class MappingStatus(str, enum.Enum):
 
 
 class ProductMapping(TimestampMixin, Base):
-    """Correspondance texte brut → ingrédient canonique.
+    """Correspondance (magasin, texte brut) → produit précis.
 
     Semi-manuelle en production ; prévue dès maintenant (docs/spec.md). C'est
     cette table — pas une clé primaire en slug — qui absorbe l'instabilité des
     identifiants du monde extérieur.
+
+    Clé sur ``(store_id, raw_text)``, pas ``raw_text`` seul (D18,
+    docs/deviations.md) : un même libellé désigne des produits différents
+    (marque, format, prix) d'une bannière à l'autre — un mapping confirmé ne
+    doit s'appliquer qu'au magasin où il a été vérifié.
+
+    Résout vers ``product_id`` (pas seulement ``canonical_ingredient_id``,
+    D18) : le solveur a besoin d'un produit précis (v_p = format), pas
+    seulement d'un ingrédient — ``raw_text → product → ingrédient``, jamais
+    ``raw_text → ingrédient`` directement.
     """
 
     __tablename__ = "product_mapping"
     __table_args__ = (
-        UniqueConstraint("raw_text"),
+        UniqueConstraint("store_id", "raw_text"),
         CheckConstraint("confidence >= 0 AND confidence <= 1", name="confidence_01"),
         {"schema": SCHEMA},
     )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    store_id: Mapped[int] = mapped_column(ForeignKey(f"{SCHEMA}.store.id"))
     raw_text: Mapped[str] = mapped_column(String(255))
-    canonical_ingredient_id: Mapped[str | None] = mapped_column(
-        ForeignKey(f"{CATALOG}.canonical_ingredient.id")
-    )
+    product_id: Mapped[int | None] = mapped_column(ForeignKey(f"{SCHEMA}.product.id"))
     confidence: Mapped[Decimal] = mapped_column(Numeric(4, 3))
     confirmed_by: Mapped[str | None] = mapped_column(String(120))

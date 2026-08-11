@@ -6,9 +6,10 @@ Deux passes, toutes deux rejouables et idempotentes :
    telles quelles dans ``staging.raw_offer`` (empreinte sha256 pour dédupliquer
    au rejeu). Rien n'est perdu, rien n'est interprété.
 2. ``normalize_offers`` — les offres en staging sont résolues :
-   ``product_mapping`` (texte brut → ingrédient canonique) est alimenté, le
-   statut passe à ``auto`` quand le produit est connu, et une ligne
-   ``market.price`` est upsertée par (produit, magasin, valid_from).
+   ``product_mapping`` ((magasin, texte brut) → produit précis, D18) est
+   consulté et alimenté, le statut passe à ``auto`` quand le produit est
+   connu, et une ligne ``market.price`` est upsertée par (produit, magasin,
+   valid_from).
 
 C'est ce cheminement — et lui seul — que le vrai scraper empruntera.
 """
@@ -62,6 +63,14 @@ def normalize_offers(session: Session) -> dict[str, int]:
     """Passe 2 : résolution des offres en staging vers ``market``.
 
     Idempotente : re-exécuter ne duplique ni mapping ni prix.
+
+    Ordre de résolution par offre, le premier qui répond gagne (D15/D18,
+    docs/deviations.md) :
+    1. ``product_external_key`` connu (chemin JSON-seed) ;
+    2. ``product_mapping`` confirmé pour ``(store_id, raw_text)`` — c'est le
+       chemin qui manquait avant D18 : une confirmation manuelle via
+       ``services/offer_resolution.py`` n'était jamais reconsultée ici ;
+    3. sinon ``unmapped``.
     """
     stats = {"auto": 0, "unmapped": 0, "prices_upserted": 0}
     # Résolution external_key → entité : c'est ici (et dans product_mapping),
@@ -70,8 +79,15 @@ def normalize_offers(session: Session) -> dict[str, int]:
     known_products = {
         p.external_key: p for p in session.scalars(select(Product)).all()
     }
+    products_by_id = {p.id: p for p in known_products.values()}
     store_ids_by_key = {
         s.external_key: s.id for s in session.scalars(select(Store)).all()
+    }
+    mappings_by_store_and_raw_text = {
+        (m.store_id, m.raw_text): m
+        for m in session.scalars(
+            select(ProductMapping).where(ProductMapping.product_id.is_not(None))
+        ).all()
     }
 
     offers = session.scalars(
@@ -84,23 +100,33 @@ def normalize_offers(session: Session) -> dict[str, int]:
 
     for raw in offers:
         p = raw.payload
-        product = known_products.get(p.get("product_external_key") or "")
         store_id = store_ids_by_key.get(p["store_external_key"])
+        product = known_products.get(p.get("product_external_key") or "")
+        if product is None and store_id is not None:
+            mapping = mappings_by_store_and_raw_text.get((store_id, p["raw_text"]))
+            if mapping is not None:
+                product = products_by_id.get(mapping.product_id)
 
-        # Alimente la table de mapping texte brut → ingrédient canonique.
-        mapping_stmt = (
-            pg_insert(ProductMapping)
-            .values(
-                raw_text=p["raw_text"],
-                canonical_ingredient_id=(
-                    product.canonical_ingredient_id if product else None
-                ),
-                confidence=Decimal("1.000") if product else Decimal("0.000"),
-                confirmed_by=None,
+        if store_id is not None:
+            # Alimente la table de mapping (store, texte brut) → produit —
+            # ne l'écrase jamais si une confirmation existe déjà
+            # (``on_conflict_do_nothing`` : seule ``offer_resolution.py``
+            # peut corriger une confirmation, jamais l'atterrissage
+            # automatique). Sans magasin résolu, pas de ligne : la clé
+            # ``store_id`` est NOT NULL — un magasin inconnu est une autre
+            # classe de problème.
+            mapping_stmt = (
+                pg_insert(ProductMapping)
+                .values(
+                    store_id=store_id,
+                    raw_text=p["raw_text"],
+                    product_id=product.id if product else None,
+                    confidence=Decimal("1.000") if product else Decimal("0.000"),
+                    confirmed_by=None,
+                )
+                .on_conflict_do_nothing(index_elements=["store_id", "raw_text"])
             )
-            .on_conflict_do_nothing(index_elements=["raw_text"])
-        )
-        session.execute(mapping_stmt)
+            session.execute(mapping_stmt)
 
         if product is None or store_id is None:
             raw.mapping_status = MappingStatus.unmapped

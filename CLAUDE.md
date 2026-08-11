@@ -44,8 +44,9 @@ adapters/     implémentations JSON v1 des ports (seul point qu'un vrai scraper 
 ingestion/    normalize.py — staging → market, idempotent
 models/       SQLAlchemy — schémas catalog, market, household, staging
 services/     appetence, prefilter, demand (D9), validation, params, travel,
-              units, needs, problem_data, planning/household/catalog
-              (modules applicatifs — voir « Refactor architecture » ci-dessous)
+              units, needs, problem_data, planning/household/catalog/
+              offer_resolution (modules applicatifs — voir « Refactor
+              architecture » et « D18 » ci-dessous)
 solver/       config.py (SolverConfig), port.py (interface MenuSolver + DTOs
               résultat), model.py (implémentation PuLP/CBC)
 api/          routes.py (transport HTTP seulement, appelle les modules
@@ -64,9 +65,10 @@ la logique a été déplacée dans trois modules de `services/` —
 module expose des DTO typés (dataclasses) et des exceptions typées
 (`PlanNotFound`, `PlanNotCommittable`, `ProfileNotFound`,
 `UnknownIngredientError`) que `routes.py` traduit en `HTTPException` — c'est
-la seule logique qui reste dans les routes. `routes.py` n'importe plus
-`sqlalchemy` ni `..models` **sauf** dans `get_unmapped`/`post_map`, laissés
-tels quels volontairement (D15, non résolu — voir plus bas).
+la seule logique qui reste dans les routes. Au moment de ce refactor,
+`get_unmapped`/`post_map` restaient une exception volontaire (D15, alors non
+résolu) ; **ce n'est plus le cas depuis D18** (ci-dessous) — `routes.py`
+n'importe plus `sqlalchemy` ni `..models` nulle part.
 
 **Décision de conception à retenir** : les fonctions de module gardent
 `session: Session` en premier paramètre explicite (pas de session ouverte en
@@ -95,8 +97,45 @@ production. Point de méthode confirmé au passage : lancer `pytest`
 pytest`, comme documenté dans « Sans Docker » ci-dessous.
 
 **Hors périmètre, volontairement** (voir `docs/architecture-refactoring-plan.md`) :
-D15/`OfferResolutionModule`, refactor du solveur, fonctionnalités du pilote
-produit (`docs/product-pilot.md`).
+D15/`OfferResolutionModule` (traité séparément, voir D18 ci-dessous), refactor
+du solveur (excepté le renommage de labels PuLP fait en D18, voir plus bas),
+fonctionnalités du pilote produit (`docs/product-pilot.md`).
+
+## D18 — Résolution de D15 : `product_mapping` clé sur `(store_id, raw_text)` (2026-08-11)
+
+Session dédiée, demandée explicitement par l'utilisateur (« démarrer D15 »).
+Trois défauts corrigés, détaillés dans `docs/deviations.md` (D18) : (1)
+`normalize_offers` ne consultait jamais `product_mapping` (le bug documenté
+par D15) ; (2) `post_map` mettait à jour `staging.raw_offer` directement
+depuis une route HTTP, contournant l'ingestion en lot ; (3) la clé
+`raw_text` seule (relevée par l'utilisateur en revue du plan) confondait des
+produits différents d'une bannière à l'autre.
+
+`market.product_mapping` résout maintenant vers `product_id` (pas seulement
+`canonical_ingredient_id`), clé sur `(store_id, raw_text)` (migration
+`9a2f6e1c4b7d`, avec une garde qui refuse de supprimer les lignes
+existantes si `confirmed_by IS NOT NULL` y figure). Nouveau module
+`services/offer_resolution.py` (`list_unresolved`/`attach_existing_product`/
+`create_and_attach_product`), qui ne touche jamais `staging.raw_offer` —
+c'est `normalize_offers`, en lot, qui reconsulte la table et résout les
+offres historiques et futures. `solver/model.py` nomme désormais ses
+variables/contraintes PuLP depuis les clés de substitution (`p.id`/`s.id`),
+pas `external_key` (instable par nature, D15) — sauf le tri du bris de
+symétrie, règle métier documentée (`docs/spec.md`), laissé inchangé.
+
+**Vérifié contre PostgreSQL réel** : cycle de migration
+upgrade/downgrade/upgrade propre ; **86/86 tests passés, 0 sauté** (82
+avant ce chantier + 4 nouveaux tests directs dans
+`tests/test_offer_resolution_module.py`, dont un qui rejoue le scénario
+exact décrit comme cassé dans D15 et confirme qu'il ne l'est plus) ;
+`tests/test_solver_toy.py`/`tests/test_solver_flags.py` inchangés dans
+leurs assertions malgré le renommage des variables PuLP.
+
+**Hors périmètre, volontairement** (le document de D15 lui-même le met en
+garde) : appariement flou/heuristique automatique `raw_text → produit`
+(exige de vraies données scrapées pour être conçu sans risquer une
+hypothèse fausse), écran de curation front-end dédié, flux de rejet
+(`MappingStatus.rejected`).
 
 ## Lancer / tester / seeder
 
@@ -134,12 +173,14 @@ d'intégrité (voir INVARIANTS).
 Brancher un vrai scraper : implémenter `CircularPort` / `RecipeSourcePort`
 (`backend/app/ports/`), câbler dans `seeding/seed.py` ou un futur job batch —
 ne touche ni `staging`, ni `normalize.py`, ni le solveur, ni l'API.
-**Exception à vérifier avant de brancher pour de vrai : D15**
-(`docs/deviations.md`) — `product_mapping` (mapping semi-manuel texte→produit)
-est aujourd'hui inerte, et la résolution `raw_text → product → ingrédient`
-qu'un vrai scraper exigera n'est pas conçue. Ce point *devra* toucher à
-`normalize.py`, contrairement à la promesse ci-dessus — c'est un vide de
-conception ouvert, pas un détail d'implémentation.
+`product_mapping` (D18, `docs/deviations.md`) résout maintenant vers un
+produit précis, clé sur `(store_id, raw_text)`, et une confirmation via
+`services/offer_resolution.py` est réellement reconsultée par
+`normalize_offers` au passage suivant. **Reste hors périmètre** :
+l'appariement automatique `raw_text → produit` (aucune heuristique/NLP —
+toute confirmation reste manuelle) et l'écran de curation front-end ; à
+concevoir contre de vraies données scrapées quand elles existeront, pas
+avant (même mise en garde que D15 à l'origine).
 
 ## INVARIANTS — ne jamais « simplifier »
 
@@ -246,13 +287,11 @@ conception ouvert, pas un détail d'implémentation.
   ["app*"]` ajouté, corrige `pip install -e .` qui échouait faute de
   découverte de paquets explicite (trouvé et corrigé après livraison, session
   de vérification du 2026-08-10).
-- **D15** — OPEN DESIGN, pas un écart résolu : `product_mapping` (mapping
-  semi-manuel texte→produit) est inerte, `normalize_offers` ne le lit
-  jamais ; de plus la table ne résout que jusqu'à `canonical_ingredient_id`,
-  pas jusqu'à un `market.product` précis (v_p, marque) dont le solveur a
-  besoin. Volontairement laissé ouvert : à concevoir contre de vraies
-  données scrapées, pas contre le seed JSON où le problème n'existe pas par
-  construction.
+- **D15** — au moment de cette session (2026-08-10, D16), OPEN DESIGN non
+  résolu : `product_mapping` inerte, `normalize_offers` ne la lisait jamais.
+  **Résolu depuis, en D18** (section « D18 » plus haut dans ce fichier,
+  détail dans `docs/deviations.md`) — laissé ici tel quel comme trace de
+  l'état au moment de cette session historique.
 - **D16** — exclusion mutuelle des variantes d'échelle du même plat
   (`dish_family_id`, `enable_variant_exclusion` défaut `True`) : sans elle,
   deux recettes du même plat (`<id>`/`<id>_familial`) contournaient le

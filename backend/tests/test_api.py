@@ -9,6 +9,9 @@ from __future__ import annotations
 
 from decimal import Decimal
 
+from sqlalchemy import select
+
+from app.models import Product
 from tests.db_fixtures import api_client, db_session, test_engine, toy_seeded  # noqa: F401
 
 ON = "2026-08-10"
@@ -131,7 +134,7 @@ def test_committed_plan_feeds_repetition_penalty(api_client):
     assert menu1 and menu2
 
 
-def test_recipes_stores_and_mapping_endpoints(api_client):
+def test_recipes_stores_and_mapping_endpoints(api_client, db_session):
     r = api_client.get("/api/recipes", params={"limit": 2})
     body = r.json()
     assert body["total"] == 3 and len(body["items"]) == 2
@@ -143,19 +146,45 @@ def test_recipes_stores_and_mapping_endpoints(api_client):
     assert [s["external_key"] for s in r.json()] == ["toy_store"]
 
     assert api_client.get("/api/ingredients/unmapped").json() == []
-    r = api_client.post(
-        "/api/ingredients/map",
-        json={"raw_text": "Riz mystère 5 kg", "canonical_ingredient_id": "riz",
-              "confirmed_by": "test"},
+
+    # D18 (docs/deviations.md) : le mapping résout vers un produit précis
+    # (store_external_key + product_id), pas seulement un ingrédient.
+    riz_id = db_session.scalar(
+        select(Product.id).where(Product.external_key == "riz_400g")
     )
-    assert r.status_code == 200
-    assert r.json()["offers_confirmed"] == 0  # aucune offre unmapped au jouet
     r = api_client.post(
         "/api/ingredients/map",
-        json={"raw_text": "x", "canonical_ingredient_id": "inexistant",
+        json={"store_external_key": "toy_store", "raw_text": "Riz mystère 5 kg",
+              "product_id": riz_id, "confirmed_by": "test"},
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["pending_offers"] == 0  # aucune offre unmapped au jouet
+
+    r = api_client.post(
+        "/api/ingredients/map",
+        json={"store_external_key": "toy_store", "raw_text": "x",
+              "new_product": {
+                  "canonical_ingredient_id": "inexistant", "brand": "Marque",
+                  "package_qty_in_base_unit": "500",
+                  "package_unit": "500 g", "tax_rate": "0",
+              },
               "confirmed_by": "test"},
     )
     assert r.status_code == 422
+
+    r = api_client.post(
+        "/api/ingredients/map",
+        json={"store_external_key": "magasin_inconnu", "raw_text": "x",
+              "product_id": riz_id, "confirmed_by": "test"},
+    )
+    assert r.status_code == 404
+
+    r = api_client.post(
+        "/api/ingredients/map",
+        json={"store_external_key": "toy_store", "raw_text": "x",
+              "confirmed_by": "test"},
+    )
+    assert r.status_code == 422  # ni product_id ni new_product
 
 
 def test_invalid_solver_config_is_rejected(api_client):

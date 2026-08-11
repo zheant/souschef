@@ -188,6 +188,13 @@ def _flag_signaling(config: SolverConfig) -> dict[str, list[str]]:
 
 
 def _add_variables(m: pulp.LpProblem, c: _Ctx) -> None:
+    # Noms de variables/contraintes construits depuis les clés de
+    # substitution (p.id, s.id), jamais depuis external_key : ce dernier est
+    # un concept de couche d'ingestion, instable par nature (D15/D18,
+    # docs/deviations.md) — le solveur ne doit dépendre que de garanties
+    # d'unicité internes à la base. Exception assumée : le tri du bris de
+    # symétrie (_add_symmetry_breaking) reste sur external_key, qui y est une
+    # règle métier (ordre lexicographique déterministe), pas un identifiant.
     for r in c.recipes:
         c.x[r.id] = pulp.LpVariable(f"x_{r.id}", lowBound=0, cat=pulp.LpInteger)
         for k, seg in enumerate(c.scorer.utility_segments(r)):
@@ -203,11 +210,11 @@ def _add_variables(m: pulp.LpProblem, c: _Ctx) -> None:
             c.delta[r.id] = pulp.LpVariable(f"delta_{r.id}", cat=pulp.LpBinary)
     for (p, s) in c.pairs:
         c.n[(p.id, s.id)] = pulp.LpVariable(
-            f"n_{p.external_key}_{s.external_key}", lowBound=0, cat=pulp.LpInteger
+            f"n_{p.id}_{s.id}", lowBound=0, cat=pulp.LpInteger
         )
     if c.config.enable_multi_store:
         for s in c.stores:
-            c.z[s.id] = pulp.LpVariable(f"z_{s.external_key}", cat=pulp.LpBinary)
+            c.z[s.id] = pulp.LpVariable(f"z_{s.id}", cat=pulp.LpBinary)
         for center in c.travel.center_stores:
             c.v[center] = pulp.LpVariable(f"v_{center}", cat=pulp.LpBinary)
         c.y = pulp.LpVariable("y", cat=pulp.LpBinary)
@@ -308,9 +315,9 @@ def _big_m(c: _Ctx, product: ProductData) -> int:
 def _add_store_linking(m: pulp.LpProblem, c: _Ctx) -> None:
     """n_ps ≤ M_ps·z_s ; y ≥ z_s ; Σz_s ≤ K ; liens centre commercial."""
     for (p, s) in c.pairs:
-        m += c.n[(p.id, s.id)] <= _big_m(c, p) * c.z[s.id], f"lien_{p.external_key}_{s.external_key}"
+        m += c.n[(p.id, s.id)] <= _big_m(c, p) * c.z[s.id], f"lien_{p.id}_{s.id}"
     for s in c.stores:
-        m += c.y >= c.z[s.id], f"sortie_{s.external_key}"
+        m += c.y >= c.z[s.id], f"sortie_{s.id}"
     m += (
         pulp.lpSum(c.z.values()) <= int(c.params.max_store_visits.value),
         "plafond_arrets",
@@ -347,7 +354,7 @@ def _add_symmetry_breaking(m: pulp.LpProblem, c: _Ctx) -> None:
                     m += (
                         c.n[(p_id, second.id)]
                         <= _big_m(c, product) * (1 - c.z[first.id]),
-                        f"symetrie_{product.external_key}_{first.external_key}_{second.external_key}",
+                        f"symetrie_{product.id}_{first.id}_{second.id}",
                     )
 
 

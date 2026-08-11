@@ -1,22 +1,18 @@
 """Routes de l'API v1 — la couche expose des résultats calculés par les
 modules applicatifs (``services/planning.py``, ``services/household.py``,
-``services/catalog.py``) ; aucune logique métier ici, aucun accès direct à
-SQLAlchemy/aux modèles ORM, aucun accès aux ports d'ingestion — **sauf**
-``get_unmapped``/``post_map``, en attente de D15 (voir leur commentaire)."""
+``services/catalog.py``, ``services/offer_resolution.py``) ; aucune logique
+métier ici, aucun accès direct à SQLAlchemy/aux modèles ORM, aucun accès aux
+ports d'ingestion."""
 
 from __future__ import annotations
 
 from dataclasses import asdict
 from datetime import date
-from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func, select
-from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
-from ..models import CanonicalIngredient, MappingStatus, ProductMapping, RawOffer
-from ..services import catalog, household, planning
+from ..services import catalog, household, offer_resolution, planning
 from ..solver import MenuSolver, SolverConfig
 from . import schemas
 from .deps import get_profile_id, get_session, get_solver
@@ -191,26 +187,13 @@ def get_stores(session: Session = Depends(get_session)):
 
 
 # ---------------------------------------------------------------------------
-# Mapping produit — en attente de D15 (docs/deviations.md). Ces deux routes
-# touchent SQLAlchemy directement, volontairement : le plan de refactor
-# interdit de les cacher derrière un ProductMappingRepository avant que la
-# résolution raw_text -> product -> ingrédient soit conçue contre de vraies
-# données scrapées (docs/architecture-refactoring-plan.md).
+# Mapping produit (D15/D18, docs/deviations.md)
 # ---------------------------------------------------------------------------
 
 @router.get("/ingredients/unmapped")
 def get_unmapped(session: Session = Depends(get_session)):
-    """File d'attente de mapping : offres en staging sans correspondance."""
-    rows = session.execute(
-        select(
-            RawOffer.payload["raw_text"].astext.label("raw_text"),
-            func.count().label("occurrences"),
-        )
-        .where(RawOffer.mapping_status == MappingStatus.unmapped)
-        .group_by(RawOffer.payload["raw_text"].astext)
-        .order_by(func.count().desc())
-    ).all()
-    return [{"raw_text": r.raw_text, "occurrences": r.occurrences} for r in rows]
+    """File d'attente de résolution : offres en staging sans correspondance."""
+    return [asdict(o) for o in offer_resolution.list_unresolved(session)]
 
 
 @router.post("/ingredients/map")
@@ -218,35 +201,22 @@ def post_map(
     body: schemas.MapRequest,
     session: Session = Depends(get_session),
 ):
-    if session.get(CanonicalIngredient, body.canonical_ingredient_id) is None:
-        raise HTTPException(
-            422, f"Ingrédient inconnu : '{body.canonical_ingredient_id}'."
-        )
-    stmt = (
-        pg_insert(ProductMapping)
-        .values(
-            raw_text=body.raw_text,
-            canonical_ingredient_id=body.canonical_ingredient_id,
-            confidence=Decimal("1.000"),
-            confirmed_by=body.confirmed_by,
-        )
-        .on_conflict_do_update(
-            index_elements=["raw_text"],
-            set_={
-                "canonical_ingredient_id": body.canonical_ingredient_id,
-                "confidence": Decimal("1.000"),
-                "confirmed_by": body.confirmed_by,
-            },
-        )
-    )
-    session.execute(stmt)
-    updated = 0
-    for raw in session.scalars(
-        select(RawOffer).where(
-            RawOffer.mapping_status == MappingStatus.unmapped,
-            RawOffer.payload["raw_text"].astext == body.raw_text,
-        )
-    ):
-        raw.mapping_status = MappingStatus.confirmed
-        updated += 1
-    return {"raw_text": body.raw_text, "offers_confirmed": updated}
+    try:
+        if body.product_id is not None:
+            result = offer_resolution.attach_existing_product(
+                session, body.store_external_key, body.raw_text,
+                body.product_id, body.confirmed_by,
+            )
+        else:
+            spec = offer_resolution.NewProductSpec(**body.new_product.model_dump())
+            result = offer_resolution.create_and_attach_product(
+                session, body.store_external_key, body.raw_text, spec,
+                body.confirmed_by,
+            )
+    except (
+        offer_resolution.UnknownStoreError, offer_resolution.UnknownProductError,
+    ) as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except offer_resolution.UnknownCanonicalIngredientError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    return asdict(result)
