@@ -39,9 +39,14 @@ export default function ResultScreen(props: {
   const [reoptimizeMsg, setReoptimizeMsg] = useState<string | null>(null);
   const [reoptimizeError, setReoptimizeError] = useState<string | null>(null);
 
+  const [groceryView, setGroceryView] = useState<"cocher" | "detaillee">("cocher");
+  const [checked, setChecked] = useState<Record<string, boolean>>({});
+
   // Nouveau plan chargé (génération, commit, réoptimisation) : les verrous
-  // ne s'appliquent qu'au plan qui les a vus posés.
-  useEffect(() => { setLockedIds(new Set()); }, [plan?.id]);
+  // et les coches ne s'appliquent qu'au plan qui les a vus posés — aucun
+  // concept « coché » n'existe côté serveur (pilote, docs/product-pilot.md),
+  // c'est un état local, réinitialisé à chaque nouveau plan.
+  useEffect(() => { setLockedIds(new Set()); setChecked({}); }, [plan?.id]);
 
   const itinerary = useMemo(() => {
     if (!plan) return [];
@@ -88,6 +93,10 @@ export default function ResultScreen(props: {
       if (next.has(recipeId)) next.delete(recipeId); else next.add(recipeId);
       return next;
     });
+  }
+
+  function toggleChecked(key: string) {
+    setChecked((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
   async function callReoptimize(lockedRecipeIds: string[], excludedRecipeIds: string[]) {
@@ -230,7 +239,59 @@ export default function ResultScreen(props: {
             {itinerary.map((s, i) => `${i + 1}. ${s.banner} (${s.km.toFixed(1)} km)`).join(" → ")}
           </p>
         )}
-        {plan.grocery_list_by_store.map((g) => {
+
+        <div className="row" style={{ marginBottom: 14 }}>
+          <button
+            className={`action${groceryView === "cocher" ? "" : " ghost"}`}
+            onClick={() => setGroceryView("cocher")}
+          >
+            Liste à cocher
+          </button>
+          <button
+            className={`action${groceryView === "detaillee" ? "" : " ghost"}`}
+            onClick={() => setGroceryView("detaillee")}
+          >
+            Vue détaillée
+          </button>
+        </div>
+
+        {groceryView === "cocher" && plan.grocery_list_by_store.map((g) => {
+          const store = stores.find((s) => s.external_key === g.store_external_key);
+          const checkedCount = g.lines.filter(
+            (l) => checked[`${g.store_external_key}:${l.product_external_key}`]
+          ).length;
+          return (
+            <div key={g.store_external_key} style={{ marginBottom: 18 }}>
+              <h2>
+                {store?.banner ?? g.store_external_key} <span className="sub">{store?.address}</span>{" "}
+                <span className="muted">— {checkedCount}/{g.lines.length} cochés</span>
+              </h2>
+              <ul className="checklist">
+                {g.lines.map((l) => {
+                  const key = `${g.store_external_key}:${l.product_external_key}`;
+                  const isChecked = Boolean(checked[key]);
+                  return (
+                    <li key={key}>
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => toggleChecked(key)}
+                        />{" "}
+                        <span style={isChecked ? { textDecoration: "line-through" } : undefined}
+                          className={isChecked ? "muted" : undefined}>
+                          {l.ingredient_name} — {l.units} × {l.package_unit}
+                        </span>
+                      </label>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          );
+        })}
+
+        {groceryView === "detaillee" && plan.grocery_list_by_store.map((g) => {
           const store = stores.find((s) => s.external_key === g.store_external_key);
           return (
             <div key={g.store_external_key} style={{ marginBottom: 18 }}>

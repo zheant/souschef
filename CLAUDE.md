@@ -298,6 +298,39 @@ classe lui-même les offres ciblées « hors du premier périmètre »).
 (aucun fichier backend modifié — confirmé par `git status`). Testé par
 l'utilisateur dans un navigateur — fonctionne.
 
+## Pilote — liste d'épicerie à cocher (2026-08-11)
+
+Sixième tranche, purement front-end (`Result.tsx`, plus une poignée de
+classes CSS minimales) : deux vues bascule-ables sur la liste d'épicerie —
+« Liste à cocher » (par défaut, sans prix, une ligne `{ingredient_name} —
+{units} × {package_unit}` par produit, cochée = barrée) et « Vue
+détaillée » (la table existante, inchangée). État `checked` local,
+réinitialisé à chaque nouveau plan (même motif que `lockedIds`).
+
+**Hors périmètre, volontairement** :
+- **Pas de regroupement par catégorie** — aucun champ catégorie
+  n'existe sur `canonical_ingredient`/`product` ; regroupement par magasin
+  seulement, comme la vue détaillée. Une vraie catégorisation est un
+  chantier de données (curation), pas d'affichage.
+- **Pas de rabais/économies dans la vue détaillée** — le pipeline actuel
+  (`PurchaseLine` → `_grocery_list`) ne transporte que le prix payé, ni
+  `is_promo` ni le prix régulier de `market.price`, alors que ces deux
+  champs existent en base mais ne sont jamais chargés dans
+  `ProblemData.prices` (`PriceData` n'a que `price_cents_cad`/`is_promo`,
+  pas le prix régulier). Les faire transiter de bout en bout est un
+  chantier séparé (5-6 fichiers back-end), pas un ajout mineur. `.badge.promo`
+  existe déjà dans `styles.css`, jamais utilisé — ce manque était déjà
+  pressenti avant cette session.
+- **Pas de persistance de l'état coché** — aucun concept « coché/acheté »
+  côté serveur ; le flux « liste précochée après achat, correction des
+  absences/substitutions avant mise à jour du stock » (`docs/product-pilot.md`)
+  est une fonctionnalité à part entière adossée au `commit` existant, pas
+  une case à cocher isolée.
+
+**Vérifié** : `tsc -b`/`vite build` propres, aucun fichier backend modifié
+(confirmé par `git status`). **Non encore vérifié dans un navigateur** au
+moment de ce commit.
+
 ## Lancer / tester / seeder
 
 ```bash
