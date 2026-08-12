@@ -178,29 +178,32 @@ def test_staples_bias_purchases_objective_without_changing_real_prices(toy):
     assert "omelette_toy" not in res_no_flag.servings_by_recipe
 
 
-def test_salvage_reports_valued_surplus(toy):
-    """Diversité forcée à 3 recettes → l'omelette entre, la douzaine d'œufs
-    laisse un surplus valorisé : w_œufs = 12 − 2·x_om, σ = 10 c/œuf."""
-    res = solve(
-        toy, enable_diversity=True, enable_salvage=True, min_distinct_recipes=3
+def test_unknown_salvage_value_is_not_invented(toy):
+    """Les valeurs NULL du catalogue ne créent aucun crédit de récupération."""
+    problem, pre = toy
+    without_salvage = dataclasses.replace(
+        problem,
+        ingredients={
+            iid: dataclasses.replace(
+                ingredient, salvage_value_cents_per_base_unit=None
+            )
+            for iid, ingredient in problem.ingredients.items()
+        },
+    )
+    res = PulpMenuSolver().solve(
+        without_salvage,
+        pre,
+        SolverConfig(
+            enable_diversity=True,
+            enable_salvage=True,
+            min_distinct_recipes=3,
+        ),
     )
     assert res.status == "Optimal"
     assert "omelette_toy" in res.servings_by_recipe
-    x_om = res.servings_by_recipe["omelette_toy"]
-    w = res.surplus_by_ingredient.get("oeuf", Decimal(0))
-    assert w == Decimal(12 - 2 * x_om)
-    valo = Decimal(
-        res.diagnostic.surplus_by_ingredient["oeuf"]["valorisation_cents"]
-    )
-    assert valo == w * Decimal("10")
-    # La récupération totale somme TOUS les surplus (les paquets de riz et de
-    # lentilles laissent aussi des restes), chacun valorisé à son σ_i.
-    total_valo = sum(
-        Decimal(v["valorisation_cents"])
-        for v in res.diagnostic.surplus_by_ingredient.values()
-    )
-    assert res.diagnostic.objective_terms.recuperation_cents == total_valo
-    assert total_valo >= valo
+    assert res.surplus_by_ingredient == {}
+    assert res.diagnostic.surplus_by_ingredient == {}
+    assert res.diagnostic.objective_terms.recuperation_cents == 0
 
 
 def test_perishable_penalty_shifts_recipe_selection(toy):

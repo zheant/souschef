@@ -8,16 +8,72 @@ cheminement qu'on garde tel quel quand le vrai scraper arrivera
 
 from __future__ import annotations
 
+import enum
 from datetime import datetime
 
-from sqlalchemy import Enum, Index, String, UniqueConstraint
+from sqlalchemy import Enum, Index, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .base import Base, utcnow
+from .base import Base, TimestampMixin, utcnow
 from .market import MappingStatus
 
 SCHEMA = "staging"
+
+
+class IngredientCandidateStatus(str, enum.Enum):
+    candidate = "candidate"
+    review = "review"
+    excluded = "excluded"
+    approved = "approved"
+    rejected = "rejected"
+
+
+class CnfFoodCandidate(TimestampMixin, Base):
+    """Copie bilingue rejouable d'une ligne ``Food_Name.csv`` du FCÉN.
+
+    Une ligne importée n'est jamais un ingrédient canonique par défaut. Le
+    statut initial ne fait qu'orienter la curation; un rejeu met à jour la
+    donnée source sans écraser le statut ou les informations de révision.
+    """
+
+    __tablename__ = "cnf_food_candidate"
+    __table_args__ = (
+        UniqueConstraint("source_version", "food_code"),
+        Index("ix_cnf_food_candidate_status", "curation_status"),
+        Index("ix_cnf_food_candidate_group", "cnf_food_group_code"),
+        {"schema": SCHEMA},
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    source_version: Mapped[str] = mapped_column(String(32))
+    archive_sha256: Mapped[str] = mapped_column(String(64))
+    food_code: Mapped[str] = mapped_column(String(32))
+    food_description_en: Mapped[str] = mapped_column(Text)
+    food_description_fr: Mapped[str] = mapped_column(Text)
+    alternate_description_en: Mapped[str | None] = mapped_column(Text)
+    alternate_description_fr: Mapped[str | None] = mapped_column(Text)
+    food_source_code: Mapped[str | None] = mapped_column(String(32))
+    usda_ndb_code: Mapped[str | None] = mapped_column(String(32))
+    cnf_food_group_code: Mapped[str] = mapped_column(String(16))
+    cnf_food_group_description_en: Mapped[str] = mapped_column(Text)
+    cnf_food_group_description_fr: Mapped[str] = mapped_column(Text)
+    comment_en: Mapped[str | None] = mapped_column(Text)
+    comment_fr: Mapped[str | None] = mapped_column(Text)
+    scientific_name: Mapped[str | None] = mapped_column(Text)
+    food_last_updated_date: Mapped[str | None] = mapped_column(String(32))
+    raw_payload: Mapped[dict] = mapped_column(JSONB)
+    curation_status: Mapped[IngredientCandidateStatus] = mapped_column(
+        Enum(
+            IngredientCandidateStatus,
+            name="ingredient_candidate_status",
+            schema=SCHEMA,
+        ),
+        default=IngredientCandidateStatus.candidate,
+        server_default=IngredientCandidateStatus.candidate.value,
+    )
+    reviewed_by: Mapped[str | None] = mapped_column(String(120))
+    reviewed_at: Mapped[datetime | None]
 
 
 class RawOffer(Base):

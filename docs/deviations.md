@@ -732,3 +732,95 @@ amorcé — vérifié par balayage direct contre le solveur, pas supposé.
 touchée, seulement le solveur et le reporting) ; suite complète —
 voir CLAUDE.md pour le chiffre exact de cette tranche. `tsc -b`/
 `vite build` propres.
+
+## D20 — Le FCÉN entre dans un registre de candidats, jamais directement dans le canon
+
+**Décision.** La publication bilingue FCÉN 2026 est importée hors requête HTTP
+dans `staging.cnf_food_candidate`. La migration `f4a7c9d2e6b1` ajoute aussi
+`catalog.canonical_ingredient_alias` pour les alias humains approuvés et
+`catalog.canonical_ingredient_external_ref` pour les crosswalks versionnés.
+
+**Raison.** Les 5 993 lignes du FCÉN sont des entrées de composition
+nutritionnelle, pas 5 993 identités d'achat prêtes à employer. Elles ne
+fournissent pas directement `unit_kind`, `base_unit`, `perishability`,
+`salvage_value_cents_per_base_unit` ou `density_g_per_ml`. Un import direct
+obligerait à inventer ces valeurs et
+confondrait plats préparés, états cru/cuit et ingrédients achetables.
+
+**Garanties de l'importeur.** `app.ingestion.cnf` lit l'archive ZIP officielle
+avec un vrai lecteur CSV UTF-8 BOM, exige les descriptions primaires française
+et anglaise, conserve le payload original, calcule le SHA-256 et upserte par
+`(source_version, food_code)`. Les groupes 3, 19, 21, 22 et 25 reçoivent le
+statut initial `excluded`; les boissons (14), `review`; les autres,
+`candidate`. Ce classement est réversible et aucune ligne n'est supprimée.
+Au rejeu, les champs source sont actualisés, mais `curation_status`,
+`reviewed_by` et `reviewed_at` ne sont jamais écrasés.
+
+**Limite volontaire.** Cette tranche pose la plomberie et l'import; elle ne
+crée aucun ingrédient canonique, alias ou crosswalk automatiquement. La
+promotion exige encore une décision de curation et le remplissage explicite
+des champs métier du solveur.
+
+**Vérification.** L'archive officielle observée le 12 août 2026 est lue en
+entier : 5 993 lignes, dont 4 835 `candidate`, 284 `review` et 874 `excluded`,
+avec l'empreinte publiée dans `docs/ingredient-database-research.md`. La suite
+hors PostgreSQL passe (67 tests, 45 tests DB sautés faute de serveur local) et
+la migration D19 compile en SQL PostgreSQL depuis la révision précédente.
+
+
+## D21 — Les familles d'ingrédients décrivent la curation, jamais la substitution
+
+**Décision.** La migration `b7e1d4a9c2f6` ajoute
+`catalog.ingredient_family`, le lien nullable
+`canonical_ingredient.family_id` et le journal append-only
+`catalog.ingredient_curation_event`. Le flux hors ligne
+`app.ingestion.ingredient_curation` offre trois décisions explicites :
+attacher à un canon, créer une variante dans une famille ou exclure.
+
+**Frontière architecturale.** Le flux vit dans `ingestion/` parce qu'il relie
+`staging.cnf_food_candidate` au catalogue curé. Aucune route API et aucun
+service du solveur ne lit `staging`. `family_id` n'est ajouté ni à
+`ProblemData`, ni au préfiltrage, ni aux besoins : deux membres d'une même
+famille restent deux identités non substituables.
+
+**Dédoublonnage et audit.** Une collision sur l'id, le nom normalisé ou un
+alias approuvé bloque une création et demande un rattachement. Les libellés
+très proches sont signalés; créer malgré l'avertissement exige de citer les
+ids acquittés dans le manifeste. Il n'existe aucune fusion automatique. Un
+fingerprint rend le rejeu exact idempotent, tandis qu'une correction écrit un
+nouvel événement avec auteur, justification, décision et instantané source.
+
+**Démonstration riz.** Le seed crée la famille descriptive `riz` et y rattache
+le canon existant (`riz_basmati` dans le seed principal, `riz` dans le jouet).
+Le test de curation crée `riz_jasmin_test` comme deuxième identité de cette
+famille et confirme que les produits restent liés au canon précis, jamais à
+la famille. Les variantes réelles supplémentaires seront donc créées seulement
+quand les recettes ou catalogues d'épicerie les justifieront.
+
+
+## D22 — Le catalogue de départ contient des identités achetables, sans valeurs métier inventées
+
+**Décision.** Le seed principal contient un socle curé de 1 026 ingrédients,
+31 familles descriptives et 1 159 alias bilingues. Chaque entrée représente une
+identité qu'un produit d'épicerie peut viser; les marques, formats, états de
+préparation et plats composés n'y sont pas promus automatiquement.
+
+**Valeurs incomplètes.** `perishability` et
+`salvage_value_cents_per_base_unit` restent dans le modèle, mais deviennent
+nullable. Les 23 ingrédients historiques du pilote conservent leurs valeurs
+calibrées; les nouvelles identités du socle restent à `NULL` tant qu'elles ne
+sont pas curées. Le solveur n'accorde aucun crédit de récupération en
+l'absence d'une valeur. Les six densités déjà établies dans le projet sont
+conservées; aucune densité par défaut n'est inventée.
+
+**Reproductibilité.** `scripts/catalog_seed_data.py` est la source compacte du
+socle manuel. `scripts/refine_cnf_catalog.py` applique au snapshot FCÉN 2026
+un filtre versionné : groupes d'ingrédients seulement, identité bilingue,
+état simple achetable, exclusion des formes cuites/assaisonnées/composées et
+revue explicite de tout nom seulement similaire. Sur 5 993 lignes, 738 sont
+promues : 591 créations et 147 rattachements exacts ou explicitement curés.
+Les 333 créations similaires enregistrent les ids comparés comme acquittés;
+11 mélanges ou fractions nutritionnelles revus restent exclus.
+`scripts/generate_catalog.py` fusionne ces décisions et régénère ingrédients,
+alias, crosswalks et événements d'audit. Les identifiants historiques utilisés
+par les recettes, produits et essentiels sont tous préservés.

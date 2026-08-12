@@ -35,8 +35,8 @@ class IngredientData:
     name: str
     unit_kind: str
     base_unit: str
-    perishability: Decimal
-    salvage_value_cents_per_base_unit: Decimal  # σ_i
+    perishability: Decimal | None
+    salvage_value_cents_per_base_unit: Decimal | None  # σ_i, inconnu si NULL
     density_g_per_ml: Decimal | None
 
 

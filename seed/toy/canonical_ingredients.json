@@ -1,6 +1,7 @@
 [
   {
     "id": "riz",
+    "family_id": "riz",
     "name": "Riz",
     "unit_kind": "mass",
     "base_unit": "g",

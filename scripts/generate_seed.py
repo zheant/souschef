@@ -5,8 +5,8 @@ Le contrat du projet, ce sont les JSON produits — ce script n'est qu'un outil
 de fabrication, il n'est jamais importé par l'application.
 
 Exigences (docs/spec.md, « Données de seed ») :
-- ~20 ingrédients canoniques, 3 unit_kind, périssabilités contrastées
-  (coriandre σ=0, riz proche de sa borne), densités pour tous les liquides ;
+- catalogue canonique généraliste séparé du sous-ensemble de démonstration ;
+- périssabilité et récupération à NULL, densités seulement si établies ;
 - ~40 recettes cohérentes partageant des ingrédients, τ^fixe et β variés ;
 - 4 magasins dont deux partageant un shopping_center_id ;
 - ~80 produits, plusieurs formats par ingrédient, rabais actifs + historique ;
@@ -20,12 +20,14 @@ import random
 from datetime import date, timedelta
 from pathlib import Path
 
+from catalog_seed_data import family_rows
+from generate_catalog import main as generate_catalog_files
+
 ROOT = Path(__file__).resolve().parent.parent
 rng = random.Random(20260810)
 
 # Lundi de la « semaine courante » de la circulaire (fixe pour déterminisme).
 CURRENT_MONDAY = date(2026, 8, 10)
-
 
 def iso_week(monday: date) -> str:
     y, w, _ = monday.isocalendar()
@@ -33,7 +35,10 @@ def iso_week(monday: date) -> str:
 
 
 # --------------------------------------------------------------------------
-# Ingrédients canoniques — 22, trois unit_kind.
+# Sous-ensemble historique de 23 ingrédients utilisé pour fabriquer les
+# recettes, produits et prix de démonstration. Le catalogue canonique complet
+# provient de ``catalog_seed_data.py`` et de la curation FCÉN.
+#
 # σ (salvage_value_cents_per_base_unit) n'est plus une valeur indépendante
 # ici : ingredients_json() le DÉRIVE de perishability, sigma = (1 -
 # perishability) * 0,8 * prix_plancher — nettement sous la borne 0,8·min
@@ -378,7 +383,8 @@ HOUSEHOLD = {
 # main (documenté dans seed/toy/README.md, test à l'étape 4).
 def toy() -> dict[str, object]:
     ingredients = [
-        {"id": "riz", "name": "Riz", "unit_kind": "mass", "base_unit": "g",
+        {"id": "riz", "family_id": "riz", "name": "Riz",
+         "unit_kind": "mass", "base_unit": "g",
          "perishability": 0.02, "salvage_value_cents_per_base_unit": 0.1,
          "density_g_per_ml": None},
         {"id": "lentille", "name": "Lentilles", "unit_kind": "mass", "base_unit": "g",
@@ -447,13 +453,20 @@ def toy() -> dict[str, object]:
         "members": [{"name": "Solo", "appetite_coefficient": 1.0}],
         "staples": [],
     }
-    return {"canonical_ingredients.json": ingredients, "recipes.json": recipes,
+    return {"ingredient_families.json": [
+                row for row in family_rows() if row["id"] == "riz"
+            ],
+            "canonical_ingredient_aliases.json": [],
+            "canonical_ingredients.json": ingredients, "recipes.json": recipes,
             "stores.json": stores, "products.json": products,
             "raw_offers.json": offers, "household.json": household}
 
 
 def dump(path: Path, obj) -> None:
-    path.write_text(json.dumps(obj, ensure_ascii=False, indent=2) + "\n")
+    path.write_text(
+        json.dumps(obj, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
 
 
 def main() -> None:
@@ -464,7 +477,23 @@ def main() -> None:
 
     products = build_products()
     offers = build_raw_offers(products)
-    dump(main_dir / "canonical_ingredients.json", ingredients_json(products, offers))
+    # Le module catalogue reste l'unique générateur des familles, alias,
+    # crosswalks et événements. On enrichit ensuite uniquement les 23
+    # ingrédients historiques dont les paramètres solveur sont réellement
+    # calibrés; toutes les nouvelles identités FCÉN conservent NULL.
+    generate_catalog_files()
+    canonical_ingredients = json.loads(
+        (main_dir / "canonical_ingredients.json").read_text(encoding="utf-8")
+    )
+    calibrated = {row["id"]: row for row in ingredients_json(products, offers)}
+    for row in canonical_ingredients:
+        if row["id"] in calibrated:
+            source = calibrated[row["id"]]
+            row["perishability"] = source["perishability"]
+            row["salvage_value_cents_per_base_unit"] = (
+                source["salvage_value_cents_per_base_unit"]
+            )
+    dump(main_dir / "canonical_ingredients.json", canonical_ingredients)
     dump(main_dir / "recipes.json", recipes_json())
     dump(main_dir / "stores.json", STORES)
     dump(main_dir / "products.json", products)
@@ -474,7 +503,7 @@ def main() -> None:
     for name, obj in toy().items():
         dump(toy_dir / name, obj)
 
-    print(f"seed/main : {len(INGREDIENTS)} ingrédients, {len(ALL_RECIPES)} recettes,"
+    print(f"seed/main : {len(canonical_ingredients)} ingrédients, {len(ALL_RECIPES)} recettes,"
           f" {len(STORES)} magasins, {len(products)} produits")
 
 

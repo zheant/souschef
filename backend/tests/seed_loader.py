@@ -23,9 +23,13 @@ def problem_from_seed_dir(seed_dir: str | Path, on_date: date) -> ProblemData:
         i["id"]: IngredientData(
             id=i["id"], name=i["name"], unit_kind=i["unit_kind"],
             base_unit=i["base_unit"],
-            perishability=Decimal(str(i["perishability"])),
-            salvage_value_cents_per_base_unit=Decimal(
-                str(i["salvage_value_cents_per_base_unit"])
+            perishability=(
+                Decimal(str(i["perishability"]))
+                if i["perishability"] is not None else None
+            ),
+            salvage_value_cents_per_base_unit=(
+                Decimal(str(i["salvage_value_cents_per_base_unit"]))
+                if i["salvage_value_cents_per_base_unit"] is not None else None
             ),
             density_g_per_ml=(
                 Decimal(str(i["density_g_per_ml"]))

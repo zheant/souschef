@@ -27,8 +27,12 @@ from ..db import SessionLocal
 from ..ingestion.normalize import land_offers, normalize_offers
 from ..models import (
     CanonicalIngredient,
+    CanonicalIngredientAlias,
+    CanonicalIngredientExternalRef,
     HouseholdMember,
     HouseholdProfile,
+    IngredientCurationEvent,
+    IngredientFamily,
     Product,
     Recipe,
     RecipeIngredient,
@@ -57,12 +61,50 @@ def _load(seed_dir: Path, name: str) -> list | dict:
     return json.loads((seed_dir / name).read_text())
 
 
+def _load_optional(seed_dir: Path, name: str) -> list:
+    path = seed_dir / name
+    return json.loads(path.read_text()) if path.exists() else []
+
+
 def seed_catalog(
     session: Session, seed_dir: Path, recipe_source=None
 ) -> None:
+    families = _load(seed_dir, "ingredient_families.json")
+    n = _upsert(session, IngredientFamily, families, ["id"])
+    print(f"  catalog.ingredient_family    : {n} lignes")
+
     ingredients = _load(seed_dir, "canonical_ingredients.json")
     n = _upsert(session, CanonicalIngredient, ingredients, ["id"])
     print(f"  catalog.canonical_ingredient : {n} lignes")
+
+    aliases = _load(seed_dir, "canonical_ingredient_aliases.json")
+    n = _upsert(
+        session,
+        CanonicalIngredientAlias,
+        aliases,
+        ["language", "normalized_alias"],
+    )
+    print(f"  catalog.ingredient_alias     : {n} lignes")
+
+    external_refs = _load_optional(
+        seed_dir, "canonical_ingredient_external_refs.json"
+    )
+    n = _upsert(
+        session,
+        CanonicalIngredientExternalRef,
+        external_refs,
+        ["source", "external_id", "source_version"],
+    )
+    print(f"  catalog.ingredient_ref       : {n} lignes")
+
+    curation_events = _load_optional(seed_dir, "ingredient_curation_events.json")
+    n = _upsert(
+        session,
+        IngredientCurationEvent,
+        curation_events,
+        ["decision_fingerprint"],
+    )
+    print(f"  catalog.curation_event       : {n} lignes")
 
     # Recettes via le port (injectable) — même contrat que le futur catalogue.
     recipes = (recipe_source or JsonRecipeSourceAdapter(seed_dir)).load_all()
@@ -70,7 +112,6 @@ def seed_catalog(
     for r in recipes:
         d = r.model_dump()
         ings = d.pop("ingredients")
-        # Convention du seed v1 (D16) : <id>/<id>_familial partagent un plat.
         d["dish_family_id"] = dish_family_id_of(d["id"])
         recipe_rows.append(d)
         for ing in ings:

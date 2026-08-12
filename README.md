@@ -103,14 +103,74 @@ principe pour le catalogue de recettes : `RecipeSourcePort.load_all()` /
 
 ## Données de seed
 
-- `seed/main/` — 23 ingrédients canoniques (3 `unit_kind`, densités pour tous
-  les liquides, $\sigma_i$ contrastés : coriandre à 0, riz proche de sa
-  borne), 40 recettes partageant des ingrédients, 4 magasins (deux au même
-  centre commercial), 83 produits, 4 semaines de prix dont ~70 rabais actifs.
+- `seed/main/` — 1 026 ingrédients canoniques répartis dans 31 familles, avec
+  1 159 alias français/anglais et 738 références FCÉN auditées. Périssabilité
+  et valeur de récupération restent à `null`; 6 densités déjà établies sont
+  conservées. Les 40 recettes et les
+  83 produits de démonstration utilisent le sous-ensemble historique de 23
+  ingrédients.
 - `seed/toy/` — instance jouet (3 recettes, 4 produits, 1 magasin) dont
   l'optimum sera vérifié à la main par un test à l'étape 4.
 - `scripts/generate_seed.py` — générateur déterministe des JSON ; le contrat
   du projet reste les JSON versionnés, jamais le script.
+
+## Importer les candidats d'ingrédients FCÉN 2026
+
+Le [Fichier canadien sur les éléments nutritifs 2026](https://open.canada.ca/data/en/dataset/1b6139bd-ed7e-4043-bc28-ff00e10f3109)
+sert de registre externe bilingue à curer; ses 5 993 aliments ne sont jamais
+copiés directement dans le catalogue canonique.
+
+Après `alembic upgrade head`, télécharger l'archive officielle puis lancer,
+depuis `backend/` :
+
+```bash
+python -m app.ingestion.cnf --archive ../data/cnf_fcen_all-files-data_2026.zip
+```
+
+L'import est idempotent, calcule le SHA-256 de l'archive et conserve les noms
+français et anglais dans `staging.cnf_food_candidate`. Les groupes clairement
+hors recette sont mis en quarantaine par statut, jamais supprimés. Un rejeu
+actualise la copie source sans écraser les décisions de curation. Les alias
+approuvés et les liens vers les identifiants externes ont leurs propres tables
+dans `catalog`. Le flux hors ligne `app.ingestion.ingredient_curation` les
+peuple seulement après une décision humaine explicite. Pour examiner une
+ligne puis appliquer un manifeste versionné :
+
+```bash
+python -m app.ingestion.ingredient_curation preview --source-version 2026 --food-code 1234
+python -m app.ingestion.ingredient_curation apply --manifest ../data/curation-riz.json
+```
+
+Le manifeste choisit `attach_existing`, `create_variant` ou `exclude`, avec
+un auteur et une justification. Un nom/alias normalisé identique bloque la
+création; une forte similarité exige un acquittement explicite et n'entraîne
+jamais de fusion automatique. Le format est détaillé dans
+[`docs/ingredient-curation.md`](docs/ingredient-curation.md).
+
+Le lot versionné courant est produit par une passe conservatrice et
+reproductible :
+
+```bash
+python scripts/refine_cnf_catalog.py --archive data/cnf_fcen_all-files-data_2026.zip
+python scripts/generate_catalog.py
+```
+
+Le lot courant accepte 738 codes : 591 nouvelles identités et 147
+rattachements au canon existant. Parmi les créations, 333 ont un nom similaire
+à un canon existant et conservent explicitement les identifiants comparés dans
+`acknowledged_similar_ids`; 11 autres cas revus sont exclus comme mélanges ou
+fractions nutritionnelles. Les formes cuites, assaisonnées, composées ou trop
+spécifiques ne sont pas promues. Le seed conserve pour chaque acceptation le
+crosswalk et l'événement d'audit associés.
+
+Le socle généraliste versionné est généré par
+`python scripts/generate_catalog.py`. Il représente des identités achetables,
+jamais des marques ou formats, et préserve tous les identifiants utilisés par
+les recettes et produits de démonstration.
+
+La sélection de la source, ses limites et le détail des colonnes françaises
+sont documentés dans
+[`docs/ingredient-database-research.md`](docs/ingredient-database-research.md).
 
 ## Arborescence
 
@@ -120,7 +180,7 @@ backend/
     models/       # SQLAlchemy — schémas catalog, market, household, staging
     ports/        # CircularPort, RecipeSourcePort + DTO (contrats stables)
     adapters/     # implémentations JSON v1 des ports
-    ingestion/    # atterrissage staging + normalisation vers market
+    ingestion/    # atterrissage, normalisation et curation hors HTTP
     services/     # units, demand (D9), travel, params, appetence, prefilter,
                   # validation, planning/household/catalog/offer_resolution
                   # (modules applicatifs — routes.py n'appelle qu'eux,

@@ -231,7 +231,10 @@ def _add_variables(m: pulp.LpProblem, c: _Ctx) -> None:
         c.y = pulp.LpVariable("y", cat=pulp.LpBinary)
     if c.config.enable_salvage:
         for iid in c._used_ingredients():
-            c.w[iid] = pulp.LpVariable(f"w_{iid}", lowBound=0)
+            # Une valeur absente n'est pas une récupération nulle curée : on
+            # omet entièrement le terme jusqu'à ce que la donnée existe.
+            if c.problem.ingredients[iid].salvage_value_cents_per_base_unit:
+                c.w[iid] = pulp.LpVariable(f"w_{iid}", lowBound=0)
     if c.config.enable_perishable_penalty:
         for iid in c._used_ingredients():
             c.waste[iid] = pulp.LpVariable(f"gaspillage_{iid}", lowBound=0)
@@ -482,7 +485,9 @@ def _time_expr_cents(c: _Ctx):
 
 def _salvage_expr_cents(c: _Ctx):
     return pulp.lpSum(
-        float(c.problem.ingredients[iid].salvage_value_cents_per_base_unit) * w
+        float(
+            c.problem.ingredients[iid].salvage_value_cents_per_base_unit or 0
+        ) * w
         for iid, w in c.w.items()
     )
 
@@ -692,8 +697,8 @@ class PulpMenuSolver:
                 iid: {
                     "quantite_base_unit": str(q),
                     "valorisation_cents": str(
-                        (q * c.problem.ingredients[iid]
-                         .salvage_value_cents_per_base_unit)
+                        (q * (c.problem.ingredients[iid]
+                         .salvage_value_cents_per_base_unit or Decimal(0)))
                         .quantize(Decimal("0.01"))
                     ),
                 }
@@ -751,7 +756,10 @@ class PulpMenuSolver:
                     temps += kappa * r.prep_time_fixed_h
         recuperation = sum(
             (
-                q * c.problem.ingredients[iid].salvage_value_cents_per_base_unit
+                q * (
+                    c.problem.ingredients[iid].salvage_value_cents_per_base_unit
+                    or Decimal(0)
+                )
                 for iid, q in surplus.items()
             ),
             Decimal(0),

@@ -121,6 +121,8 @@ def validate_problem(
     min_price = min_taxed_price_per_base_unit(problem)
     for iid, ing in problem.ingredients.items():
         sigma = ing.salvage_value_cents_per_base_unit
+        if sigma is None:
+            continue  # valeur métier non encore curée : aucune récupération
         if sigma == 0 or iid not in min_price:
             continue  # sans produit prixé, l'ingrédient tombe sous l'assertion 4
         bound = Decimal("0.8") * min_price[iid]

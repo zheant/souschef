@@ -1,0 +1,188 @@
+[
+  {
+    "id": "riz",
+    "name_fr": "Riz",
+    "name_en": "Rice",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "cereales",
+    "name_fr": "Céréales et grains",
+    "name_en": "Grains and cereals",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "pates",
+    "name_fr": "Pâtes et nouilles",
+    "name_en": "Pasta and noodles",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "farines",
+    "name_fr": "Farines et amidons",
+    "name_en": "Flours and starches",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "legumineuses",
+    "name_fr": "Légumineuses",
+    "name_en": "Legumes",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "legumes",
+    "name_fr": "Légumes",
+    "name_en": "Vegetables",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "alliums",
+    "name_fr": "Alliacées",
+    "name_en": "Alliums",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "herbes",
+    "name_fr": "Herbes fraîches",
+    "name_en": "Fresh herbs",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "fruits",
+    "name_fr": "Fruits",
+    "name_en": "Fruit",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "volaille",
+    "name_fr": "Volaille",
+    "name_en": "Poultry",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "boeuf",
+    "name_fr": "Bœuf",
+    "name_en": "Beef",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "veau",
+    "name_fr": "Veau",
+    "name_en": "Veal",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "porc",
+    "name_fr": "Porc",
+    "name_en": "Pork",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "agneau",
+    "name_fr": "Agneau",
+    "name_en": "Lamb",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "poissons",
+    "name_fr": "Poissons",
+    "name_en": "Fish",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "fruits_de_mer",
+    "name_fr": "Fruits de mer",
+    "name_en": "Seafood",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "oeufs",
+    "name_fr": "Œufs",
+    "name_en": "Eggs",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "produits_laitiers",
+    "name_fr": "Produits laitiers",
+    "name_en": "Dairy",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "fromages",
+    "name_fr": "Fromages",
+    "name_en": "Cheese",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "proteines_vegetales",
+    "name_fr": "Protéines végétales",
+    "name_en": "Plant proteins",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "huiles",
+    "name_fr": "Huiles et matières grasses",
+    "name_en": "Oils and fats",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "bouillons",
+    "name_fr": "Bouillons",
+    "name_en": "Stocks and broths",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "tomates",
+    "name_fr": "Tomates transformées",
+    "name_en": "Processed tomatoes",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "sauces",
+    "name_fr": "Sauces et condiments",
+    "name_en": "Sauces and condiments",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "epices",
+    "name_fr": "Épices et assaisonnements",
+    "name_en": "Spices and seasonings",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "sucres",
+    "name_fr": "Sucres et sirops",
+    "name_en": "Sugars and syrups",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "patisserie",
+    "name_fr": "Pâtisserie et levants",
+    "name_en": "Baking ingredients",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "noix_graines",
+    "name_fr": "Noix et graines",
+    "name_en": "Nuts and seeds",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "pains",
+    "name_fr": "Pains et produits plats",
+    "name_en": "Bread and flatbreads",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "conserves",
+    "name_fr": "Conserves et ingrédients préparés",
+    "name_en": "Canned ingredients",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  },
+  {
+    "id": "boissons",
+    "name_fr": "Boissons de cuisine",
+    "name_en": "Cooking beverages",
+    "description_fr": "Famille descriptive de curation; sans effet de substitution."
+  }
+]
