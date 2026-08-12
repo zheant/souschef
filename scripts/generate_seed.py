@@ -34,34 +34,38 @@ def iso_week(monday: date) -> str:
 
 # --------------------------------------------------------------------------
 # Ingrédients canoniques — 22, trois unit_kind.
-# σ (salvage_value_cents_per_base_unit) est calibré NETTEMENT sous la borne
-# 0,8·min(prix taxé/unité) de l'assertion 1 ; le riz est volontairement
-# proche de sa borne, la coriandre à 0.
-# (id, name, unit_kind, base_unit, perishability, salvage_cents/bu, density)
+# σ (salvage_value_cents_per_base_unit) n'est plus une valeur indépendante
+# ici : ingredients_json() le DÉRIVE de perishability, sigma = (1 -
+# perishability) * 0,8 * prix_plancher — nettement sous la borne 0,8·min
+# (prix taxé/unité) de l'assertion 1 par construction (ratio ≤ 1). Le riz
+# est proche de sa borne parce que sa périssabilité est basse (0,02) ; la
+# coriandre et les épinards sont à 1,0 pour donner exactement σ = 0
+# (exigé tel quel par docs/spec.md, § Données de seed).
+# (id, name, unit_kind, base_unit, perishability, density)
 INGREDIENTS = [
-    ("riz_basmati", "Riz basmati", "mass", "g", 0.02, 0.28, None),
-    ("farine_tout_usage", "Farine tout usage", "mass", "g", 0.03, 0.075, None),
-    ("lentille_verte", "Lentilles vertes sèches", "mass", "g", 0.02, 0.12, None),
-    ("poulet_cuisse", "Cuisses de poulet", "mass", "g", 0.85, 0.30, None),
-    ("boeuf_hache", "Bœuf haché mi-maigre", "mass", "g", 0.85, 0.45, None),
-    ("tofu_ferme", "Tofu ferme", "mass", "g", 0.60, 0.25, None),
-    ("oignon_jaune", "Oignon jaune", "mass", "g", 0.15, 0.08, None),
-    ("carotte", "Carotte", "mass", "g", 0.25, 0.06, None),
-    ("pomme_de_terre", "Pomme de terre", "mass", "g", 0.15, 0.05, None),
-    ("tomate_conserve", "Tomates en conserve", "mass", "g", 0.05, 0.10, None),
-    ("cheddar", "Cheddar", "mass", "g", 0.40, 0.60, None),
-    ("beurre", "Beurre salé", "mass", "g", 0.20, 0.55, None),
-    ("coriandre_fraiche", "Coriandre fraîche", "mass", "g", 0.95, 0.0, None),
-    ("epinard_frais", "Épinards frais", "mass", "g", 0.90, 0.0, None),
-    ("lait_325", "Lait 3,25 %", "volume", "ml", 0.70, 0.08, 1.03),
-    ("huile_olive", "Huile d'olive", "volume", "ml", 0.02, 0.50, 0.91),
-    ("sauce_soja", "Sauce soja", "volume", "ml", 0.02, 0.25, 1.10),
-    ("creme_35", "Crème 35 %", "volume", "ml", 0.75, 0.30, 0.98),
-    ("bouillon_poulet", "Bouillon de poulet", "volume", "ml", 0.30, 0.08, 1.00),
-    ("oeuf", "Œuf de calibre gros", "count", "unit", 0.30, 22.0, None),
-    ("tortilla", "Tortilla de blé", "count", "unit", 0.35, 20.0, None),
-    ("gousse_ail", "Gousse d'ail", "count", "unit", 0.10, 4.0, None),
-    ("feuille_laurier", "Feuille de laurier séchée", "count", "unit", 0.02, 0.0, None),
+    ("riz_basmati", "Riz basmati", "mass", "g", 0.02, None),
+    ("farine_tout_usage", "Farine tout usage", "mass", "g", 0.03, None),
+    ("lentille_verte", "Lentilles vertes sèches", "mass", "g", 0.02, None),
+    ("poulet_cuisse", "Cuisses de poulet", "mass", "g", 0.85, None),
+    ("boeuf_hache", "Bœuf haché mi-maigre", "mass", "g", 0.85, None),
+    ("tofu_ferme", "Tofu ferme", "mass", "g", 0.60, None),
+    ("oignon_jaune", "Oignon jaune", "mass", "g", 0.15, None),
+    ("carotte", "Carotte", "mass", "g", 0.25, None),
+    ("pomme_de_terre", "Pomme de terre", "mass", "g", 0.15, None),
+    ("tomate_conserve", "Tomates en conserve", "mass", "g", 0.05, None),
+    ("cheddar", "Cheddar", "mass", "g", 0.40, None),
+    ("beurre", "Beurre salé", "mass", "g", 0.20, None),
+    ("coriandre_fraiche", "Coriandre fraîche", "mass", "g", 1.0, None),
+    ("epinard_frais", "Épinards frais", "mass", "g", 1.0, None),
+    ("lait_325", "Lait 3,25 %", "volume", "ml", 0.70, 1.03),
+    ("huile_olive", "Huile d'olive", "volume", "ml", 0.02, 0.91),
+    ("sauce_soja", "Sauce soja", "volume", "ml", 0.02, 1.10),
+    ("creme_35", "Crème 35 %", "volume", "ml", 0.75, 0.98),
+    ("bouillon_poulet", "Bouillon de poulet", "volume", "ml", 0.30, 1.00),
+    ("oeuf", "Œuf de calibre gros", "count", "unit", 0.30, None),
+    ("tortilla", "Tortilla de blé", "count", "unit", 0.35, None),
+    ("gousse_ail", "Gousse d'ail", "count", "unit", 0.10, None),
+    ("feuille_laurier", "Feuille de laurier séchée", "count", "unit", 0.02, None),
 ]
 
 # --------------------------------------------------------------------------
@@ -216,11 +220,17 @@ TAXED = {"tortilla": 0.14975}
 
 def build_products() -> list[dict]:
     products = []
-    for (iid, _n, kind, _bu, _p, _s, _d) in INGREDIENTS:
+    for (iid, _n, kind, _bu, _p, _d) in INGREDIENTS:
         n_formats = 4 if kind == "mass" else 3
         fmts = FORMATS[kind][:n_formats]
+        # hash(iid) est randomisé par processus (PYTHONHASHSEED) depuis
+        # Python 3.3 — jamais reproductible d'un lancement à l'autre malgré
+        # ce que prétendait le docstring du module. random.Random(clé) est
+        # le seul générateur réellement déterministe ici, même motif que
+        # key_rng plus bas pour l'assortiment magasin/produit.
+        brand_offset = random.Random(f"brand|{iid}").randrange(len(BRANDS))
         for k, (size, label) in enumerate(fmts):
-            brand = BRANDS[(hash(iid) + k) % len(BRANDS)]
+            brand = BRANDS[(brand_offset + k) % len(BRANDS)]
             products.append({
                 "external_key": f"{iid}_f{size}",
                 "canonical_ingredient_id": iid,
@@ -303,25 +313,18 @@ def recipes_json() -> list[dict]:
     return out
 
 
-# Ratio cible sigma / (0,8 * min prix taxé par unité de base). Le riz est
-# l'UNIQUE cas volontairement proche de la borne ; coriandre et épinards à 0.
-SIGMA_TARGET_RATIO = {
-    "riz_basmati": 0.93,
-    "coriandre_fraiche": 0.0,
-    "epinard_frais": 0.0,
-}
-
-
-def _sigma_ratio(iid: str) -> float:
-    if iid in SIGMA_TARGET_RATIO:
-        return SIGMA_TARGET_RATIO[iid]
-    # Déterministe par ingrédient, étalé dans [0,50 ; 0,80] — jamais limite.
-    return 0.50 + 0.30 * random.Random(f"sigma|{iid}").random()
-
-
 def ingredients_json(products: list[dict], offers: list[dict]) -> list[dict]:
-    """sigma est CALIBRÉ contre les prix générés (semaine courante) : l'assertion
-    1 de la spec tient par construction, et reste vraie si les prix changent."""
+    """sigma est DÉRIVÉ de la périssabilité, contre les prix générés (semaine
+    courante) : sigma_i = (1 - perishability_i) * 0,8 * prix_plancher_i —
+    un ingrédient stable (perishability≈0) garde presque tout le plafond
+    permis par l'assertion 1 ; un ingrédient périssable (perishability≈1)
+    tombe à ≈0, jamais crédité comme s'il allait survivre à la semaine.
+    ratio = 1 - perishability ∈ [0, 1] (perishability est déjà borné 0-1 en
+    base) : l'assertion 1 tient par construction, et reste vraie si les prix
+    changent, exactement comme l'ancien ratio pseudo-aléatoire — sauf que
+    celui-ci est dérivé d'une vraie donnée par ingrédient plutôt qu'arbitraire
+    (vérifié empiriquement contre le solveur avant d'être appliqué ici, voir
+    CLAUDE.md)."""
     pk = {p["external_key"]: p for p in products}
     wk = iso_week(CURRENT_MONDAY)
     min_per_unit: dict[str, float] = {}
@@ -333,8 +336,8 @@ def ingredients_json(products: list[dict], offers: list[dict]) -> list[dict]:
         iid = prod["canonical_ingredient_id"]
         min_per_unit[iid] = min(min_per_unit.get(iid, float("inf")), per)
     out = []
-    for (iid, n, k, bu, p, _s, d) in INGREDIENTS:
-        sigma = round(_sigma_ratio(iid) * 0.8 * min_per_unit[iid], 6)
+    for (iid, n, k, bu, p, d) in INGREDIENTS:
+        sigma = round((1 - p) * 0.8 * min_per_unit[iid], 6)
         out.append({"id": iid, "name": n, "unit_kind": k, "base_unit": bu,
                     "perishability": p, "salvage_value_cents_per_base_unit": sigma,
                     "density_g_per_ml": d})
@@ -363,11 +366,10 @@ HOUSEHOLD = {
         {"name": "Camille", "appetite_coefficient": 1.0},
         {"name": "Noa", "appetite_coefficient": 0.6},
     ],
-    "pantry": [
-        {"canonical_ingredient_id": "riz_basmati", "quantity_base_unit": 500},
-        {"canonical_ingredient_id": "huile_olive", "quantity_base_unit": 250},
-        {"canonical_ingredient_id": "feuille_laurier", "quantity_base_unit": 0},
-    ],
+    #: Essentiels (staples, pilote, docs/product-pilot.md) — simple
+    #: appartenance, sans quantité ; remplace l'ancien garde-manger
+    #: (pantry_stock, retiré).
+    "staples": ["riz_basmati", "huile_olive", "feuille_laurier"],
 }
 
 
@@ -443,7 +445,7 @@ def toy() -> dict[str, object]:
                     "meals_per_horizon": 4, "min_distinct_recipes": 2,
                     "max_share_per_recipe": 0.75, "max_store_visits": 1},
         "members": [{"name": "Solo", "appetite_coefficient": 1.0}],
-        "pantry": [],
+        "staples": [],
     }
     return {"canonical_ingredients.json": ingredients, "recipes.json": recipes,
             "stores.json": stores, "products.json": products,

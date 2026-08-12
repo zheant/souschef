@@ -5,7 +5,7 @@
     "unit_kind": "mass",
     "base_unit": "g",
     "perishability": 0.02,
-    "salvage_value_cents_per_base_unit": 0.241554,
+    "salvage_value_cents_per_base_unit": 0.254541,
     "density_g_per_ml": null
   },
   {
@@ -14,7 +14,7 @@
     "unit_kind": "mass",
     "base_unit": "g",
     "perishability": 0.03,
-    "salvage_value_cents_per_base_unit": 0.050225,
+    "salvage_value_cents_per_base_unit": 0.077258,
     "density_g_per_ml": null
   },
   {
@@ -23,7 +23,7 @@
     "unit_kind": "mass",
     "base_unit": "g",
     "perishability": 0.02,
-    "salvage_value_cents_per_base_unit": 0.082,
+    "salvage_value_cents_per_base_unit": 0.131588,
     "density_g_per_ml": null
   },
   {
@@ -32,7 +32,7 @@
     "unit_kind": "mass",
     "base_unit": "g",
     "perishability": 0.85,
-    "salvage_value_cents_per_base_unit": 0.233772,
+    "salvage_value_cents_per_base_unit": 0.052533,
     "density_g_per_ml": null
   },
   {
@@ -41,7 +41,7 @@
     "unit_kind": "mass",
     "base_unit": "g",
     "perishability": 0.85,
-    "salvage_value_cents_per_base_unit": 0.33921,
+    "salvage_value_cents_per_base_unit": 0.096667,
     "density_g_per_ml": null
   },
   {
@@ -50,7 +50,7 @@
     "unit_kind": "mass",
     "base_unit": "g",
     "perishability": 0.6,
-    "salvage_value_cents_per_base_unit": 0.290603,
+    "salvage_value_cents_per_base_unit": 0.146489,
     "density_g_per_ml": null
   },
   {
@@ -59,7 +59,7 @@
     "unit_kind": "mass",
     "base_unit": "g",
     "perishability": 0.15,
-    "salvage_value_cents_per_base_unit": 0.074953,
+    "salvage_value_cents_per_base_unit": 0.103133,
     "density_g_per_ml": null
   },
   {
@@ -68,7 +68,7 @@
     "unit_kind": "mass",
     "base_unit": "g",
     "perishability": 0.25,
-    "salvage_value_cents_per_base_unit": 0.051517,
+    "salvage_value_cents_per_base_unit": 0.059736,
     "density_g_per_ml": null
   },
   {
@@ -77,7 +77,7 @@
     "unit_kind": "mass",
     "base_unit": "g",
     "perishability": 0.15,
-    "salvage_value_cents_per_base_unit": 0.059856,
+    "salvage_value_cents_per_base_unit": 0.066111,
     "density_g_per_ml": null
   },
   {
@@ -86,7 +86,7 @@
     "unit_kind": "mass",
     "base_unit": "g",
     "perishability": 0.05,
-    "salvage_value_cents_per_base_unit": 0.109515,
+    "salvage_value_cents_per_base_unit": 0.141022,
     "density_g_per_ml": null
   },
   {
@@ -95,7 +95,7 @@
     "unit_kind": "mass",
     "base_unit": "g",
     "perishability": 0.4,
-    "salvage_value_cents_per_base_unit": 0.559841,
+    "salvage_value_cents_per_base_unit": 0.504317,
     "density_g_per_ml": null
   },
   {
@@ -104,7 +104,7 @@
     "unit_kind": "mass",
     "base_unit": "g",
     "perishability": 0.2,
-    "salvage_value_cents_per_base_unit": 0.55952,
+    "salvage_value_cents_per_base_unit": 0.590661,
     "density_g_per_ml": null
   },
   {
@@ -112,7 +112,7 @@
     "name": "Coriandre fraîche",
     "unit_kind": "mass",
     "base_unit": "g",
-    "perishability": 0.95,
+    "perishability": 1.0,
     "salvage_value_cents_per_base_unit": 0.0,
     "density_g_per_ml": null
   },
@@ -121,7 +121,7 @@
     "name": "Épinards frais",
     "unit_kind": "mass",
     "base_unit": "g",
-    "perishability": 0.9,
+    "perishability": 1.0,
     "salvage_value_cents_per_base_unit": 0.0,
     "density_g_per_ml": null
   },
@@ -131,7 +131,7 @@
     "unit_kind": "volume",
     "base_unit": "ml",
     "perishability": 0.7,
-    "salvage_value_cents_per_base_unit": 0.078538,
+    "salvage_value_cents_per_base_unit": 0.03264,
     "density_g_per_ml": 1.03
   },
   {
@@ -140,7 +140,7 @@
     "unit_kind": "volume",
     "base_unit": "ml",
     "perishability": 0.02,
-    "salvage_value_cents_per_base_unit": 0.47055,
+    "salvage_value_cents_per_base_unit": 0.675024,
     "density_g_per_ml": 0.91
   },
   {
@@ -149,7 +149,7 @@
     "unit_kind": "volume",
     "base_unit": "ml",
     "perishability": 0.02,
-    "salvage_value_cents_per_base_unit": 0.160111,
+    "salvage_value_cents_per_base_unit": 0.285376,
     "density_g_per_ml": 1.1
   },
   {
@@ -158,7 +158,7 @@
     "unit_kind": "volume",
     "base_unit": "ml",
     "perishability": 0.75,
-    "salvage_value_cents_per_base_unit": 0.271179,
+    "salvage_value_cents_per_base_unit": 0.1232,
     "density_g_per_ml": 0.98
   },
   {
@@ -167,7 +167,7 @@
     "unit_kind": "volume",
     "base_unit": "ml",
     "perishability": 0.3,
-    "salvage_value_cents_per_base_unit": 0.065831,
+    "salvage_value_cents_per_base_unit": 0.0588,
     "density_g_per_ml": 1.0
   },
   {
@@ -176,7 +176,7 @@
     "unit_kind": "count",
     "base_unit": "unit",
     "perishability": 0.3,
-    "salvage_value_cents_per_base_unit": 14.073704,
+    "salvage_value_cents_per_base_unit": 19.506667,
     "density_g_per_ml": null
   },
   {
@@ -185,7 +185,7 @@
     "unit_kind": "count",
     "base_unit": "unit",
     "perishability": 0.35,
-    "salvage_value_cents_per_base_unit": 26.341926,
+    "salvage_value_cents_per_base_unit": 21.9219,
     "density_g_per_ml": null
   },
   {
@@ -194,7 +194,7 @@
     "unit_kind": "count",
     "base_unit": "unit",
     "perishability": 0.1,
-    "salvage_value_cents_per_base_unit": 3.493163,
+    "salvage_value_cents_per_base_unit": 5.28,
     "density_g_per_ml": null
   },
   {
@@ -203,7 +203,7 @@
     "unit_kind": "count",
     "base_unit": "unit",
     "perishability": 0.02,
-    "salvage_value_cents_per_base_unit": 3.359266,
+    "salvage_value_cents_per_base_unit": 6.1152,
     "density_g_per_ml": null
   }
 ]

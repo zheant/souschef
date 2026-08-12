@@ -2,7 +2,7 @@
   {
     "external_key": "riz_basmati_f454",
     "canonical_ingredient_id": "riz_basmati",
-    "brand": "Val-Mont",
+    "brand": "Sans Nom",
     "package_qty_in_base_unit": 454,
     "package_unit": "454 g",
     "tax_rate": 0.0
@@ -10,7 +10,7 @@
   {
     "external_key": "riz_basmati_f900",
     "canonical_ingredient_id": "riz_basmati",
-    "brand": "Sans Nom",
+    "brand": "Récolte d'Or",
     "package_qty_in_base_unit": 900,
     "package_unit": "900 g",
     "tax_rate": 0.0
@@ -18,7 +18,7 @@
   {
     "external_key": "riz_basmati_f1800",
     "canonical_ingredient_id": "riz_basmati",
-    "brand": "Récolte d'Or",
+    "brand": "Maison Rivard",
     "package_qty_in_base_unit": 1800,
     "package_unit": "1,8 kg",
     "tax_rate": 0.0
@@ -26,7 +26,7 @@
   {
     "external_key": "riz_basmati_f2270",
     "canonical_ingredient_id": "riz_basmati",
-    "brand": "Maison Rivard",
+    "brand": "Val-Mont",
     "package_qty_in_base_unit": 2270,
     "package_unit": "2,27 kg",
     "tax_rate": 0.0
@@ -34,7 +34,7 @@
   {
     "external_key": "farine_tout_usage_f454",
     "canonical_ingredient_id": "farine_tout_usage",
-    "brand": "Val-Mont",
+    "brand": "Maison Rivard",
     "package_qty_in_base_unit": 454,
     "package_unit": "454 g",
     "tax_rate": 0.0
@@ -42,7 +42,7 @@
   {
     "external_key": "farine_tout_usage_f900",
     "canonical_ingredient_id": "farine_tout_usage",
-    "brand": "Sans Nom",
+    "brand": "Val-Mont",
     "package_qty_in_base_unit": 900,
     "package_unit": "900 g",
     "tax_rate": 0.0
@@ -50,7 +50,7 @@
   {
     "external_key": "farine_tout_usage_f1800",
     "canonical_ingredient_id": "farine_tout_usage",
-    "brand": "Récolte d'Or",
+    "brand": "Sans Nom",
     "package_qty_in_base_unit": 1800,
     "package_unit": "1,8 kg",
     "tax_rate": 0.0
@@ -58,7 +58,7 @@
   {
     "external_key": "farine_tout_usage_f2270",
     "canonical_ingredient_id": "farine_tout_usage",
-    "brand": "Maison Rivard",
+    "brand": "Récolte d'Or",
     "package_qty_in_base_unit": 2270,
     "package_unit": "2,27 kg",
     "tax_rate": 0.0
@@ -66,7 +66,7 @@
   {
     "external_key": "lentille_verte_f454",
     "canonical_ingredient_id": "lentille_verte",
-    "brand": "Maison Rivard",
+    "brand": "Val-Mont",
     "package_qty_in_base_unit": 454,
     "package_unit": "454 g",
     "tax_rate": 0.0
@@ -74,7 +74,7 @@
   {
     "external_key": "lentille_verte_f900",
     "canonical_ingredient_id": "lentille_verte",
-    "brand": "Val-Mont",
+    "brand": "Sans Nom",
     "package_qty_in_base_unit": 900,
     "package_unit": "900 g",
     "tax_rate": 0.0
@@ -82,7 +82,7 @@
   {
     "external_key": "lentille_verte_f1800",
     "canonical_ingredient_id": "lentille_verte",
-    "brand": "Sans Nom",
+    "brand": "Récolte d'Or",
     "package_qty_in_base_unit": 1800,
     "package_unit": "1,8 kg",
     "tax_rate": 0.0
@@ -90,7 +90,7 @@
   {
     "external_key": "lentille_verte_f2270",
     "canonical_ingredient_id": "lentille_verte",
-    "brand": "Récolte d'Or",
+    "brand": "Maison Rivard",
     "package_qty_in_base_unit": 2270,
     "package_unit": "2,27 kg",
     "tax_rate": 0.0
@@ -98,7 +98,7 @@
   {
     "external_key": "poulet_cuisse_f454",
     "canonical_ingredient_id": "poulet_cuisse",
-    "brand": "Maison Rivard",
+    "brand": "Sans Nom",
     "package_qty_in_base_unit": 454,
     "package_unit": "454 g",
     "tax_rate": 0.0
@@ -106,7 +106,7 @@
   {
     "external_key": "poulet_cuisse_f900",
     "canonical_ingredient_id": "poulet_cuisse",
-    "brand": "Val-Mont",
+    "brand": "Récolte d'Or",
     "package_qty_in_base_unit": 900,
     "package_unit": "900 g",
     "tax_rate": 0.0
@@ -114,7 +114,7 @@
   {
     "external_key": "poulet_cuisse_f1800",
     "canonical_ingredient_id": "poulet_cuisse",
-    "brand": "Sans Nom",
+    "brand": "Maison Rivard",
     "package_qty_in_base_unit": 1800,
     "package_unit": "1,8 kg",
     "tax_rate": 0.0
@@ -122,7 +122,7 @@
   {
     "external_key": "poulet_cuisse_f2270",
     "canonical_ingredient_id": "poulet_cuisse",
-    "brand": "Récolte d'Or",
+    "brand": "Val-Mont",
     "package_qty_in_base_unit": 2270,
     "package_unit": "2,27 kg",
     "tax_rate": 0.0
@@ -130,7 +130,7 @@
   {
     "external_key": "boeuf_hache_f454",
     "canonical_ingredient_id": "boeuf_hache",
-    "brand": "Sans Nom",
+    "brand": "Récolte d'Or",
     "package_qty_in_base_unit": 454,
     "package_unit": "454 g",
     "tax_rate": 0.0
@@ -138,7 +138,7 @@
   {
     "external_key": "boeuf_hache_f900",
     "canonical_ingredient_id": "boeuf_hache",
-    "brand": "Récolte d'Or",
+    "brand": "Maison Rivard",
     "package_qty_in_base_unit": 900,
     "package_unit": "900 g",
     "tax_rate": 0.0
@@ -146,7 +146,7 @@
   {
     "external_key": "boeuf_hache_f1800",
     "canonical_ingredient_id": "boeuf_hache",
-    "brand": "Maison Rivard",
+    "brand": "Val-Mont",
     "package_qty_in_base_unit": 1800,
     "package_unit": "1,8 kg",
     "tax_rate": 0.0
@@ -154,7 +154,7 @@
   {
     "external_key": "boeuf_hache_f2270",
     "canonical_ingredient_id": "boeuf_hache",
-    "brand": "Val-Mont",
+    "brand": "Sans Nom",
     "package_qty_in_base_unit": 2270,
     "package_unit": "2,27 kg",
     "tax_rate": 0.0
@@ -194,7 +194,7 @@
   {
     "external_key": "oignon_jaune_f454",
     "canonical_ingredient_id": "oignon_jaune",
-    "brand": "Maison Rivard",
+    "brand": "Sans Nom",
     "package_qty_in_base_unit": 454,
     "package_unit": "454 g",
     "tax_rate": 0.0
@@ -202,7 +202,7 @@
   {
     "external_key": "oignon_jaune_f900",
     "canonical_ingredient_id": "oignon_jaune",
-    "brand": "Val-Mont",
+    "brand": "Récolte d'Or",
     "package_qty_in_base_unit": 900,
     "package_unit": "900 g",
     "tax_rate": 0.0
@@ -210,7 +210,7 @@
   {
     "external_key": "oignon_jaune_f1800",
     "canonical_ingredient_id": "oignon_jaune",
-    "brand": "Sans Nom",
+    "brand": "Maison Rivard",
     "package_qty_in_base_unit": 1800,
     "package_unit": "1,8 kg",
     "tax_rate": 0.0
@@ -218,7 +218,7 @@
   {
     "external_key": "oignon_jaune_f2270",
     "canonical_ingredient_id": "oignon_jaune",
-    "brand": "Récolte d'Or",
+    "brand": "Val-Mont",
     "package_qty_in_base_unit": 2270,
     "package_unit": "2,27 kg",
     "tax_rate": 0.0
@@ -258,7 +258,7 @@
   {
     "external_key": "pomme_de_terre_f454",
     "canonical_ingredient_id": "pomme_de_terre",
-    "brand": "Maison Rivard",
+    "brand": "Sans Nom",
     "package_qty_in_base_unit": 454,
     "package_unit": "454 g",
     "tax_rate": 0.0
@@ -266,7 +266,7 @@
   {
     "external_key": "pomme_de_terre_f900",
     "canonical_ingredient_id": "pomme_de_terre",
-    "brand": "Val-Mont",
+    "brand": "Récolte d'Or",
     "package_qty_in_base_unit": 900,
     "package_unit": "900 g",
     "tax_rate": 0.0
@@ -274,7 +274,7 @@
   {
     "external_key": "pomme_de_terre_f1800",
     "canonical_ingredient_id": "pomme_de_terre",
-    "brand": "Sans Nom",
+    "brand": "Maison Rivard",
     "package_qty_in_base_unit": 1800,
     "package_unit": "1,8 kg",
     "tax_rate": 0.0
@@ -282,7 +282,7 @@
   {
     "external_key": "pomme_de_terre_f2270",
     "canonical_ingredient_id": "pomme_de_terre",
-    "brand": "Récolte d'Or",
+    "brand": "Val-Mont",
     "package_qty_in_base_unit": 2270,
     "package_unit": "2,27 kg",
     "tax_rate": 0.0
@@ -290,7 +290,7 @@
   {
     "external_key": "tomate_conserve_f454",
     "canonical_ingredient_id": "tomate_conserve",
-    "brand": "Sans Nom",
+    "brand": "Maison Rivard",
     "package_qty_in_base_unit": 454,
     "package_unit": "454 g",
     "tax_rate": 0.0
@@ -298,7 +298,7 @@
   {
     "external_key": "tomate_conserve_f900",
     "canonical_ingredient_id": "tomate_conserve",
-    "brand": "Récolte d'Or",
+    "brand": "Val-Mont",
     "package_qty_in_base_unit": 900,
     "package_unit": "900 g",
     "tax_rate": 0.0
@@ -306,7 +306,7 @@
   {
     "external_key": "tomate_conserve_f1800",
     "canonical_ingredient_id": "tomate_conserve",
-    "brand": "Maison Rivard",
+    "brand": "Sans Nom",
     "package_qty_in_base_unit": 1800,
     "package_unit": "1,8 kg",
     "tax_rate": 0.0
@@ -314,7 +314,7 @@
   {
     "external_key": "tomate_conserve_f2270",
     "canonical_ingredient_id": "tomate_conserve",
-    "brand": "Val-Mont",
+    "brand": "Récolte d'Or",
     "package_qty_in_base_unit": 2270,
     "package_unit": "2,27 kg",
     "tax_rate": 0.0
@@ -354,7 +354,7 @@
   {
     "external_key": "beurre_f454",
     "canonical_ingredient_id": "beurre",
-    "brand": "Sans Nom",
+    "brand": "Maison Rivard",
     "package_qty_in_base_unit": 454,
     "package_unit": "454 g",
     "tax_rate": 0.0
@@ -362,7 +362,7 @@
   {
     "external_key": "beurre_f900",
     "canonical_ingredient_id": "beurre",
-    "brand": "Récolte d'Or",
+    "brand": "Val-Mont",
     "package_qty_in_base_unit": 900,
     "package_unit": "900 g",
     "tax_rate": 0.0
@@ -370,7 +370,7 @@
   {
     "external_key": "beurre_f1800",
     "canonical_ingredient_id": "beurre",
-    "brand": "Maison Rivard",
+    "brand": "Sans Nom",
     "package_qty_in_base_unit": 1800,
     "package_unit": "1,8 kg",
     "tax_rate": 0.0
@@ -378,7 +378,7 @@
   {
     "external_key": "beurre_f2270",
     "canonical_ingredient_id": "beurre",
-    "brand": "Val-Mont",
+    "brand": "Récolte d'Or",
     "package_qty_in_base_unit": 2270,
     "package_unit": "2,27 kg",
     "tax_rate": 0.0
@@ -386,7 +386,7 @@
   {
     "external_key": "coriandre_fraiche_f454",
     "canonical_ingredient_id": "coriandre_fraiche",
-    "brand": "Maison Rivard",
+    "brand": "Récolte d'Or",
     "package_qty_in_base_unit": 454,
     "package_unit": "454 g",
     "tax_rate": 0.0
@@ -394,7 +394,7 @@
   {
     "external_key": "coriandre_fraiche_f900",
     "canonical_ingredient_id": "coriandre_fraiche",
-    "brand": "Val-Mont",
+    "brand": "Maison Rivard",
     "package_qty_in_base_unit": 900,
     "package_unit": "900 g",
     "tax_rate": 0.0
@@ -402,7 +402,7 @@
   {
     "external_key": "coriandre_fraiche_f1800",
     "canonical_ingredient_id": "coriandre_fraiche",
-    "brand": "Sans Nom",
+    "brand": "Val-Mont",
     "package_qty_in_base_unit": 1800,
     "package_unit": "1,8 kg",
     "tax_rate": 0.0
@@ -410,7 +410,7 @@
   {
     "external_key": "coriandre_fraiche_f2270",
     "canonical_ingredient_id": "coriandre_fraiche",
-    "brand": "Récolte d'Or",
+    "brand": "Sans Nom",
     "package_qty_in_base_unit": 2270,
     "package_unit": "2,27 kg",
     "tax_rate": 0.0
@@ -450,7 +450,7 @@
   {
     "external_key": "lait_325_f500",
     "canonical_ingredient_id": "lait_325",
-    "brand": "Maison Rivard",
+    "brand": "Récolte d'Or",
     "package_qty_in_base_unit": 500,
     "package_unit": "500 ml",
     "tax_rate": 0.0
@@ -458,7 +458,7 @@
   {
     "external_key": "lait_325_f1000",
     "canonical_ingredient_id": "lait_325",
-    "brand": "Val-Mont",
+    "brand": "Maison Rivard",
     "package_qty_in_base_unit": 1000,
     "package_unit": "1 L",
     "tax_rate": 0.0
@@ -466,7 +466,7 @@
   {
     "external_key": "lait_325_f2000",
     "canonical_ingredient_id": "lait_325",
-    "brand": "Sans Nom",
+    "brand": "Val-Mont",
     "package_qty_in_base_unit": 2000,
     "package_unit": "2 L",
     "tax_rate": 0.0
@@ -474,7 +474,7 @@
   {
     "external_key": "huile_olive_f500",
     "canonical_ingredient_id": "huile_olive",
-    "brand": "Récolte d'Or",
+    "brand": "Maison Rivard",
     "package_qty_in_base_unit": 500,
     "package_unit": "500 ml",
     "tax_rate": 0.0
@@ -482,7 +482,7 @@
   {
     "external_key": "huile_olive_f1000",
     "canonical_ingredient_id": "huile_olive",
-    "brand": "Maison Rivard",
+    "brand": "Val-Mont",
     "package_qty_in_base_unit": 1000,
     "package_unit": "1 L",
     "tax_rate": 0.0
@@ -490,7 +490,7 @@
   {
     "external_key": "huile_olive_f2000",
     "canonical_ingredient_id": "huile_olive",
-    "brand": "Val-Mont",
+    "brand": "Sans Nom",
     "package_qty_in_base_unit": 2000,
     "package_unit": "2 L",
     "tax_rate": 0.0
@@ -498,7 +498,7 @@
   {
     "external_key": "sauce_soja_f500",
     "canonical_ingredient_id": "sauce_soja",
-    "brand": "Maison Rivard",
+    "brand": "Sans Nom",
     "package_qty_in_base_unit": 500,
     "package_unit": "500 ml",
     "tax_rate": 0.0
@@ -506,7 +506,7 @@
   {
     "external_key": "sauce_soja_f1000",
     "canonical_ingredient_id": "sauce_soja",
-    "brand": "Val-Mont",
+    "brand": "Récolte d'Or",
     "package_qty_in_base_unit": 1000,
     "package_unit": "1 L",
     "tax_rate": 0.0
@@ -514,7 +514,7 @@
   {
     "external_key": "sauce_soja_f2000",
     "canonical_ingredient_id": "sauce_soja",
-    "brand": "Sans Nom",
+    "brand": "Maison Rivard",
     "package_qty_in_base_unit": 2000,
     "package_unit": "2 L",
     "tax_rate": 0.0
@@ -546,7 +546,7 @@
   {
     "external_key": "bouillon_poulet_f500",
     "canonical_ingredient_id": "bouillon_poulet",
-    "brand": "Val-Mont",
+    "brand": "Maison Rivard",
     "package_qty_in_base_unit": 500,
     "package_unit": "500 ml",
     "tax_rate": 0.0
@@ -554,7 +554,7 @@
   {
     "external_key": "bouillon_poulet_f1000",
     "canonical_ingredient_id": "bouillon_poulet",
-    "brand": "Sans Nom",
+    "brand": "Val-Mont",
     "package_qty_in_base_unit": 1000,
     "package_unit": "1 L",
     "tax_rate": 0.0
@@ -562,7 +562,7 @@
   {
     "external_key": "bouillon_poulet_f2000",
     "canonical_ingredient_id": "bouillon_poulet",
-    "brand": "Récolte d'Or",
+    "brand": "Sans Nom",
     "package_qty_in_base_unit": 2000,
     "package_unit": "2 L",
     "tax_rate": 0.0
@@ -570,7 +570,7 @@
   {
     "external_key": "oeuf_f6",
     "canonical_ingredient_id": "oeuf",
-    "brand": "Val-Mont",
+    "brand": "Sans Nom",
     "package_qty_in_base_unit": 6,
     "package_unit": "paquet de 6",
     "tax_rate": 0.0
@@ -578,7 +578,7 @@
   {
     "external_key": "oeuf_f12",
     "canonical_ingredient_id": "oeuf",
-    "brand": "Sans Nom",
+    "brand": "Récolte d'Or",
     "package_qty_in_base_unit": 12,
     "package_unit": "paquet de 12",
     "tax_rate": 0.0
@@ -586,7 +586,7 @@
   {
     "external_key": "oeuf_f30",
     "canonical_ingredient_id": "oeuf",
-    "brand": "Récolte d'Or",
+    "brand": "Maison Rivard",
     "package_qty_in_base_unit": 30,
     "package_unit": "paquet de 30",
     "tax_rate": 0.0
@@ -618,7 +618,7 @@
   {
     "external_key": "gousse_ail_f6",
     "canonical_ingredient_id": "gousse_ail",
-    "brand": "Val-Mont",
+    "brand": "Maison Rivard",
     "package_qty_in_base_unit": 6,
     "package_unit": "paquet de 6",
     "tax_rate": 0.0
@@ -626,7 +626,7 @@
   {
     "external_key": "gousse_ail_f12",
     "canonical_ingredient_id": "gousse_ail",
-    "brand": "Sans Nom",
+    "brand": "Val-Mont",
     "package_qty_in_base_unit": 12,
     "package_unit": "paquet de 12",
     "tax_rate": 0.0
@@ -634,7 +634,7 @@
   {
     "external_key": "gousse_ail_f30",
     "canonical_ingredient_id": "gousse_ail",
-    "brand": "Récolte d'Or",
+    "brand": "Sans Nom",
     "package_qty_in_base_unit": 30,
     "package_unit": "paquet de 30",
     "tax_rate": 0.0
@@ -642,7 +642,7 @@
   {
     "external_key": "feuille_laurier_f6",
     "canonical_ingredient_id": "feuille_laurier",
-    "brand": "Val-Mont",
+    "brand": "Sans Nom",
     "package_qty_in_base_unit": 6,
     "package_unit": "paquet de 6",
     "tax_rate": 0.0
@@ -650,7 +650,7 @@
   {
     "external_key": "feuille_laurier_f12",
     "canonical_ingredient_id": "feuille_laurier",
-    "brand": "Sans Nom",
+    "brand": "Récolte d'Or",
     "package_qty_in_base_unit": 12,
     "package_unit": "paquet de 12",
     "tax_rate": 0.0
@@ -658,7 +658,7 @@
   {
     "external_key": "feuille_laurier_f30",
     "canonical_ingredient_id": "feuille_laurier",
-    "brand": "Récolte d'Or",
+    "brand": "Maison Rivard",
     "package_qty_in_base_unit": 30,
     "package_unit": "paquet de 30",
     "tax_rate": 0.0
