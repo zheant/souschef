@@ -31,7 +31,7 @@ def test_singleton_center_recomposes_full_formula():
     t = compute_travel_costs(*home, (s,))
     d = t.distance_km[1]
     # ancrage (125 + 156·d) + arrêt (25) = 150 + 156·d = f_marg complet
-    total = t.center_anchor_cents[f"__solo_1"] + t.per_stop_cents
+    total = t.center_anchor_cents["__solo_1"] + t.per_stop_cents
     assert total == marginal_stop_cost_cents(d)
 
 

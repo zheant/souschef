@@ -5,19 +5,21 @@ d'épicerie. Spécification complète : [`docs/spec.md`](docs/spec.md). Écarts
 assumés : [`docs/deviations.md`](docs/deviations.md). Calibration de κ et
 u_r justifiée par [`docs/calibration.md`](docs/calibration.md).
 
-**État d'avancement** (ordre de livraison de la spec) : les six étapes
-sont livrées — structure, migrations, seeding, spec versionnée ; assertions,
-scoring, préfiltrage ; solveur MILP derrière l'interface `MenuSolver` avec
-tests à optimum vérifié à la main ; API FastAPI complète (plans persistés,
-`commit` reportant les restes vers le garde-manger, liste d'épicerie groupée
-par magasin, file de mapping) ; SPA React complète — les cinq écrans, dont la
-décomposition du coût en cinq barres signées et l'écran Diagnostic
-développeur avec drapeaux modifiables. La demande est encadrée
-⌈D⌉ ≤ Σx_r ≤ ⌈D(1+ε)⌉ (D9) ; calibration justifiée dans
-`docs/calibration.md` ; l'écran Résultat sépare décaissement et stock déjà
-payé (D13).
+**État d'avancement** (ordre de livraison de la spec, puis pilote produit) :
+les six étapes de la spec sont livrées — structure, migrations, seeding,
+spec versionnée ; assertions, scoring, préfiltrage ; solveur MILP derrière
+l'interface `MenuSolver` (six termes d'objectif — voir D19,
+`docs/deviations.md`) avec tests à optimum vérifié à la main ; API FastAPI
+complète (plans persistés, verrouillage/remplacement/réoptimisation,
+finalisation post-génération, liste d'épicerie groupée par magasin, file de
+mapping) ; SPA React complète — trois onglets (Planification, Ménage,
+Paramètres). La demande est encadrée ⌈D⌉ ≤ Σx_r ≤ ⌈D(1+ε)⌉ (D9) ; calibration
+justifiée dans `docs/calibration.md`. Le garde-manger à quantité suivie
+d'origine a été retiré et remplacé par les essentiels (staples, pure
+appartenance ménage/ingrédient) — voir `CLAUDE.md` pour l'historique complet
+du pilote.
 
-L'API expose les dix endpoints de la spec sous `/api` (documentation
+L'API expose quatorze endpoints sous `/api` (documentation
 interactive : `/docs`). Le solveur, le scorer et les ports d'acquisition sont
 injectés — des tests de substituabilité (`tests/test_substitutability.py`)
 prouvent qu'une implémentation factice de chacune des quatre interfaces
@@ -38,10 +40,10 @@ Une seule commande démarre les trois services :
 - `api` — applique les migrations Alembic, exécute le seeding idempotent
   depuis `seed/main`, puis sert FastAPI sur <http://localhost:8000>
   (santé : `GET /api/health`) ;
-- `web` — SPA React sur <http://localhost:5173> : Ménage (D en direct),
-  Génération (infaisabilité explicite), Résultat (menu, épicerie par magasin
-  avec itinéraire, cinq barres), Garde-manger, Diagnostic (drapeaux du
-  `SolverConfig` modifiables, rapport brut).
+- `web` — SPA React sur <http://localhost:5173> : Planification (génération,
+  infaisabilité explicite, menu + épicerie par magasin avec itinéraire),
+  Ménage (essentiels, membres, préférences — D en direct), Paramètres
+  (drapeaux du `SolverConfig` modifiables, rapport de diagnostic brut).
 
 Relancer `docker compose up` est sans effet de bord : migrations et seeding
 sont idempotents.
@@ -68,8 +70,11 @@ magasin, `appetence_mode="objective"`** ; on rallume un mécanisme à la fois :
 2. `enable_batch_fixed_cost` — coûts fixes de lot ($\tau^{\text{fixe}}_r$, $\delta_r$) ;
 3. `enable_multi_store` — arrêts multiples ($z_s$, coûts de déplacement) ;
 4. `enable_time_cost` — valorisation du temps ($\kappa$) ;
-5. `enable_pantry_stock` — stock initial ($g_i$) ;
-6. `enable_salvage` — valeur résiduelle des surplus ($\sigma_i$, $w_i$).
+5. `enable_staples` — un essentiel du ménage est évalué au prix historique
+   le plus bas dans l'objectif, jamais au décaissement réel ;
+6. `enable_salvage` — valeur résiduelle des surplus ($\sigma_i$, $w_i$) ;
+7. `enable_perishable_penalty` — pénalise, plutôt que de simplement ne pas
+   créditer, le surplus d'un ingrédient périssable (D19, `docs/deviations.md`).
 
 Chaque résolution retourne le rapport de diagnostic complet : statut et
 temps de résolution, valeur de chaque terme de l'objectif séparément,
@@ -117,18 +122,19 @@ backend/
     adapters/     # implémentations JSON v1 des ports
     ingestion/    # atterrissage staging + normalisation vers market
     services/     # units, demand (D9), travel, params, appetence, prefilter,
-                  # validation, planning/household/catalog (modules
-                  # applicatifs — routes.py n'appelle qu'eux, jamais
-                  # SQLAlchemy directement, sauf le mapping produit, D15)
+                  # validation, planning/household/catalog/offer_resolution
+                  # (modules applicatifs — routes.py n'appelle qu'eux,
+                  # jamais SQLAlchemy directement, y compris pour le
+                  # mapping produit depuis D18)
     solver/       # SolverConfig, interface MenuSolver, modèle PuLP/CBC
     api/          # routes FastAPI (transport HTTP seulement), schémas,
                   # dépendances injectables
     seeding/      # commande de seeding idempotente (ports injectables)
-  tests/          # pytest — 82 tests : optima manuels, API, substituabilité,
+  tests/          # pytest — 118 tests : optima manuels, API, substituabilité,
                   # modules applicatifs (planning/household/catalog)
   alembic/        # migrations (0001 : schéma initial complet)
 docs/             # spec.md (versionnée, intouchée) + deviations.md
-frontend/         # SPA Vite + React + TS — cinq écrans, client API typé
+frontend/         # SPA Vite + React + TS — trois onglets, client API typé
 seed/main/        # jeu de données principal (JSON versionnés)
 seed/toy/         # instance jouet pour le test d'optimum connu
 scripts/          # générateur des seeds (outillage, hors application)

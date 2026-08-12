@@ -1,8 +1,14 @@
 """Évaluateur pur de l'équation de couverture — besoins par ingrédient d'un
 menu résolu (â^marg·x + â^fixe·δ si le mécanisme de lot est actif).
 
-Partagé entre le commit (comptabilité déterministe) et le diagnostic du
-solveur (valeur du stock consommé)."""
+Utilisé par ``services/planning.py::_persist_plan`` pour peupler
+``Plan.ingredient_needs`` à la génération/réoptimisation — c'est ce que
+``_needed_ingredients`` (écran de confirmation post-génération) et
+``_grocery_list`` (association ingrédient → recettes consommatrices)
+lisent ensuite pour l'affichage. Le commit (pilote, docs/product-pilot.md,
+depuis le retrait du garde-manger) et le diagnostic du solveur n'en ont
+plus besoin — les deux anciens usages qui justifiaient ce module ont été
+retirés avec le garde-manger."""
 
 from __future__ import annotations
 

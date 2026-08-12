@@ -221,6 +221,16 @@ l'étape 3 est fermée.
 ## D13 — Valeur du stock consommé au rapport de diagnostic
 *(décision du point de contrôle de l'étape 5)*
 
+**Retirée depuis (D19)** : le garde-manger à quantité suivie (`pantry_stock`)
+a été retiré en entier lors du pivot vers les essentiels (staples,
+`CLAUDE.md`, section « Pilote — garde-manger retiré »). `pantry_consumed_by_ingredient`,
+`pantry_consumed_value_cents` et `enable_pantry_stock`, tous les trois
+décrits ci-dessous, n'existent plus dans le code — `Diagnostic` n'a plus
+cette distinction du tout, un essentiel étant acheté comme n'importe quel
+autre ingrédient (voir D19 pour ce qui gère maintenant la pression vers les
+périssables). Laissée ici telle quelle comme trace de l'état au moment de
+cette décision historique, même convention que D15→D18.
+
 **Écart.** Le rapport de diagnostic de la spec ne distingue pas décaissement
 et coût réel. Champs ajoutés : `pantry_consumed_by_ingredient` et
 `pantry_consumed_value_cents` = Σ_i min(g_i, besoin_i)·c̄_i, avec c̄_i le
@@ -627,3 +637,98 @@ cassé, rejoué et confirmé résolu — plus `tests/test_api.py` mis à jour po
 le nouveau contrat). `tests/test_solver_toy.py`/`tests/test_solver_flags.py`
 inchangés dans leurs assertions malgré le renommage des variables PuLP,
 confirmant que c'est un pur changement de label.
+
+## D19 — Sixième terme d'objectif : pénalité de gaspillage périssable
+*(ajouté à la demande explicite de l'utilisateur, 2026-08-12, après une
+discussion sur l'utilité réelle du terme de récupération une fois le
+garde-manger retiré — voir CLAUDE.md pour le fil complet)*
+
+**Écart assumé, explicite.** `docs/spec.md` (§ Fonction objectif) définit
+$\min Z$ avec exactement cinq termes. Ce qui suit en ajoute un sixième —
+une déviation délibérée de la formule exacte de la spec, pas une correction
+de bug.
+
+**Pourquoi un terme séparé, pas une transformation de σ_i.** `perishability`
+est chargé (`IngredientData.perishability`) depuis le début de l'étape 4
+mais n'était lu nulle part dans le solveur — un champ orphelin (déjà noté
+dans « Évaluation franche », CLAUDE.md, avant même ce chantier). L'idée
+naturelle — multiplier σ_i par un facteur dérivé de la périssabilité — a été
+explorée et écartée pour deux raisons structurelles, pas un choix de
+style :
+1. Les ingrédients réellement périssables du seed principal ont **déjà**
+   σ_i = 0 par calibration volontaire (`coriandre_fraiche`,
+   `epinard_frais`, `scripts/generate_seed.py::SIGMA_TARGET_RATIO`) —
+   n'importe quel facteur multiplicatif donne `0 × facteur = 0`, sans
+   effet sur les ingrédients qu'on veut justement cibler.
+2. `catalog.canonical_ingredient.salvage_value_cents_per_base_unit` porte
+   `CHECK (>= 0)` (`salvage_nonneg`) — σ_i ne peut structurellement jamais
+   devenir négatif, donc jamais représenter une pénalité par transformation
+   de sa propre valeur.
+3. Plus fondamentalement : le coût d'achat est déjà compté en entier au
+   terme 1 (achats), qu'un ingrédient reste utilisé ou non. σ_i = 0 rend le
+   solveur *indifférent* à un reste — ça ne le *pénalise* pas au-delà de ce
+   qui est déjà payé. Une vraie pression de sélection exige un coût
+   **additionnel**, jamais une réduction de crédit qui bute déjà sur zéro.
+
+**Formule.** Par ingrédient : `pénalité_i = perishability_i · RATIO ·
+prix_plancher_i`, où `prix_plancher_i = min_{p,s} c_ps(1+t_p)/v_p` —
+réutilise `services/validation.py::min_taxed_price_per_base_unit` (déjà la
+fonction de l'assertion 1), aucun nouveau calcul de prix. `RATIO`
+(`solver/model.py::PERISHABLE_WASTE_PENALTY_RATIO`) est une constante
+système, pas configurable par `SolverConfig`/le ménage — même famille que
+l'ancien `MUST_USE_PANTRY_MIN_FRACTION` (« un bouton, pas un curseur »).
+
+**Piège trouvé en implémentant, pas anticipé au plan.** Le premier jet
+réutilisait `w_i`/`_add_surplus` (le mécanisme déjà existant du terme de
+récupération), en changeant seulement le signe du coefficient dans
+l'objectif. Testé en direct contre l'instance jouet (œuf forcé à
+périssabilité 1,0) : **aucun effet** — le solveur mettait systématiquement
+`w_i = 0`, quel que soit le surplus réel. Cause : `w_i ≤ approvisionnement −
+besoin` ne fait que *plafonner* `w_i` ; avec un coefficient de pénalité
+(positif, à minimiser), rien ne force `w_i` à refléter le vrai surplus — le
+solveur le laisse simplement à sa borne basse (0), annulant toute pression.
+Le mécanisme de crédit ne fonctionne que parce que l'objectif *maximise*
+`w_i` (le pousse vers sa borne haute) ; une pénalité a besoin de l'inverse.
+
+Corrigé avec une **variable et une contrainte séparées**, jamais un
+partage avec `w_i` : `gaspillage_i ≥ approvisionnement − besoin`,
+`gaspillage_i ≥ 0` (`solver/model.py::_add_perishable_waste`) — une
+inégalité **miroir** de celle du terme 4, à dessein. Une borne *basse*
+force `gaspillage_i` à refléter le vrai surplus ; la pression de
+minimisation le sature naturellement vers le bas, sans jamais descendre
+sous ce vrai surplus. Pas de risque de non-bornitude symétrique à
+l'invariant existant (`w_i ≤ ..., jamais ≥`) : ici le coefficient est
+positif (un coût, pas un crédit), donc gonfler `gaspillage_i` ne profite
+jamais au solveur — le raisonnement inverse s'applique proprement.
+`lowBound=0` couvre aussi le cas d'un ingrédient confirmé disponible
+(`confirmed_available_ids`, `services/planning.py::finalize_plan`) où la
+couverture n'est pas imposée : `approvisionnement − besoin` peut alors être
+négatif, et `gaspillage_i` doit rester à 0, pas devenir un crédit caché.
+
+**Calibration de `RATIO`, empirique, pas déduite.** Une valeur pensée par
+analogie avec le plafond ≤ 0,8 de σ_i (donc ≤ 1) s'est révélée **sans aucun
+effet** sur la sélection de recettes dans le même scénario jouet — le
+gaspillage réel restait absorbé sans broncher, noyé sous les termes achats/
+appétence (plusieurs centaines de cents). L'effet n'apparaît qu'à partir
+d'un ratio ≈ 1, se stabilise dès 2 (`omelette_toy` passe de 1 à 3 portions,
+le maximum que le surplus d'œufs peut absorber compte tenu de
+`max_batch_servings`) et reste stable jusqu'à 20 sans dégénérer davantage.
+`RATIO = 2,0` retenu : premier palier qui produit l'effet plein, pas juste
+amorcé — vérifié par balayage direct contre le solveur, pas supposé.
+
+**Portée volontairement restreinte** :
+- Ne corrige pas l'honnêteté du crédit du terme 4 (σ_i·w_i) — `docs/
+  spec.md` affirme que ce crédit n'est honnête que si `w_i` est reporté
+  vers un stock réellement utilisable la semaine suivante ; ce report
+  n'existe plus depuis le retrait du garde-manger (staples). Limite réelle,
+  déjà documentée par la spec elle-même, mais indépendante de ce
+  chantier : une pénalité n'a pas besoin d'une réalisation future pour
+  être honnête (le coût est immédiat), contrairement à un crédit.
+- `RATIO` non configurable, `docs/calibration.md` (balayage κ) non
+  retouché — document historique déjà daté, non rejoué systématiquement à
+  chaque changement du solveur (précédent déjà posé pour D16).
+
+**Vérifié contre PostgreSQL réel** : aucune migration (aucune table
+touchée, seulement le solveur et le reporting) ; suite complète —
+voir CLAUDE.md pour le chiffre exact de cette tranche. `tsc -b`/
+`vite build` propres.

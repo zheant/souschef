@@ -232,6 +232,15 @@ maintenant vérifiées en navigateur, pas seulement par la suite de tests.
 
 ## Pilote — périssables prioritaires ou obligatoires (2026-08-11)
 
+**Retirée depuis** (section « Pilote — garde-manger retiré, remplacé par
+les essentiels » plus bas dans ce fichier) : le garde-manger à quantité
+suivie entier a été retiré, `must_use`/`use_soon` avec lui — `use_soon`
+était déjà inerte sur le solveur (noté ci-dessous) et `must_use` n'a pas
+d'équivalent dans les essentiels (pure appartenance, sans notion de
+contrainte dure de consommation minimale). Laissée ici telle quelle comme
+trace de l'état au moment de cette session historique, même convention que
+D15/D18.
+
 Quatrième tranche du pilote produit, complément de la confirmation du
 garde-manger : `household.pantry_stock` gagne `priority`
 (`normal`/`use_soon`/`must_use`, migration `c3d8f21a9e6b`). Seul
@@ -445,6 +454,14 @@ de l'utilisateur en navigateur mobile — pas encore re-testés par lui après
 ce second correctif.
 
 ## Écran Résultat — refonte réelle, piste « circulaire du quartier » (2026-08-11)
+
+**Sous-thread garde-manger/« à acheter »/Replanifier retiré depuis**
+(section « Pilote — garde-manger retiré, remplacé par les essentiels » plus
+bas dans ce fichier) : le garde-manger à quantité suivie entier — dont tout
+ce sous-thème est solidaire — a été retiré. Le reste de cette tranche
+(disposition, glissement, détail recette, `GET /api/recipes/{id}/
+ingredients`) reste d'actualité. Laissé ici tel quel comme trace de l'état
+au moment de cette session historique, même convention que D15/D18.
 
 Neuvième tranche du pilote : implémentation en production de la
 disposition « P » convergée après six rounds de maquettes interactives
@@ -776,6 +793,197 @@ En cours de route : une affirmation périmée dans « Évaluation franche »
 inexacte — corrigée (voir plus haut), avec sa mention dans « Leçon de
 méthode » annotée en conséquence plutôt que réécrite.
 
+## Pilote — garde-manger retiré, remplacé par les essentiels (staples) (2026-08-12)
+
+Onzième tranche du pilote produit, pivot majeur demandé explicitement par
+l'utilisateur après avoir creusé le terme 4 de l'objectif (récupération) :
+`perishability` s'est révélé chargé mais jamais lu nulle part dans le
+solveur (aucun mécanisme de péremption/décroissance n'existe). Plutôt que
+d'ajouter un sixième terme d'objectif pour pousser à l'utilisation des
+périssables, décision de l'utilisateur : retirer entièrement le
+garde-manger à quantité suivie — ses corrections successives (« à
+acheter », Replanifier, périssables prioritaires/obligatoires, documentées
+plus haut dans ce fichier) reposaient toutes sur un input utilisateur
+(quantités déclarées) qui diverge inévitablement du stock réel. Remplacé
+par les **essentiels (staples)** : une simple appartenance
+ménage/ingrédient, sans quantité ni priorité — un ingrédient que le ménage
+est supposé toujours avoir sous la main.
+
+**Mécanique** :
+- `household.staple` (migration `f4b1a9d0c2e6`, remplace `pantry_stock` +
+  l'enum `pantry_priority`) — `(household_profile_id,
+  canonical_ingredient_id)`, aucune colonne de quantité.
+- Un essentiel n'est jamais gratuit : `SolverConfig.enable_staples`
+  (remplace `enable_pantry_stock`) ne change QUE l'objectif —
+  `solver/model.py::_purchases_expr_cents` évalue un produit dont
+  l'ingrédient est un essentiel au `min(prix courant, prix historique le
+  plus bas de la dernière année)` (`services/pricing.py::
+  historical_min_price_per_base_unit`, nouvelle fonction — fenêtre 365
+  jours sur `Price.valid_from`, `market.price` conserve déjà tout
+  l'historique, rien à stocker en plus). La couverture/le besoin ne
+  bougent JAMAIS — `enable_staples` n'est donc plus dans
+  `FLAGS_ALTERING_NEEDS`, contrairement à l'ancien `enable_pantry_stock` :
+  propriété plus simple, documentée explicitement dans le code. Les
+  montants réellement rapportés (`PurchaseLine.unit_price_cents_cad`,
+  `_objective_terms`) continuent de lire les prix réels — jamais le prix
+  biaisé de l'objectif.
+- Après génération, `PlanView.needed_ingredients` (remplace
+  `pantry_lines`) liste TOUS les ingrédients requis par le menu, avec
+  `is_staple` — l'écran de confirmation (`Planning.tsx`, nouvelle phase
+  entre générer et résultat) les présente en liste à cocher, essentiels
+  pré-décochés (supposés déjà présents), le reste pré-coché (à acheter de
+  toute façon). L'usager corrige ce qui manque réellement.
+- `services/planning.py::finalize_plan` (nouveau, `POST
+  /api/plan/{id}/finalize`) réutilise TEL QUEL `reoptimize_plan` — même
+  mécanisme déjà éprouvé pour Remplacer/Replanifier, aucune résolution
+  séparée — mais verrouille systématiquement TOUT le menu courant (jamais
+  un choix de l'appelant, contrairement à Replanifier : finaliser ne
+  change jamais les recettes) et pose `SolverConfig.
+  confirmed_available_ids` (les ingrédients décochés) — `solver/model.py::
+  _add_coverage` ne pose simplement pas la contrainte de couverture pour
+  ces ingrédients ; aucune quantité de stock n'est jamais injectée nulle
+  part (contrairement à l'ancien `pantry_stock`/`supply_expr`).
+
+**Commit simplifié** : `commit_plan` redevient une simple validation +
+passage à `PlanStatus.committed` — plus de comptabilité de stock à
+décrémenter/reporter (`_apply_commit`/`_purchased_by_ingredient` retirés en
+entier). `CommitResult.pantry_after_commit` disparaît de la réponse HTTP.
+
+**Retiré en entier, backend** : `PantryStock`/`PantryPriority` (modèles),
+`_add_must_use_pantry`/`MUST_USE_PANTRY_MIN_FRACTION`/
+`_pantry_consumption` (solveur), `Diagnostic.
+pantry_consumed_by_ingredient`/`pantry_consumed_value_cents`,
+`services/household.py::get_pantry`/`update_pantry`/`set_pantry_priority`,
+`services/planning.py::_with_must_use_pantry`/
+`PantryIngredientNotUsableError`/`PlanPantryLine`/`_plan_pantry_lines`, les
+routes `GET/PUT /api/pantry`, `PUT /api/pantry/{id}/priority`. Remplacés
+par `services/household.py::get_staples`/`set_staples` (remplace tout
+l'ensemble à chaque appel — pas un upsert ligne par ligne, plus simple :
+un essentiel n'a ni quantité ni priorité à préserver), routes `GET/PUT
+/api/staples`. Le seed (`seed/*/household.json`) passe de `"pantry": [...]`
+(objets quantité) à `"staples": [...]` (liste d'ids).
+
+**Retiré en entier, front-end** : `screens/Pantry.tsx`/`PantryPanel`
+(remplacé par `screens/Staples.tsx`/`StaplesPanel` — liste simple
+ajout/retrait), la section « Garde-manger — à récupérer » et tout le
+mécanisme Replanifier (`buyInsteadIds`/`fixRecipes`/`replan()`) dans
+`Result.tsx`, le partage Acheté/Garde-manger de la barre héro (un seul
+montant désormais). `Household.tsx` : sous-onglet « Garde-manger » →
+« Essentiels ». `Diagnostic.tsx` : `enable_pantry_stock` → `enable_staples`,
+ligne « Stock consommé » retirée du rapport résumé. `styles.css` :
+`.rp-pantry*`/`.rp-buy-btn`/`.rp-tag*`/`.rp-replan*` retirés ; `--rp-pantry`
+renommé `--rp-amber` (encore utilisé par `.rp-promo-badge`, plus rien à
+voir avec le garde-manger).
+
+**Sections superseded, annotées sur place plutôt que réécrites** (même
+convention que D15→D18) : « Pilote — périssables prioritaires ou
+obligatoires » (le mécanisme `must_use`/`use_soon` entier disparaît, pas
+seulement `use_soon` qui était déjà inerte) et « Écran Résultat — refonte
+réelle » (tout le sous-thread garde-manger/« à acheter »/Replanifier).
+
+**Vérifié contre PostgreSQL réel, en deux temps** : le bac à sable de cette
+tranche n'avait initialement pas accès à Postgres (seule la vérification
+statique ci-dessus — imports, `ast.parse` — était possible) ; l'utilisateur
+a ensuite démarré sa base pendant la même session, ce qui a permis la
+vérification réelle. Cycle de migration `upgrade head` → `downgrade base`
+→ `upgrade head` propre sur `menu_test` : `downgrade base` vide les 4
+schémas (`catalog`/`market`/`household`/`staging`), `upgrade head` les
+recrée, `household.staple` présent, `pantry_stock`/`pantry_priority`
+absents. **107/107 tests passés, 0 échec, 0 sauté** (venv dédié requis —
+`python -m pytest` depuis l'environnement conda `base` échoue sur
+`ModuleNotFoundError: No module named 'tests'`, exactement l'écueil déjà
+documenté dans « Lancer / tester / seeder » ci-dessous, reconfirmé au
+passage). `tsc -b`/`vite build` toujours propres.
+
+**Sondé en direct contre la pile de développement de l'utilisateur**
+(`docker compose up --build`, pas seulement la base de test) : le
+conteneur `api` avait déjà rebuild et appliqué migration + seeding avec ce
+code (`alembic current` → `f4b1a9d0c2e6` sur `menu_optimizer`,
+`household.staple` contient `riz_basmati`/`huile_olive`/
+`feuille_laurier`, exactement le seed principal mis à jour). Requêtes
+réelles contre `http://localhost:8000` : `GET /api/staples` retourne les
+trois essentiels seedés ; `POST /api/plan` retourne `needed_ingredients`
+avec `riz_basmati.is_staple == true` et aucune clé `pantry_lines` ;
+`POST /api/plan/{id}/finalize` avec `riz_basmati` confirmé disponible
+retourne le **même menu** (`changes.added`/`removed` vides, la garantie
+« finaliser ne change jamais les recettes » tient en pratique) et un
+poste achats en baisse de 2,34 $, avec le riz effectivement absent de la
+nouvelle liste d'épicerie ; `POST /api/plan/{id}/commit` fonctionne, et
+un second `finalize` sur le plan commis est rejeté 409 comme attendu
+(deux plans de test créés dans cette base au passage, id 287 non commis
+et id 288 commis — aucune donnée de seed altérée). **Non vérifié** :
+interaction en navigateur (rendu réel des écrans Essentiels/confirmation/
+Résultat) — à faire manuellement avant de considérer cette tranche
+pleinement terminée, le contrat HTTP sous-jacent est maintenant confirmé
+correct.
+
+## D19 — Sixième terme d'objectif : pénalité de gaspillage périssable (2026-08-12)
+
+Suite directe de la tranche précédente : en discutant de l'utilité du terme
+de récupération une fois le garde-manger retiré, l'utilisateur a demandé
+explicitement d'ajouter un sixième terme qui pousse le solveur à utiliser un
+ingrédient périssable plutôt que de le laisser en surplus — `perishability`
+était chargé depuis le début mais jamais lu nulle part. Détail complet de la
+formule, du raisonnement d'élimination (pourquoi σ_i ne peut pas porter
+cette pénalité) et de la portée exclue : **D19, `docs/deviations.md`**
+(nouvel écart explicite à la formule exacte de l'objectif de `docs/spec.md`
+— jamais modifié lui-même).
+
+**Piège réel, trouvé en testant, pas anticipé au plan approuvé.** Le plan
+initial proposait de partager `w_i`/`_add_surplus` (le mécanisme du terme 4)
+avec la nouvelle pénalité, en changeant seulement le signe dans l'objectif.
+Testé en direct contre l'instance jouet (œuf forcé à périssabilité 1,0 via
+`dataclasses.replace`) avant même d'écrire le test formel : **aucun effet**
+— le solveur mettait systématiquement `w_i = 0`. Cause structurelle : `w_i ≤
+approvisionnement − besoin` ne fait que plafonner `w_i` ; avec un
+coefficient de pénalité à minimiser, rien ne force `w_i` à refléter le vrai
+surplus, le solveur le laisse simplement à 0. Le crédit ne fonctionne que
+parce que l'objectif *maximise* `w_i` (le pousse vers sa borne haute) — une
+pénalité a besoin de l'inverse. Corrigé avec une variable et une contrainte
+**séparées** (`solver/model.py::_add_perishable_waste`,
+`gaspillage_i ≥ approvisionnement − besoin`, borne *basse* plutôt que
+haute) — jamais un partage avec `w_i`. Détail complet dans D19.
+
+**Calibration de la constante, elle aussi corrigée en testant.** La valeur
+de départ proposée au plan (0,15, par analogie avec le plafond ≤ 0,8 de
+σ_i) s'est révélée **sans aucun effet** sur la sélection de recettes du même
+scénario jouet — noyée sous les termes achats/appétence. Un balayage direct
+contre le solveur (0,15 → 20) a montré que l'effet n'apparaît qu'à partir
+d'un ratio ≈ 1 et se stabilise dès 2. `PERISHABLE_WASTE_PENALTY_RATIO = 2,0`
+retenu — vérifié, pas supposé.
+
+**Vérifié** : test discriminant
+(`test_perishable_penalty_shifts_recipe_selection`) confirme que le drapeau
+change réellement la sélection (`omelette_toy` 1→3 portions pour absorber
+le surplus d'œufs forcé périssable) et que les prix réels rapportés ne sont
+jamais biaisés (450 c/douzaine dans les deux plans — contrairement au
+mécanisme des essentiels, il n'y a même pas de substitution de prix ici).
+Vérifié en deux temps, comme les tranches précédentes quand la base n'était
+pas disponible d'emblée : **110/110 tests passés, 0 sauté** une fois
+PostgreSQL de nouveau accessible (67 sans base + 43 dépendants de la base,
+tous verts — aucune migration à revalider, ce chantier ne touche aucune
+table). `tsc -b`/`vite build` propres.
+
+**Sondé en direct contre la pile de développement de l'utilisateur**
+(`docker compose up`, déjà reconstruite avec ce code) : `POST /api/plan`
+avec `enable_perishable_penalty: true` contre `seed/main` (données réelles,
+pas le jouet) retourne `objective_terms_cents.gaspillage = "20.25"`,
+`flag_effects` liste bien `enable_perishable_penalty`, et `total` (−1571,75)
+reconcilie exactement achats + déplacements + temps + gaspillage −
+récupération − appétence (3773 + 0 + 0 + 20,25 − 0 − 5365) — la formule de
+`total_cents()` est correcte de bout en bout, pas seulement au niveau du
+jouet (plan de test id 357, non commis, aucune mutation). **Non vérifié** :
+rendu réel en navigateur (nouveau segment « Gaspillage » dans la barre de
+décomposition à 6 termes) — à faire manuellement.
+
+**Limite documentée, hors périmètre de ce chantier** : `docs/spec.md`
+(§ Fonction objectif) affirme que le crédit du terme 4 n'est honnête que si
+le surplus est reporté vers un stock utilisable la semaine suivante —
+mécanisme qui n'existe plus depuis le retrait du garde-manger (tranche
+précédente). Le nouveau terme 6 n'en hérite pas (une pénalité n'a pas besoin
+d'une réalisation future), mais la limite du terme 4 reste réelle,
+consignée dans D19, pas corrigée ici.
+
 ## Lancer / tester / seeder
 
 ```bash
@@ -802,8 +1010,8 @@ MENU_TEST_DATABASE_URL=postgresql+psycopg2://menu:menu@localhost:5432/menu_test 
 
 Activer les mécanismes du solveur un à un (défaut dev : tout `False`, un seul
 magasin) : `enable_diversity` → `enable_batch_fixed_cost` →
-`enable_multi_store` → `enable_time_cost` → `enable_pantry_stock` →
-`enable_salvage`. Chaque drapeau seul doit produire un modèle résoluble
+`enable_multi_store` → `enable_time_cost` → `enable_staples` →
+`enable_salvage` → `enable_perishable_penalty` (D19). Chaque drapeau seul doit produire un modèle résoluble
 (`tests/test_solver_flags.py`). **Exception** : `enable_variant_exclusion`
 (D16) est à `True` par défaut, même en configuration minimale — ce n'est pas
 un mécanisme d'optimisation à activer un à un, c'est une contrainte
