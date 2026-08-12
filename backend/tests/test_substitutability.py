@@ -80,7 +80,8 @@ class FakeSolver:
         terms = ObjectiveTerms(
             achats_cents=Decimal("180.00"),
             deplacements_cents=Decimal("0"), temps_cents=Decimal("0"),
-            recuperation_cents=Decimal("0"), appetence_cents=Decimal("0"),
+            recuperation_cents=Decimal("0"), gaspillage_cents=Decimal("0"),
+            appetence_cents=Decimal("0"),
         )
         diag = Diagnostic(
             solver_status="Optimal", solve_time_s=0.0,
@@ -89,8 +90,6 @@ class FakeSolver:
             saturated_constraints={}, prefilter_counts=prefiltered.counts_by_stage,
             surplus_by_ingredient={}, distinct_recipes=1,
             distinct_dish_families=1,
-            pantry_consumed_by_ingredient={},
-            pantry_consumed_value_cents=Decimal("0.00"),
             max_share_of_demand=Decimal("1.0"),
             demand={"D_exact": "4.0", "borne_basse": "4", "borne_haute": "5"},
         )

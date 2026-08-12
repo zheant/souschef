@@ -23,6 +23,17 @@ Interactions documentées (sémantiques précisées, docs/deviations.md D11) :
 - Avec ``enable_diversity = False``, un menu monotone est **attendu** — c'est
   la démonstration que la contrainte est nécessaire, vérifiée par test dans
   les deux configurations.
+- ``enable_staples = False`` : un essentiel est évalué au prix courant comme
+  n'importe quel ingrédient — aucun biais. Actif, seul l'objectif change
+  (quel prix un essentiel voit) ; la couverture/le besoin ne bougent jamais,
+  contrairement à l'ancien ``enable_pantry_stock`` qu'il remplace.
+- ``enable_perishable_penalty = False`` (D19, docs/deviations.md) : sixième
+  terme d'objectif, pénalise le surplus ``w_i`` d'un ingrédient périssable
+  au lieu de simplement ne pas le créditer (ce que ``σ_i = 0`` fait déjà
+  pour un ingrédient réellement périssable). Partage la variable ``w_i``
+  avec ``enable_salvage`` (même définition, ``w_i ≤ approvisionnement −
+  besoin``) mais reste testable seul — n'altère jamais la couverture/le
+  besoin, seulement l'objectif.
 - ``enable_variant_exclusion`` (D16, docs/deviations.md) fait EXCEPTION au
   défaut « tout à False » : il vaut ``True`` par défaut. Les variantes
   d'échelle du seed (format régulier / familial) sont deux segments d'une
@@ -49,8 +60,17 @@ class SolverConfig(BaseModel):
     enable_multi_store: bool = False
     enable_batch_fixed_cost: bool = False
     enable_salvage: bool = False
+    #: Sixième terme d'objectif (D19, docs/deviations.md) : pénalise le
+    #: surplus d'un ingrédient périssable, symétrique de enable_salvage qui
+    #: ne fait que le créditer. Partage w_i/_add_surplus avec enable_salvage
+    #: (solver/model.py) mais reste indépendamment activable.
+    enable_perishable_penalty: bool = False
     enable_time_cost: bool = False
-    enable_pantry_stock: bool = False
+    #: Essentiels (staples, pilote, docs/product-pilot.md) : biaise
+    #: uniquement l'objectif (quel prix un essentiel voit), jamais la
+    #: couverture — contrairement à l'ancien enable_pantry_stock, ce
+    #: drapeau n'altère pas l'équation de besoin (FLAGS_ALTERING_NEEDS).
+    enable_staples: bool = False
     enable_diversity: bool = False
     #: Exception au défaut « tout False » (voir docstring du module, D16) :
     #: exclusion mutuelle des variantes d'échelle du même plat, active par
@@ -79,13 +99,15 @@ class SolverConfig(BaseModel):
     #: précédent, pas une valeur arbitraire).
     locked_recipe_servings: dict[str, int] = Field(default_factory=dict)
 
-    #: Ingrédients du garde-manger marqués « doit être utilisé » (pilote,
-    #: docs/product-pilot.md) — tuple vide = comportement inchangé, sa
-    #: présence EST le drapeau, même motif que locked_recipe_servings.
-    #: Alimenté par services/planning.py::_with_must_use_pantry depuis
-    #: pantry_stock.priority, jamais construit à la main par un appelant
-    #: HTTP. N'a d'effet que si enable_pantry_stock est actif.
-    must_use_pantry_ids: tuple[str, ...] = ()
+    #: Ingrédients confirmés disponibles pour CE plan précis, après la
+    #: liste de confirmation post-génération (pilote,
+    #: docs/product-pilot.md) — tuple vide = comportement inchangé, même
+    #: motif que locked_recipe_servings. Alimenté par
+    #: services/planning.py::finalize_plan, jamais construit à la main par
+    #: un appelant HTTP. Contrairement à l'ancien pantry_stock, ceci n'est
+    #: **jamais persisté** — un usage unique par résolution, dérivé de la
+    #: confirmation de l'utilisateur pour ce plan-là seulement.
+    confirmed_available_ids: tuple[str, ...] = ()
 
     solver_time_limit_s: int = Field(default=60, ge=1)
     mip_gap: float = Field(default=0.001, ge=0)
@@ -105,8 +127,8 @@ class SolverConfig(BaseModel):
             name
             for name in (
                 "enable_multi_store", "enable_batch_fixed_cost", "enable_salvage",
-                "enable_time_cost", "enable_pantry_stock", "enable_diversity",
-                "enable_variant_exclusion",
+                "enable_perishable_penalty", "enable_time_cost", "enable_staples",
+                "enable_diversity", "enable_variant_exclusion",
             )
             if getattr(self, name)
         ]

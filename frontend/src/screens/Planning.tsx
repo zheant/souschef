@@ -1,19 +1,20 @@
 import { useState } from "react";
 import { api } from "../api";
+import { describeChanges } from "../changes";
 import type { Household, Plan, SolverConfigInput, Store } from "../types";
 import ResultScreen from "./Result";
 
-/** Écran 1 — Planification : orchestrateur mince entre la génération et le
- *  résultat. État initial : seulement le bouton Générer. Une fois un plan
- *  optimal obtenu, l'écran affiche directement le résultat (ses propres
- *  sous-onglets « Cette semaine »/« Épicerie », `Result.tsx`, inchangé).
- *
- *  La confirmation du garde-manger en deux temps (aucun/un peu/assez) qui
- *  vivait ici a été retirée (pilote, docs/product-pilot.md) : elle faisait
- *  double emploi avec « à acheter » dans la sous-catégorie garde-manger de
- *  la liste d'épicerie — un mécanisme réactif (corriger après coup)
- *  remplace le mécanisme proactif (déclarer avant), pas les deux à la
- *  fois. */
+/** Écran 1 — Planification : orchestrateur entre la génération, la
+ *  confirmation post-génération et le résultat. État initial : seulement
+ *  le bouton Générer. Une fois un plan optimal obtenu, une liste de
+ *  confirmation s'intercale (pilote, docs/product-pilot.md — remplace le
+ *  garde-manger à quantité suivie) : tous les ingrédients requis par le
+ *  menu, essentiels pré-décochés (supposés déjà présents), le reste
+ *  pré-coché (à acheter de toute façon). L'usager corrige ce qui manque
+ *  réellement, puis ``finalize_plan`` verrouille le menu et détermine la
+ *  logistique d'achat finale. Une fois confirmé, l'écran affiche le
+ *  résultat (ses propres sous-onglets « Cette semaine »/« Épicerie »,
+ *  `Result.tsx`, inchangé). */
 export default function PlanningScreen(props: {
   config: SolverConfigInput;
   plan: Plan | null;
@@ -30,18 +31,89 @@ export default function PlanningScreen(props: {
   // déjà (sinon Planification reste coincée sur le dernier résultat).
   const [forceForm, setForceForm] = useState(false);
 
+  // Confirmation post-génération : plan généré mais pas encore finalisé,
+  // en attente de correction de la liste d'ingrédients à acheter.
+  const [pendingPlan, setPendingPlan] = useState<Plan | null>(null);
+  const [toBuy, setToBuy] = useState<Record<string, boolean>>({});
+  const [finalizing, setFinalizing] = useState(false);
+  const [finalizeError, setFinalizeError] = useState<string | null>(null);
+  const [finalizeMsg, setFinalizeMsg] = useState<string | null>(null);
+
   const enabled = Object.entries(props.config)
     .filter(([k, v]) => k.startsWith("enable_") && v)
     .map(([k]) => k.replace("enable_", ""));
 
   async function generate() {
-    setBusy(true); setError(null); setInfeasible(null);
+    setBusy(true); setError(null); setInfeasible(null); setFinalizeMsg(null);
     try {
       const plan = await api.createPlan(props.config);
       if (plan.solver_status !== "Optimal") { setInfeasible(plan); return; }
-      props.onPlan(plan);
+      setPendingPlan(plan);
+      setToBuy(Object.fromEntries(
+        plan.needed_ingredients.map((l) => [l.canonical_ingredient_id, !l.is_staple])
+      ));
       setForceForm(false);
     } catch (e) { setError(String(e)); } finally { setBusy(false); }
+  }
+
+  async function confirm() {
+    if (!pendingPlan) return;
+    setFinalizing(true); setFinalizeError(null);
+    try {
+      const confirmedAvailableIds = pendingPlan.needed_ingredients
+        .filter((l) => !toBuy[l.canonical_ingredient_id])
+        .map((l) => l.canonical_ingredient_id);
+      const r = await api.finalizePlan(pendingPlan.id, props.config, confirmedAvailableIds);
+      if (r.changes) setFinalizeMsg(describeChanges(r.changes));
+      props.onPlan(r.plan);
+      setPendingPlan(null);
+    } catch (e) { setFinalizeError(String(e)); } finally { setFinalizing(false); }
+  }
+
+  if (pendingPlan) {
+    return (
+      <section>
+        <h2>Confirmer les ingrédients <span className="sub">— corrigez ce que vous avez déjà</span></h2>
+        <div className="card">
+          <p className="muted" style={{ margin: "0 0 14px" }}>
+            Les essentiels sont pré-décochés (supposés déjà présents) ; le
+            reste est pré-coché (à acheter de toute façon). Corrigez ce qui
+            manque réellement, puis confirmez pour verrouiller le menu et
+            obtenir la liste d'épicerie finale.
+          </p>
+          <div className="table-scroll">
+            <table className="ledger">
+              <thead><tr><th>À acheter</th><th>Ingrédient</th></tr></thead>
+              <tbody>
+                {pendingPlan.needed_ingredients.map((l) => (
+                  <tr key={l.canonical_ingredient_id}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={Boolean(toBuy[l.canonical_ingredient_id])}
+                        onChange={() => setToBuy((prev) => ({
+                          ...prev, [l.canonical_ingredient_id]: !prev[l.canonical_ingredient_id],
+                        }))}
+                      />
+                    </td>
+                    <td>
+                      {l.name}
+                      {l.is_staple && <span className="badge" style={{ marginLeft: 6 }}>Essentiel</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="row" style={{ marginTop: 14 }}>
+            <button className="action" onClick={confirm} disabled={finalizing}>
+              {finalizing ? <><span className="spin" aria-hidden />Confirmation…</> : "Confirmer"}
+            </button>
+            {finalizeError && <span className="callout error">{finalizeError}</span>}
+          </div>
+        </div>
+      </section>
+    );
   }
 
   if (props.plan && !forceForm) {
@@ -52,6 +124,7 @@ export default function PlanningScreen(props: {
             ‹ Générer un nouveau plan
           </button>
         </div>
+        {finalizeMsg && <p className="callout" style={{ margin: "10px 0" }}>{finalizeMsg}</p>}
         <ResultScreen
           plan={props.plan} household={props.household} stores={props.stores}
           config={props.config} onCommitted={props.onCommitted}

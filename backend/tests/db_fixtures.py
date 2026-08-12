@@ -68,7 +68,7 @@ def toy_seeded(test_engine):
 
 @pytest.fixture
 def db_session(toy_seeded, test_engine):
-    """Session par test ; les tables mutables (plans, garde-manger) sont
+    """Session par test ; les tables mutables (plans, essentiels) sont
     remises à l'état seedé après chaque test."""
     factory = toy_seeded
     with factory() as session:
@@ -76,7 +76,7 @@ def db_session(toy_seeded, test_engine):
         session.rollback()
     with factory() as cleanup:
         cleanup.execute(sqlalchemy.text("DELETE FROM household.plan"))
-        cleanup.execute(sqlalchemy.text("DELETE FROM household.pantry_stock"))
+        cleanup.execute(sqlalchemy.text("DELETE FROM household.staple"))
         cleanup.commit()
 
 

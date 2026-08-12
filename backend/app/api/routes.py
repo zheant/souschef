@@ -69,46 +69,30 @@ def put_household(
 
 
 # ---------------------------------------------------------------------------
-# Garde-manger
+# Essentiels (staples)
 # ---------------------------------------------------------------------------
 
-@router.get("/pantry")
-def get_pantry(
+@router.get("/staples")
+def get_staples(
     session: Session = Depends(get_session),
     profile_id: str = Depends(get_profile_id),
 ):
-    return [asdict(line) for line in household.get_pantry(session, profile_id)]
+    return [asdict(line) for line in household.get_staples(session, profile_id)]
 
 
-@router.put("/pantry")
-def put_pantry(
-    body: schemas.PantryUpdate,
+@router.put("/staples")
+def put_staples(
+    body: schemas.StaplesUpdate,
     session: Session = Depends(get_session),
     profile_id: str = Depends(get_profile_id),
 ):
     try:
-        lines = household.update_pantry(
-            session, profile_id, [line.model_dump() for line in body.lines]
+        lines = household.set_staples(
+            session, profile_id, body.canonical_ingredient_ids
         )
     except household.UnknownIngredientError as exc:
         raise HTTPException(422, str(exc)) from exc
     return [asdict(line) for line in lines]
-
-
-@router.put("/pantry/{canonical_ingredient_id}/priority")
-def put_pantry_priority(
-    canonical_ingredient_id: str,
-    body: schemas.SetPantryPriorityRequest,
-    session: Session = Depends(get_session),
-    profile_id: str = Depends(get_profile_id),
-):
-    try:
-        line = household.set_pantry_priority(
-            session, profile_id, canonical_ingredient_id, body.priority
-        )
-    except household.UnknownIngredientError as exc:
-        raise HTTPException(422, str(exc)) from exc
-    return asdict(line)
 
 
 # ---------------------------------------------------------------------------
@@ -121,7 +105,9 @@ def _plan_out(view: planning.PlanView) -> schemas.PlanOut:
         on_date=view.on_date,
         menu=[schemas.MenuLine(**asdict(m)) for m in view.menu],
         grocery_list_by_store=view.grocery_list_by_store,
-        pantry_lines=[schemas.PlanPantryLineOut(**asdict(l)) for l in view.pantry_lines],
+        needed_ingredients=[
+            schemas.NeededIngredientOut(**asdict(l)) for l in view.needed_ingredients
+        ],
         stores_visited=view.stores_visited, diagnostic=view.diagnostic,
     )
 
@@ -137,14 +123,11 @@ def post_plan(
         config = SolverConfig(**body.config)
     except ValueError as exc:
         raise HTTPException(422, f"SolverConfig invalide : {exc}") from exc
-    try:
-        # Un plan infaisable (statut solveur != Optimal) est aussi persisté
-        # et retourné : l'écran Génération affiche le message du diagnostic.
-        view = planning.generate_plan(
-            session, profile_id, body.on_date or date.today(), config, solver
-        )
-    except planning.PantryIngredientNotUsableError as exc:
-        raise HTTPException(422, str(exc)) from exc
+    # Un plan infaisable (statut solveur != Optimal) est aussi persisté
+    # et retourné : l'écran Génération affiche le message du diagnostic.
+    view = planning.generate_plan(
+        session, profile_id, body.on_date or date.today(), config, solver
+    )
     return _plan_out(view)
 
 
@@ -172,8 +155,7 @@ def post_commit(
         raise HTTPException(404, str(exc)) from exc
     except planning.PlanNotCommittable as exc:
         raise HTTPException(409, str(exc)) from exc
-    return {"plan_id": result.plan_id, "status": result.status,
-            "pantry_after_commit": result.pantry_after_commit}
+    return {"plan_id": result.plan_id, "status": result.status}
 
 
 @router.post("/plan/{plan_id}/reoptimize", response_model=schemas.ReoptimizeOut)
@@ -203,9 +185,42 @@ def post_reoptimize(
         raise HTTPException(409, str(exc)) from exc
     except (
         planning.RecipeNotLockableError, planning.ConflictingRecipeSelectionError,
-        planning.PantryIngredientNotUsableError,
     ) as exc:
         raise HTTPException(422, str(exc)) from exc
+    return schemas.ReoptimizeOut(
+        plan=_plan_out(result.plan),
+        changes=(
+            schemas.MenuChangeOut(**asdict(result.changes))
+            if result.changes else None
+        ),
+    )
+
+
+@router.post("/plan/{plan_id}/finalize", response_model=schemas.ReoptimizeOut)
+def post_finalize(
+    plan_id: int,
+    body: schemas.FinalizeRequest,
+    session: Session = Depends(get_session),
+    profile_id: str = Depends(get_profile_id),
+    solver: MenuSolver = Depends(get_solver),
+):
+    """Confirmation post-génération (pilote, docs/product-pilot.md) — le
+    menu reste verrouillé en entier, seule la logistique d'achat peut
+    changer selon les ingrédients confirmés déjà possédés."""
+    try:
+        config = SolverConfig(**body.config)
+    except ValueError as exc:
+        raise HTTPException(422, f"SolverConfig invalide : {exc}") from exc
+    try:
+        result = planning.finalize_plan(
+            session, profile_id, plan_id,
+            tuple(body.confirmed_available_ids),
+            config, solver,
+        )
+    except planning.PlanNotFound as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except planning.PlanAlreadyCommittedError as exc:
+        raise HTTPException(409, str(exc)) from exc
     return schemas.ReoptimizeOut(
         plan=_plan_out(result.plan),
         changes=(
@@ -228,6 +243,10 @@ def get_recipes(
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
 ):
+    """Recherche/pagination de recettes (docs/spec.md). Sans appelant
+    frontend à ce jour — aucune tranche pilote n'a eu besoin d'un
+    navigateur de recettes ; conservé tel quel, pas du code mort (implémente
+    un endpoint requis par la spec), juste hors périmètre du pilote."""
     page = catalog.search_recipes(
         session,
         catalog.RecipeQuery(

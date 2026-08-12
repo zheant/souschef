@@ -31,6 +31,7 @@ import math
 from decimal import Decimal
 
 from .demand import DemandBounds, compute_demand_bounds
+from .params import EffectiveParams
 from .problem_data import ProblemData, RecipeData
 from .units import BASE_UNIT_OF_KIND
 
@@ -92,12 +93,23 @@ def min_taxed_price_per_base_unit(
 def validate_problem(
     problem: ProblemData,
     surviving_recipes: tuple[RecipeData, ...],
+    params: EffectiveParams,
 ) -> tuple[list[str], DemandBounds]:
     """Exécute les assertions 1 à 6 dans l'ordre de la spec.
 
     ``surviving_recipes`` sont les recettes **après préfiltrage** : les
     assertions 4 à 6 se jugent sur le problème réellement soumis au solveur,
     pas sur le catalogue complet.
+
+    ``params`` : sortie de ``resolve_effective_params`` — R_min, α et ε
+    doivent être lus ici, jamais sur ``problem.profile`` directement (LA
+    fonction de résolution, ``services/params.py``, l'interdit
+    explicitement). Sans ça, une surcharge ``SolverConfig`` de ces trois
+    paramètres serait ignorée par la validation pré-solveur tout en étant
+    honorée par le solveur lui-même — les bornes de demande vérifiées ici
+    divergeraient silencieusement de celles réellement construites dans le
+    modèle (trouvé en écrivant un test de non-régression sans rapport,
+    jamais couvert avant).
 
     Retourne (assertions passées, bornes de demande) ; lève à la première
     violation.
@@ -168,7 +180,7 @@ def validate_problem(
     bounds = compute_demand_bounds(
         profile.meals_per_horizon,
         list(profile.appetite_coefficients),
-        profile.demand_slack_epsilon,
+        Decimal(str(params.demand_slack_epsilon.value)),
     )
     if bounds.exact <= 0:
         raise EmptyProblemError(f"D = {bounds.exact} ≤ 0.")
@@ -183,8 +195,8 @@ def validate_problem(
     # variantes survivantes), pas R_min fois le minimum GLOBAL — ce minimum
     # peut n'appartenir qu'à une seule famille, auquel cas les R_min-1 autres
     # plats distincts nécessaires ne peuvent pas tous l'atteindre.
-    r_min = profile.min_distinct_recipes
-    alpha = profile.max_share_per_recipe
+    r_min = params.min_distinct_recipes.value
+    alpha = Decimal(str(params.max_share_per_recipe.value))
     family_min_beta: dict[str, int] = {}
     for r in surviving_recipes:
         fam = r.dish_family_id

@@ -1,8 +1,8 @@
 // Client API typé — seule porte vers le back-end.
 
 import type {
-  Household, PantryLine, PantryPriority, Plan,
-  RecipeIngredientLine, ReoptimizeResult, SolverConfigInput, Store,
+  Household, Plan,
+  RecipeIngredientLine, ReoptimizeResult, SolverConfigInput, StapleLine, Store,
 } from "./types";
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
@@ -21,18 +21,17 @@ export const api = {
   household: () => req<Household>("/api/household"),
   updateHousehold: (patch: object) =>
     req<Household>("/api/household", { method: "PUT", body: JSON.stringify(patch) }),
-  pantry: () => req<PantryLine[]>("/api/pantry"),
-  updatePantry: (lines: { canonical_ingredient_id: string; quantity_base_unit: number }[]) =>
-    req<PantryLine[]>("/api/pantry", { method: "PUT", body: JSON.stringify({ lines }) }),
-  setPantryPriority: (canonicalIngredientId: string, priority: PantryPriority) =>
-    req<PantryLine>(`/api/pantry/${canonicalIngredientId}/priority`, {
-      method: "PUT", body: JSON.stringify({ priority }),
+  staples: () => req<StapleLine[]>("/api/staples"),
+  setStaples: (canonicalIngredientIds: string[]) =>
+    req<StapleLine[]>("/api/staples", {
+      method: "PUT",
+      body: JSON.stringify({ canonical_ingredient_ids: canonicalIngredientIds }),
     }),
   createPlan: (config: SolverConfigInput) =>
     req<Plan>("/api/plan", { method: "POST", body: JSON.stringify({ config }) }),
   getPlan: (id: number) => req<Plan>(`/api/plan/${id}`),
   commitPlan: (id: number) =>
-    req<{ plan_id: number; status: string; pantry_after_commit: Record<string, string> }>(
+    req<{ plan_id: number; status: string }>(
       `/api/plan/${id}/commit`, { method: "POST" }),
   reoptimizePlan: (
     id: number, config: SolverConfigInput,
@@ -44,6 +43,15 @@ export const api = {
         config,
         locked_recipe_ids: lockedRecipeIds,
         excluded_recipe_ids: excludedRecipeIds,
+      }),
+    }),
+  finalizePlan: (
+    id: number, config: SolverConfigInput, confirmedAvailableIds: string[],
+  ) =>
+    req<ReoptimizeResult>(`/api/plan/${id}/finalize`, {
+      method: "POST",
+      body: JSON.stringify({
+        config, confirmed_available_ids: confirmedAvailableIds,
       }),
     }),
   stores: () => req<Store[]>("/api/stores"),

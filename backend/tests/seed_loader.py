@@ -112,12 +112,9 @@ def problem_from_seed_dir(seed_dir: str | Path, on_date: date) -> ProblemData:
             Decimal(str(mm["appetite_coefficient"])) for mm in h["members"]
         ),
     )
-    pantry = {
-        p["canonical_ingredient_id"]: Decimal(str(p["quantity_base_unit"]))
-        for p in h["pantry"]
-    }
+    staples = frozenset(h["staples"])
     return ProblemData(
         on_date=on_date, profile=profile, ingredients=ingredients,
         recipes=recipes, stores=stores, products=products, prices=prices,
-        pantry=pantry,
+        staples=staples,
     )

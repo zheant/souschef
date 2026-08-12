@@ -2,7 +2,7 @@
 
 from .base import Base
 from .catalog import CanonicalIngredient, Recipe, RecipeIngredient, UnitKind
-from .household import HouseholdMember, HouseholdProfile, PantryPriority, PantryStock
+from .household import HouseholdMember, HouseholdProfile, Staple
 from .market import MappingStatus, Price, Product, ProductMapping, Store
 from .plan import Plan, PlanStatus
 from .staging import RawOffer
@@ -23,8 +23,7 @@ __all__ = [
     "MappingStatus",
     "HouseholdProfile",
     "HouseholdMember",
-    "PantryStock",
-    "PantryPriority",
+    "Staple",
     "Plan",
     "PlanStatus",
     "RawOffer",

@@ -72,14 +72,6 @@ def objective_cents(result) -> Decimal:
     return result.diagnostic.objective_terms.total_cents()
 
 
-def test_pantry_value_zero_when_pantry_disabled(toy):
-    """Sans enable_pantry_stock, aucun stock n'entre dans le modèle : la
-    valeur consommée est nulle même si le garde-manger est garni."""
-    res = solve(toy)
-    assert res.diagnostic.pantry_consumed_value_cents == Decimal("0.00")
-    assert res.diagnostic.pantry_consumed_by_ingredient == {}
-
-
 def test_default_config_optimum_and_monotone_menu(toy):
     """Calcul manuel 1 : optimum −333,5 c, menu monotone ATTENDU sans
     diversité (spec : ce n'est pas un bug)."""
@@ -129,39 +121,6 @@ def test_locked_recipe_servings_pins_exact_portions(toy):
     assert 4 <= sum(res.servings_by_recipe.values()) <= 5
 
 
-def test_must_use_pantry_forces_minimum_consumption(toy):
-    """Périssables obligatoires (pilote, docs/product-pilot.md) : lentille
-    déclarée à 300 g, must_use. Sans la contrainte (diversité seule), le
-    mélange retenu est dahl_toy=2 (140 g de lentille — sous le seuil de
-    50 % = 150 g) ; avec must_use, le solveur bascule vers dahl_toy=3
-    (210 g) — preuve que la contrainte change réellement la sélection, pas
-    seulement qu'elle est trivialement satisfaite."""
-    problem, pre = toy
-    problem = dataclasses.replace(problem, pantry={"lentille": Decimal(300)})
-    kwargs = dict(
-        enable_multi_store=True, enable_batch_fixed_cost=True,
-        enable_salvage=True, enable_time_cost=True,
-        enable_pantry_stock=True, enable_diversity=True,
-    )
-
-    baseline = PulpMenuSolver().solve(problem, pre, SolverConfig(**kwargs))
-    assert baseline.status == "Optimal"
-    assert 70 * baseline.servings_by_recipe.get("dahl_toy", 0) < 150
-
-    res = PulpMenuSolver().solve(
-        problem, pre, SolverConfig(**kwargs, must_use_pantry_ids=("lentille",))
-    )
-    assert res.status == "Optimal"
-    assert 70 * res.servings_by_recipe.get("dahl_toy", 0) >= 150  # 0,5 × 300
-
-    # Sans enable_pantry_stock, g_i n'est même pas dans le modèle : aucun effet.
-    res_no_flag = PulpMenuSolver().solve(
-        problem, pre, SolverConfig(must_use_pantry_ids=("lentille",))
-    )
-    assert res_no_flag.status == "Optimal"
-    assert res_no_flag.servings_by_recipe == {"riz_nature": 5}  # monotone, inchangé
-
-
 def test_batch_fixed_cost_and_time(toy):
     """Calcul manuel 3 : optimum −33,5 c ; τ^fixe pèse via δ_r."""
     res = solve(toy, enable_batch_fixed_cost=True, enable_time_cost=True)
@@ -172,29 +131,51 @@ def test_batch_fixed_cost_and_time(toy):
     assert res.cooked_flags.get("riz_nature") is True
 
 
-def test_pantry_covers_demand(toy):
-    """Garde-manger contenant 400 g de riz : plus rien à acheter."""
-    problem, pre = toy
-    stocked = type(problem)(
-        on_date=problem.on_date, profile=problem.profile,
-        ingredients=problem.ingredients, recipes=problem.recipes,
-        stores=problem.stores, products=problem.products,
-        prices=problem.prices, pantry={"riz": Decimal("400")},
-    )
-    res = PulpMenuSolver().solve(
-        stocked, pre, SolverConfig(enable_pantry_stock=True)
-    )
+def test_confirmed_available_ids_skips_coverage(toy):
+    """Confirmation post-génération (pilote, docs/product-pilot.md) :
+    ``riz`` confirmé disponible retire la contrainte de couverture — plus
+    rien à acheter, sans qu'aucune quantité de stock ne soit injectée nulle
+    part (contrairement à l'ancien garde-manger)."""
+    res = solve(toy, confirmed_available_ids=("riz",))
     assert res.status == "Optimal"
     assert res.purchases == ()
     assert res.diagnostic.objective_terms.achats_cents == 0
     assert objective_cents(res) == Decimal("-513.50")
-    # D13 — valeur du stock consommé, distincte du décaissement (nul ici) :
-    # consommé = min(400, 400) = 400 g ; c̄_riz = min(300/1000, 180/400)
-    # = 0,30 c/g → 120,00 c de stock déjà payé.
-    assert res.diagnostic.pantry_consumed_value_cents == Decimal("120.00")
-    assert res.diagnostic.pantry_consumed_by_ingredient["riz"] == {
-        "quantite_base_unit": "400", "valeur_cents": "120.00",
-    }
+
+
+def test_staples_bias_purchases_objective_without_changing_real_prices(toy):
+    """Essentiels (staples, pilote, docs/product-pilot.md) : ``oeuf`` marqué
+    essentiel avec un prix historique bas biaise l'objectif vers
+    omelette_toy (diversité forcée, sinon riz seul reste toujours moins cher
+    — la comparaison n'aurait rien de discriminant). Le prix RÉEL payé pour
+    les œufs (rapporté dans les lignes d'achat) ne doit jamais refléter ce
+    biais — seul le choix de recettes en dépend."""
+    problem, pre = toy
+    biased = dataclasses.replace(
+        problem,
+        staples=frozenset({"oeuf"}),
+        historical_low_price_cents_per_base_unit={"oeuf": Decimal("0.01")},
+    )
+    baseline = PulpMenuSolver().solve(
+        problem, pre, SolverConfig(enable_diversity=True)
+    )
+    assert baseline.status == "Optimal"
+    assert "omelette_toy" not in baseline.servings_by_recipe
+
+    res = PulpMenuSolver().solve(
+        biased, pre, SolverConfig(enable_diversity=True, enable_staples=True)
+    )
+    assert res.status == "Optimal"
+    assert "omelette_toy" in res.servings_by_recipe
+
+    egg_lines = [p for p in res.purchases if p.product_external_key == "oeuf_12"]
+    assert egg_lines and egg_lines[0].unit_price_cents_cad == 450
+
+    # Sans enable_staples, le même problème (staples/prix historique chargés
+    # mais ignorés) reproduit le comportement non biaisé.
+    res_no_flag = PulpMenuSolver().solve(biased, pre, SolverConfig(enable_diversity=True))
+    assert res_no_flag.status == "Optimal"
+    assert "omelette_toy" not in res_no_flag.servings_by_recipe
 
 
 def test_salvage_reports_valued_surplus(toy):
@@ -220,6 +201,59 @@ def test_salvage_reports_valued_surplus(toy):
     )
     assert res.diagnostic.objective_terms.recuperation_cents == total_valo
     assert total_valo >= valo
+
+
+def test_perishable_penalty_shifts_recipe_selection(toy):
+    """Sixième terme d'objectif (D19, docs/deviations.md) : œuf forcé à
+    périssabilité 1,0 (dataclasses.replace, seul ingrédient jouet dont le
+    surplus de paquet est significatif — 1 douzaine achetée quel que soit le
+    besoin réel). Sans le drapeau, le mélange retenu laisse 10 œufs de
+    surplus (omelette_toy=1) ; avec, le solveur bascule vers omelette_toy=3
+    (le maximum que permet max_batch_servings) pour absorber le surplus —
+    preuve que la pénalité change réellement la sélection, pas seulement
+    qu'elle est calculée sans effet. Calibration de RATIO documentée dans
+    D19 : un ratio ≤ 0,8 (par analogie avec le plafond de σ_i) n'a AUCUN
+    effet sur ce même scénario — vérifié en développant ce test, pas
+    supposé."""
+    problem, pre = toy
+    biased = dataclasses.replace(
+        problem,
+        ingredients={
+            **problem.ingredients,
+            "oeuf": dataclasses.replace(
+                problem.ingredients["oeuf"], perishability=Decimal("1")
+            ),
+        },
+    )
+    kwargs = dict(enable_diversity=True, min_distinct_recipes=3)
+
+    off = PulpMenuSolver().solve(biased, pre, SolverConfig(**kwargs))
+    assert off.status == "Optimal"
+    assert off.servings_by_recipe.get("omelette_toy", 0) == 1
+    assert off.diagnostic.objective_terms.gaspillage_cents == Decimal("0.00")
+
+    on = PulpMenuSolver().solve(
+        biased, pre, SolverConfig(**kwargs, enable_perishable_penalty=True)
+    )
+    assert on.status == "Optimal"
+    assert on.servings_by_recipe.get("omelette_toy", 0) == 3
+    assert on.diagnostic.objective_terms.gaspillage_cents > Decimal("0.00")
+
+    # Jamais de biais de prix (contrairement aux essentiels/staples) : le
+    # prix réel de la douzaine d'œufs reste le même dans les deux plans,
+    # seule la sélection de recettes change.
+    off_eggs = next(p for p in off.purchases if p.product_external_key == "oeuf_12")
+    on_eggs = next(p for p in on.purchases if p.product_external_key == "oeuf_12")
+    assert off_eggs.unit_price_cents_cad == on_eggs.unit_price_cents_cad == 450
+
+
+def test_perishable_penalty_alone_is_independent_of_salvage(toy):
+    """enable_perishable_penalty n'a pas besoin de w_i/enable_salvage — sa
+    propre variable (gaspillage_i, solver/model.py::_add_perishable_waste)
+    est créée et contrainte indépendamment (D19)."""
+    res = solve(toy, enable_perishable_penalty=True)
+    assert res.status == "Optimal"
+    assert res.diagnostic.objective_terms.recuperation_cents == Decimal("0.00")
 
 
 def test_appetence_constraint_mode(toy):
@@ -272,19 +306,18 @@ def test_override_provenance(toy):
 
 
 def test_flags_altering_needs_are_signaled(toy):
-    """D11 : les drapeaux qui changent l'équation de couverture (â^fixe via
-    enable_batch_fixed_cost, g_i via enable_pantry_stock) sont signalés
-    séparément — les paniers ne sont pas comparables entre configurations qui
-    en diffèrent."""
-    res = solve(toy, enable_batch_fixed_cost=True, enable_pantry_stock=True,
+    """D11 : seul le drapeau qui change l'équation de couverture (â^fixe via
+    enable_batch_fixed_cost) est signalé séparément. enable_staples n'en
+    fait PAS partie — contrairement à l'ancien enable_pantry_stock qu'il
+    remplace, il ne change que le prix vu par l'objectif, jamais la
+    couverture : un plan avec/sans enable_staples reste comparable."""
+    res = solve(toy, enable_batch_fixed_cost=True, enable_staples=True,
                 enable_time_cost=True)
     fx = res.diagnostic.flag_effects
-    assert fx["alterent_les_besoins_en_ingredients"] == [
-        "enable_batch_fixed_cost", "enable_pantry_stock"
-    ]
+    assert fx["alterent_les_besoins_en_ingredients"] == ["enable_batch_fixed_cost"]
     # enable_variant_exclusion est à True par défaut (D16) : présent ici sans
     # avoir été demandé, classé côté "objectif_ou_contraintes_seulement"
     # puisqu'il ne touche jamais l'équation de couverture des ingrédients.
     assert fx["objectif_ou_contraintes_seulement"] == [
-        "enable_time_cost", "enable_variant_exclusion",
+        "enable_time_cost", "enable_staples", "enable_variant_exclusion",
     ]

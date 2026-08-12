@@ -44,18 +44,9 @@
       "appetite_coefficient": 0.6
     }
   ],
-  "pantry": [
-    {
-      "canonical_ingredient_id": "riz_basmati",
-      "quantity_base_unit": 500
-    },
-    {
-      "canonical_ingredient_id": "huile_olive",
-      "quantity_base_unit": 250
-    },
-    {
-      "canonical_ingredient_id": "feuille_laurier",
-      "quantity_base_unit": 0
-    }
+  "staples": [
+    "riz_basmati",
+    "huile_olive",
+    "feuille_laurier"
   ]
 }

@@ -7,11 +7,10 @@ optionnelles résolues par une fonction unique (implémentée à l'étape 4).
 
 from __future__ import annotations
 
-import enum
 from decimal import Decimal
 
 from sqlalchemy import (
-    CheckConstraint, Enum, ForeignKey, Numeric, String, UniqueConstraint,
+    CheckConstraint, ForeignKey, Numeric, String, UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -90,28 +89,21 @@ class HouseholdMember(TimestampMixin, Base):
     profile: Mapped[HouseholdProfile] = relationship(back_populates="members")
 
 
-class PantryPriority(str, enum.Enum):
-    """Périssables prioritaires ou obligatoires (pilote,
-    docs/product-pilot.md) : ``use_soon`` (« à utiliser en priorité ») est
-    une préférence — stockée, sans effet sur le solveur en v1 (une vraie
-    préférence douce demanderait un sixième terme d'objectif, hors
-    périmètre). ``must_use`` (« doit être utilisé ») est une contrainte
-    réelle (``SolverConfig.must_use_pantry_ids``,
-    ``solver/model.py::_add_must_use_pantry``)."""
+class Staple(TimestampMixin, Base):
+    """Un ingrédient que ce ménage est supposé toujours avoir sous la main
+    (pilote, docs/product-pilot.md — remplace le garde-manger à quantité
+    suivie, retiré : l'input utilisateur qu'il exigeait divergeait
+    inévitablement du stock réel). Pure appartenance — aucune quantité,
+    aucune priorité. Au solveur, un essentiel n'est jamais gratuit : il est
+    acheté comme n'importe quel ingrédient, seulement évalué dans
+    l'objectif au prix historique le plus bas de la dernière année
+    (``services/pricing.py::historical_min_price_per_base_unit``), ce qui
+    biaise le *choix* de recettes sans jamais fausser le montant réel
+    affiché."""
 
-    normal = "normal"
-    use_soon = "use_soon"
-    must_use = "must_use"
-
-
-class PantryStock(TimestampMixin, Base):
-    """g_i — stock du garde-manger, reporté d'une exécution à l'autre
-    (le ``commit`` d'un plan y reversera les surplus w_i, étape 5)."""
-
-    __tablename__ = "pantry_stock"
+    __tablename__ = "staple"
     __table_args__ = (
         UniqueConstraint("household_profile_id", "canonical_ingredient_id"),
-        CheckConstraint("quantity_base_unit >= 0", name="qty_nonneg"),
         {"schema": SCHEMA},
     )
 
@@ -121,10 +113,4 @@ class PantryStock(TimestampMixin, Base):
     )
     canonical_ingredient_id: Mapped[str] = mapped_column(
         ForeignKey(f"{CATALOG}.canonical_ingredient.id")
-    )
-    #: Quantité dans la base_unit de l'ingrédient canonique.
-    quantity_base_unit: Mapped[Decimal] = mapped_column(Numeric(12, 3))
-    priority: Mapped[PantryPriority] = mapped_column(
-        Enum(PantryPriority, name="pantry_priority", schema=SCHEMA),
-        default=PantryPriority.normal,
     )

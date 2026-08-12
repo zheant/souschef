@@ -15,9 +15,14 @@ règle réelle de ``CLAUDE.md`` (« l'API ne touche jamais SQLAlchemy
 directement pour de la logique métier »), pas la formulation littérale du
 document de refactor source.
 
-Le ``commit`` est ce qui rend le terme de récupération honnête (docs/spec.md,
-section API) : il décrémente le stock consommé et reporte les restes vers
-``pantry_stock``. Les recettes des derniers plans commis alimentent la
+Le ``commit`` (pilote, docs/product-pilot.md — depuis le retrait du
+garde-manger) est une simple validation + passage à
+``PlanStatus.committed`` : plus de stock à décrémenter/reporter, la
+comptabilité qui rendait le terme de récupération honnête vivait dans
+``pantry_stock``, retiré. ``finalize_plan`` (écran de confirmation
+post-génération) est le nouveau point qui ajuste le plan une dernière fois
+avant commit — il réutilise ``reoptimize_plan`` telle quelle, menu
+verrouillé en entier. Les recettes des derniers plans commis alimentent la
 pénalité de répétition du scoring d'appétence.
 """
 
@@ -28,18 +33,15 @@ from datetime import date
 from decimal import Decimal
 
 from sqlalchemy import select
-from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
-from ..models import (
-    CanonicalIngredient, PantryPriority, PantryStock, Plan, PlanStatus, Product,
-    Recipe,
-)
+from ..models import CanonicalIngredient, Plan, PlanStatus, Product, Recipe, Staple
 from ..models.base import utcnow
 from ..services.appetence import RuleBasedAppetenceScorer
 from ..services.prefilter import prefilter_recipes
 from ..services.needs import ingredient_needs
 from ..services.problem_data import load_problem_data
+from ..services.validation import min_taxed_price_per_base_unit
 from ..solver.config import SolverConfig
 from ..solver.port import MenuSolver, SolveResult
 
@@ -66,21 +68,15 @@ class RecipeNotLockableError(ValueError):
     déclarée entre deux générations (l'API traduit en 422)."""
 
 
-class PantryIngredientNotUsableError(ValueError):
-    """Un ingrédient marqué « doit être utilisé » n'apparaît dans aucune
-    recette du catalogue (l'API traduit en 422)."""
-
-
 class ConflictingRecipeSelectionError(ValueError):
     """Une recette à la fois verrouillée et exclue (l'API traduit en 422)."""
 
 
 class PlanAlreadyCommittedError(ValueError):
     """Un plan déjà commis ne peut plus être réoptimisé (verrouiller/
-    remplacer une recette) — le stock du garde-manger et les achats ont
-    déjà été ajustés pour le menu tel qu'accepté ; le modifier après coup
-    désynchroniserait cette comptabilité du menu réellement suivi (l'API
-    traduit en 409)."""
+    remplacer une recette, ou finaliser) — les achats ont déjà été ajustés
+    pour le menu tel qu'accepté ; le modifier après coup désynchroniserait
+    le menu réellement suivi (l'API traduit en 409)."""
 
 
 @dataclass(frozen=True)
@@ -93,17 +89,15 @@ class MenuLine:
 
 
 @dataclass(frozen=True)
-class PlanPantryLine:
-    """Garde-manger itemisé pour l'écran Résultat (pilote,
-    docs/product-pilot.md) — ``diagnostic.pantry_consumed_by_ingredient``
-    existe depuis l'étape 5 (id → quantité/valeur) mais n'était résolu en nom
-    nulle part, contrairement aux lignes d'achat (``_grocery_list``)."""
+class NeededIngredientLine:
+    """Ingrédient requis par le menu du plan, pour l'écran de confirmation
+    post-génération (pilote, docs/product-pilot.md) — tous les ingrédients
+    sont montrés, pas seulement les essentiels ; ``is_staple`` permet au
+    front de pré-décocher ceux que le ménage est supposé déjà avoir."""
 
     canonical_ingredient_id: str
     name: str
-    quantity_base_unit: str
-    base_unit: str
-    priority: str
+    is_staple: bool
 
 
 @dataclass(frozen=True)
@@ -116,7 +110,7 @@ class PlanView:
     #: Groupée par magasin ; structure documentée dans docs/spec.md (section
     #: API), pas re-typée ici — même choix que ``diagnostic`` ci-dessous.
     grocery_list_by_store: list[dict]
-    pantry_lines: list[PlanPantryLine]
+    needed_ingredients: list[NeededIngredientLine]
     stores_visited: list[str]
     diagnostic: dict
 
@@ -125,7 +119,6 @@ class PlanView:
 class CommitResult:
     plan_id: int
     status: str
-    pantry_after_commit: dict[str, str]
 
 
 @dataclass(frozen=True)
@@ -169,7 +162,6 @@ def generate_plan(
 ) -> PlanView:
     problem = load_problem_data(session, profile_id, on_date)
     pre = _run_prefilter(session, profile_id, problem)
-    config = _with_must_use_pantry(session, profile_id, problem, config)
     result = solver.solve(problem, pre, config)
     plan = _persist_plan(session, profile_id, on_date, config, problem, result)
     return _plan_view(session, plan)
@@ -228,13 +220,14 @@ def reoptimize_plan(
     )
     # Erreur explicite AVANT le solveur (jamais un statut Infeasible muet) :
     # une recette verrouillée qui ne survit plus au préfiltrage (ex.
-    # nouvelle allergie déclarée entre deux générations) n'est pas repêchée
-    # par force_keep_ids (services/prefilter.py) — c'est ici qu'on le détecte.
+    # nouvelle allergie déclarée entre deux générations, ou un ingrédient
+    # devenu invendable) n'est pas repêchée par force_keep_ids
+    # (services/prefilter.py) — c'est ici qu'on le détecte.
     surviving_ids = {r.id for r in pre.surviving}
     if not locked_recipe_ids <= surviving_ids:
         raise RecipeNotLockableError(
             "Recette(s) verrouillée(s) ne passant plus les filtres du "
-            "profil actuel (allergènes/régime/équipement/temps) : "
+            "profil actuel (allergènes/régime/équipement/temps/prix) : "
             f"{sorted(locked_recipe_ids - surviving_ids)}."
         )
 
@@ -244,7 +237,6 @@ def reoptimize_plan(
     reopt_config = config.model_copy(
         update={"locked_recipe_servings": locked_recipe_servings}
     )
-    reopt_config = _with_must_use_pantry(session, profile_id, problem, reopt_config)
     result = solver.solve(problem, pre, reopt_config)
     plan = _persist_plan(
         session, profile_id, previous.on_date, reopt_config, problem, result
@@ -252,7 +244,14 @@ def reoptimize_plan(
 
     view = _plan_view(session, plan)
     changes = None
-    if result.status == "Optimal":
+    # Garde sur le plan PRÉCÉDENT aussi, pas seulement le nouveau : un plan
+    # infaisable est persisté (routes.py le permet explicitement) et n'a pas
+    # d'objective_terms_cents (None, voir _diagnostic_json) — sans cette
+    # garde, réoptimiser/finaliser un plan infaisable qui réussit cette fois
+    # lève TypeError sur `None["achats"]` et annule silencieusement le
+    # commit du nouveau plan pourtant résolu (get_session ne commit qu'au
+    # retour propre).
+    if result.status == "Optimal" and previous.diagnostic.get("objective_terms_cents"):
         old_ids = set(previous.servings.keys())
         new_ids = set(plan.servings.keys())
         old_achats = Decimal(previous.diagnostic["objective_terms_cents"]["achats"])
@@ -265,16 +264,52 @@ def reoptimize_plan(
     return ReoptimizationResult(plan=view, changes=changes)
 
 
+def finalize_plan(
+    session: Session,
+    profile_id: str,
+    plan_id: int,
+    confirmed_available_ids: tuple[str, ...],
+    config: SolverConfig,
+    solver: MenuSolver,
+) -> ReoptimizationResult:
+    """Confirmation post-génération (pilote, docs/product-pilot.md) : dernier
+    ajustement avant commit, une fois que l'usager a corrigé la liste des
+    ingrédients qu'il possède déjà réellement. Verrouille systématiquement
+    tout le menu courant — jamais un choix de l'appelant, contrairement à
+    Replanifier : finaliser ne doit jamais changer les recettes, seulement
+    la logistique d'achat. Aucune résolution séparée : un appel de plus au
+    même mécanisme déjà éprouvé (``reoptimize_plan``)."""
+    previous = _load_owned_plan(session, profile_id, plan_id)
+    all_recipe_ids = frozenset(previous.servings.keys())
+    finalize_config = config.model_copy(
+        update={
+            "enable_staples": False,
+            "confirmed_available_ids": tuple(confirmed_available_ids),
+        }
+    )
+    return reoptimize_plan(
+        session, profile_id, plan_id,
+        all_recipe_ids, frozenset(),
+        finalize_config, solver,
+    )
+
+
 def get_plan(session: Session, profile_id: str, plan_id: int) -> PlanView:
     return _plan_view(session, _load_owned_plan(session, profile_id, plan_id))
 
 
 def commit_plan(session: Session, profile_id: str, plan_id: int) -> CommitResult:
     plan = _load_owned_plan(session, profile_id, plan_id)
-    new_stock = _apply_commit(session, plan)
-    return CommitResult(
-        plan_id=plan.id, status=plan.status.value, pantry_after_commit=new_stock
-    )
+    if plan.status != PlanStatus.proposed:
+        raise PlanNotCommittable(f"Plan {plan.id} déjà '{plan.status.value}'.")
+    if plan.solver_status != "Optimal":
+        raise PlanNotCommittable(
+            f"Plan {plan.id} non commis : statut solveur '{plan.solver_status}'."
+        )
+    plan.status = PlanStatus.committed
+    plan.committed_at = utcnow()
+    session.flush()
+    return CommitResult(plan_id=plan.id, status=plan.status.value)
 
 
 def _load_owned_plan(session: Session, profile_id: str, plan_id: int) -> Plan:
@@ -293,44 +328,17 @@ def _run_prefilter(
 ):
     recent = recent_committed_recipe_ids(session, profile_id)
     scorer = RuleBasedAppetenceScorer(problem, recent_recipe_ids=recent)
+    # Une recette dont un ingrédient n'a plus aucun produit prixé est exclue
+    # ici, avant le solveur — même ensemble que l'assertion 4
+    # (min_taxed_price_per_base_unit) : évite qu'un ingrédient invendable
+    # atteigne validate_problem sans distinguer s'il est confirmé disponible
+    # ou non (les deux tombaient sinon sur la même MissingPriceError non
+    # gérée par l'API).
+    priced_ids = frozenset(min_taxed_price_per_base_unit(problem))
     return prefilter_recipes(
-        problem.recipes, problem.profile, scorer,
+        problem.recipes, problem.profile, scorer, priced_ids,
         force_keep_ids=force_keep_ids, exclude_ids=exclude_ids,
     )
-
-
-def _with_must_use_pantry(
-    session: Session, profile_id: str, problem, config: SolverConfig
-) -> SolverConfig:
-    """Périssables obligatoires (pilote, docs/product-pilot.md) : dérive
-    ``SolverConfig.must_use_pantry_ids`` depuis ``pantry_stock.priority`` —
-    jamais fourni à la main par l'appelant HTTP, même motif que
-    ``locked_recipe_servings``. Sans effet si ``enable_pantry_stock`` est
-    inactif (cohérent avec la garde de ``_add_must_use_pantry`` côté
-    solveur)."""
-    if not config.enable_pantry_stock:
-        return config
-    ids = tuple(session.scalars(
-        select(PantryStock.canonical_ingredient_id).where(
-            PantryStock.household_profile_id == profile_id,
-            PantryStock.priority == PantryPriority.must_use,
-        )
-    ).all())
-    if not ids:
-        return config
-    # Erreur explicite AVANT le solveur (jamais un statut Infeasible muet,
-    # même principe que RecipeNotLockableError) : un ingrédient « doit être
-    # utilisé » qu'aucune recette ne référence ne peut jamais être satisfait.
-    used_ids = {
-        ri.canonical_ingredient_id for r in problem.recipes for ri in r.ingredients
-    }
-    unusable = sorted(iid for iid in ids if iid not in used_ids)
-    if unusable:
-        raise PantryIngredientNotUsableError(
-            "Ingrédient(s) marqué(s) « doit être utilisé » sans aucune "
-            f"recette compatible dans le catalogue : {unusable}."
-        )
-    return config.model_copy(update={"must_use_pantry_ids": ids})
 
 
 def _persist_plan(
@@ -394,6 +402,7 @@ def _diagnostic_json(result: SolveResult) -> dict:
                 "deplacements": str(t.deplacements_cents),
                 "temps": str(t.temps_cents),
                 "recuperation": str(t.recuperation_cents),
+                "gaspillage": str(t.gaspillage_cents),
                 "appetence": str(t.appetence_cents),
                 "total": str(t.total_cents()),
             }
@@ -404,8 +413,6 @@ def _diagnostic_json(result: SolveResult) -> dict:
         "saturated_constraints": d.saturated_constraints,
         "prefilter_counts": d.prefilter_counts,
         "surplus_by_ingredient": d.surplus_by_ingredient,
-        "pantry_consumed_by_ingredient": d.pantry_consumed_by_ingredient,
-        "pantry_consumed_value_cents": str(d.pantry_consumed_value_cents),
         "distinct_recipes": d.distinct_recipes,
         "max_share_of_demand": (
             str(d.max_share_of_demand) if d.max_share_of_demand is not None else None
@@ -447,7 +454,7 @@ def _plan_view(session: Session, plan: Plan) -> PlanView:
         id=plan.id, status=plan.status.value, solver_status=plan.solver_status,
         on_date=plan.on_date, menu=menu,
         grocery_list_by_store=_grocery_list(session, plan),
-        pantry_lines=_plan_pantry_lines(session, plan),
+        needed_ingredients=_needed_ingredients(session, plan),
         stores_visited=plan.stores_visited, diagnostic=plan.diagnostic,
     )
 
@@ -541,143 +548,31 @@ def _grocery_list(session: Session, plan: Plan) -> list[dict]:
     ]
 
 
-def _plan_pantry_lines(session: Session, plan: Plan) -> list[PlanPantryLine]:
-    """Garde-manger itemisé (pilote, docs/product-pilot.md) : joint
-    ``diagnostic.pantry_consumed_by_ingredient`` (id → quantité/valeur,
-    présent depuis l'étape 5) contre ``CanonicalIngredient`` pour le nom —
-    même pattern que ``_grocery_list`` pour les achats — et contre
-    ``PantryStock.priority`` pour distinguer les périssables prioritaires
-    (D « Périssables prioritaires ou obligatoires »)."""
-    consumed: dict[str, dict] = plan.diagnostic.get("pantry_consumed_by_ingredient") or {}
-    ids = [
-        iid for iid, v in consumed.items()
-        if Decimal(v["quantite_base_unit"]) > 0
-    ]
+def _needed_ingredients(session: Session, plan: Plan) -> list[NeededIngredientLine]:
+    """Tous les ingrédients requis par le menu du plan (pilote,
+    docs/product-pilot.md) — écran de confirmation post-génération : montre
+    tout, pas seulement les essentiels, pré-décochés côté front via
+    ``is_staple`` pour que l'usager corrige ce qui manque réellement."""
+    ids = sorted(plan.ingredient_needs.keys())
     if not ids:
         return []
-    ingredients = {
-        i.id: i
+    names = {
+        i.id: i.name
         for i in session.scalars(
             select(CanonicalIngredient).where(CanonicalIngredient.id.in_(ids))
         )
     }
-    priorities = {
-        ps.canonical_ingredient_id: ps.priority
-        for ps in session.scalars(
-            select(PantryStock).where(
-                PantryStock.household_profile_id == plan.household_profile_id,
-                PantryStock.canonical_ingredient_id.in_(ids),
-            )
+    staples = set(session.scalars(
+        select(Staple.canonical_ingredient_id).where(
+            Staple.household_profile_id == plan.household_profile_id,
+            Staple.canonical_ingredient_id.in_(ids),
         )
-    }
+    ).all())
     return [
-        PlanPantryLine(
-            canonical_ingredient_id=iid,
-            name=ingredients[iid].name,
-            quantity_base_unit=consumed[iid]["quantite_base_unit"],
-            base_unit=ingredients[iid].base_unit,
-            priority=priorities.get(iid, PantryPriority.normal).value,
+        NeededIngredientLine(
+            canonical_ingredient_id=iid, name=names[iid], is_staple=iid in staples,
         )
-        for iid in sorted(ids)
+        for iid in ids
     ]
 
 
-def _purchased_by_ingredient(
-    session: Session, purchases: list[dict]
-) -> dict[str, Decimal]:
-    """Quantité totale déjà achetée par ingrédient canonique (base_unit),
-    depuis des lignes d'achat sérialisées — factoré parce que
-    ``_apply_commit`` en a besoin deux fois : une fois avant d'ajouter les
-    lignes « à acheter » (pour calculer ce qui manque réellement), une fois
-    après (pour la comptabilité finale du stock)."""
-    if not purchases:
-        return {}
-    products = {
-        p.id: p
-        for p in session.scalars(
-            select(Product).where(
-                Product.id.in_({l["product_id"] for l in purchases})
-            )
-        )
-    }
-    result: dict[str, Decimal] = {}
-    for line in purchases:
-        prod = products[line["product_id"]]
-        result[prod.canonical_ingredient_id] = (
-            result.get(prod.canonical_ingredient_id, Decimal(0))
-            + prod.package_qty_in_base_unit * line["units"]
-        )
-    return result
-
-
-def _apply_commit(session: Session, plan: Plan) -> dict[str, str]:
-    """Décrémente le stock consommé et reporte les restes vers pantry_stock.
-
-    Comptabilité par ingrédient (déterministe depuis les données figées du
-    plan) : acheté = Σ unités·v_p ; consommé du garde-manger =
-    min(stock, besoin) si le plan a utilisé le stock, 0 sinon ; nouveau stock
-    = (stock − consommé) + (acheté + consommé − besoin). Le second terme est
-    exactement le w_i du solveur quand la récupération était active — c'est ce
-    report qui rend σ_i honnête : la valeur résiduelle promise est réalisée.
-
-    Correction d'un ingrédient déclaré à tort au garde-manger (« à
-    acheter ») : ce n'est **plus** géré ici. Une tentative de le corriger au
-    moment du commit (résoudre un achat de remplacement après coup) s'est
-    avérée fragile en pratique — double-achat, quantités qui ne collaient
-    jamais exactement à ce qu'un vrai panier optimal aurait choisi. La bonne
-    correction, plus solide, se fait *avant* le commit : mettre
-    ``pantry_stock`` à 0 pour l'ingrédient concerné puis relancer une vraie
-    réoptimisation (``reoptimize_plan``) — le solveur, pas une heuristique
-    séparée, décide alors du panier réellement optimal. Voir Result.tsx
-    (« Replanifier ») et CLAUDE.md pour l'historique de cette décision.
-    """
-    if plan.status != PlanStatus.proposed:
-        raise PlanNotCommittable(f"Plan {plan.id} déjà '{plan.status.value}'.")
-    if plan.solver_status != "Optimal":
-        raise PlanNotCommittable(
-            f"Plan {plan.id} non commis : statut solveur '{plan.solver_status}'."
-        )
-
-    purchased = _purchased_by_ingredient(session, plan.purchases)
-
-    pantry = {
-        ps.canonical_ingredient_id: ps
-        for ps in session.scalars(
-            select(PantryStock).where(
-                PantryStock.household_profile_id == plan.household_profile_id
-            )
-        )
-    }
-    used_pantry = bool(plan.config.get("enable_pantry_stock"))
-    new_stock: dict[str, str] = {}
-    for iid in sorted(set(purchased) | set(plan.ingredient_needs)):
-        need = Decimal(plan.ingredient_needs.get(iid, "0"))
-        bought = purchased.get(iid, Decimal(0))
-        stock = pantry[iid].quantity_base_unit if iid in pantry else Decimal(0)
-        consumed = min(stock, need) if used_pantry else Decimal(0)
-        leftover = bought + consumed - need
-        if leftover < 0:
-            raise PlanNotCommittable(
-                f"Plan {plan.id} incohérent : besoin de {iid} non couvert "
-                f"({bought}+{consumed} < {need})."
-            )
-        qty = (stock - consumed) + leftover
-        stmt = (
-            pg_insert(PantryStock)
-            .values(
-                household_profile_id=plan.household_profile_id,
-                canonical_ingredient_id=iid,
-                quantity_base_unit=qty,
-            )
-            .on_conflict_do_update(
-                index_elements=["household_profile_id", "canonical_ingredient_id"],
-                set_={"quantity_base_unit": qty},
-            )
-        )
-        session.execute(stmt)
-        new_stock[iid] = str(qty)
-
-    plan.status = PlanStatus.committed
-    plan.committed_at = utcnow()
-    session.flush()
-    return new_stock

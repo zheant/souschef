@@ -14,20 +14,17 @@ export interface Household {
   demand: { D_exact: string; borne_basse: number; borne_haute: number };
 }
 
-// Périssables prioritaires ou obligatoires (pilote, docs/product-pilot.md) :
-// "use_soon" (préférence, stockée, sans effet sur le solveur en v1) vs
-// "must_use" (contrainte réelle).
-export type PantryPriority = "normal" | "use_soon" | "must_use";
-
-export interface PantryLine {
-  canonical_ingredient_id: string; quantity_base_unit: string;
-  priority: PantryPriority;
+// Essentiels (staples, pilote, docs/product-pilot.md) : simple appartenance
+// ménage/ingrédient, sans quantité ni priorité — remplace le garde-manger.
+export interface StapleLine {
+  canonical_ingredient_id: string; name: string;
 }
 
 export interface SolverConfigInput {
   enable_multi_store?: boolean; enable_batch_fixed_cost?: boolean;
-  enable_salvage?: boolean; enable_time_cost?: boolean;
-  enable_pantry_stock?: boolean; enable_diversity?: boolean;
+  enable_salvage?: boolean; enable_perishable_penalty?: boolean;
+  enable_time_cost?: boolean;
+  enable_staples?: boolean; enable_diversity?: boolean;
   appetence_mode?: "objective" | "constraint";
   appetence_u_min_dollars?: number | null;
   max_store_visits?: number | null; min_distinct_recipes?: number | null;
@@ -60,7 +57,7 @@ export interface GroceryGroup {
 
 export interface ObjectiveTermsCents {
   achats: string; deplacements: string; temps: string;
-  recuperation: string; appetence: string; total: string;
+  recuperation: string; gaspillage: string; appetence: string; total: string;
 }
 
 export interface Diagnostic {
@@ -72,25 +69,23 @@ export interface Diagnostic {
   saturated_constraints: Record<string, string[]>;
   prefilter_counts: Record<string, number>;
   surplus_by_ingredient: Record<string, { quantite_base_unit: string; valorisation_cents: string }>;
-  pantry_consumed_by_ingredient: Record<string, { quantite_base_unit: string; valeur_cents: string }>;
-  pantry_consumed_value_cents: string;
   distinct_recipes: number; max_share_of_demand: string | null;
   demand: Record<string, string>;
   assertions_passed: string[]; last_enabled_flag: string | null;
   infeasibility_note: string | null;
 }
 
-// Garde-manger itemisé pour ce plan précis (pilote, docs/product-pilot.md) —
-// distinct de PantryLine (l'inventaire déclaré côté ménage).
-export interface PlanPantryLine {
-  canonical_ingredient_id: string; name: string;
-  quantity_base_unit: string; base_unit: string; priority: PantryPriority;
+// Ingrédient requis par le menu du plan (pilote, docs/product-pilot.md) —
+// écran de confirmation post-génération, tous les ingrédients sont montrés ;
+// is_staple pré-décoche ceux que le ménage est supposé déjà avoir.
+export interface NeededIngredientLine {
+  canonical_ingredient_id: string; name: string; is_staple: boolean;
 }
 
 export interface Plan {
   id: number; status: "proposed" | "committed"; solver_status: string;
   on_date: string; menu: MenuLine[]; grocery_list_by_store: GroceryGroup[];
-  pantry_lines: PlanPantryLine[];
+  needed_ingredients: NeededIngredientLine[];
   stores_visited: string[]; diagnostic: Diagnostic;
 }
 

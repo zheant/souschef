@@ -30,49 +30,23 @@ def test_get_and_update_profile(db_session):
     household.update_profile(db_session, PROFILE_ID, {"meals_per_horizon": 4})
 
 
-def test_pantry_roundtrip_and_unknown_ingredient(db_session):
-    lines = household.update_pantry(
-        db_session, PROFILE_ID,
-        [{"canonical_ingredient_id": "riz", "quantity_base_unit": 120}],
-    )
-    assert any(
-        line.canonical_ingredient_id == "riz"
-        and Decimal(line.quantity_base_unit) == 120
-        for line in lines
-    )
-    assert household.get_pantry(db_session, PROFILE_ID) == lines
+def test_staples_roundtrip_and_unknown_ingredient(db_session):
+    lines = household.set_staples(db_session, PROFILE_ID, ["riz", "lentille"])
+    assert {l.canonical_ingredient_id for l in lines} == {"riz", "lentille"}
+    assert household.get_staples(db_session, PROFILE_ID) == lines
 
     with pytest.raises(household.UnknownIngredientError):
-        household.update_pantry(
-            db_session, PROFILE_ID,
-            [{"canonical_ingredient_id": "inexistant", "quantity_base_unit": 1}],
-        )
+        household.set_staples(db_session, PROFILE_ID, ["inexistant"])
 
 
-def test_set_pantry_priority_and_unknown_ingredient(db_session):
-    line = household.set_pantry_priority(db_session, PROFILE_ID, "riz", "must_use")
-    assert line.priority == "must_use"
-    assert line.quantity_base_unit == "0.000"  # ligne neuve, quantité par défaut
+def test_set_staples_replaces_the_full_set(db_session):
+    """Pas un upsert ligne par ligne comme l'ancien garde-manger — la liste
+    est remplacée comme un tout à chaque appel."""
+    household.set_staples(db_session, PROFILE_ID, ["riz", "lentille"])
+    lines = household.set_staples(db_session, PROFILE_ID, ["oeuf"])
+    assert {l.canonical_ingredient_id for l in lines} == {"oeuf"}
+    assert household.get_staples(db_session, PROFILE_ID) == lines
 
-    with pytest.raises(household.UnknownIngredientError):
-        household.set_pantry_priority(db_session, PROFILE_ID, "inexistant", "must_use")
-
-
-def test_update_pantry_never_resets_priority(db_session):
-    """Piège identifié en conception : PUT /api/pantry (quantité) est aussi
-    appelé par la confirmation en deux temps de Génération, qui n'envoie
-    jamais de priorité — il ne doit jamais écraser un « doit être utilisé »
-    déjà posé."""
-    household.update_pantry(
-        db_session, PROFILE_ID,
-        [{"canonical_ingredient_id": "riz", "quantity_base_unit": 100}],
-    )
-    household.set_pantry_priority(db_session, PROFILE_ID, "riz", "must_use")
-
-    lines = household.update_pantry(
-        db_session, PROFILE_ID,
-        [{"canonical_ingredient_id": "riz", "quantity_base_unit": 250}],
-    )
-    riz = next(l for l in lines if l.canonical_ingredient_id == "riz")
-    assert riz.quantity_base_unit == "250.000"
-    assert riz.priority == "must_use"
+    empty = household.set_staples(db_session, PROFILE_ID, [])
+    assert empty == ()
+    assert household.get_staples(db_session, PROFILE_ID) == ()

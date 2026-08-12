@@ -82,3 +82,24 @@ def test_concave_segments_decreasing_and_cover_m():
     marginals = [s.marginal_u_per_serving for s in segs]
     assert marginals == sorted(marginals, reverse=True)
     assert len(set(marginals)) == len(marginals)  # strictement décroissants
+
+
+def test_concave_segments_never_skip_the_65_percent_tier():
+    """m=2 est le seul cas où la formule brute donne un palier à 65 % vide
+    (second=0) alors qu'il reste une portion après le premier tiers — sans
+    garde-fou, cette portion tombait au palier 35 % au lieu de 65 %,
+    contredisant le docstring (« premier tiers plein tarif, deuxième
+    65 %, reste 35 % »)."""
+    r = make_recipe(m=2)
+    segs = scorer().utility_segments(r)
+    assert [(s.max_portions, s.marginal_u_per_serving) for s in segs] == [
+        (1, Decimal("1.300")), (1, Decimal("0.845")),  # 1,300 * 0,65
+    ]
+
+
+def test_concave_segments_unchanged_for_m_other_than_two():
+    """Le garde-fou du palier 65 % ne doit rien changer pour m ≠ 2 — vérifié
+    sur un échantillon plutôt que supposé."""
+    for m in (1, 3, 4, 5, 6, 8, 12):
+        segs = scorer().utility_segments(make_recipe(m=m))
+        assert sum(s.max_portions for s in segs) == m

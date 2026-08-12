@@ -20,12 +20,13 @@ from sqlalchemy.orm import Session, selectinload
 from ..models import (
     CanonicalIngredient,
     HouseholdProfile,
-    PantryStock,
     Price,
     Product,
     Recipe,
+    Staple,
     Store,
 )
+from .pricing import historical_min_price_per_base_unit
 
 
 @dataclass(frozen=True)
@@ -123,7 +124,19 @@ class ProblemData:
     stores: tuple[StoreData, ...]
     products: tuple[ProductData, ...]
     prices: tuple[PriceData, ...]                # valides à on_date uniquement
-    pantry: dict[str, Decimal] = field(default_factory=dict)  # g_i
+    #: Ingrédients essentiels (staples) pour ce ménage — pure appartenance,
+    #: jamais une quantité (pilote, docs/product-pilot.md). Un essentiel
+    #: est acheté comme n'importe quel ingrédient ; seule sa présence ici
+    #: change quel prix l'objectif du solveur lui voit (voir
+    #: historical_low_price_cents_per_base_unit ci-dessous).
+    staples: frozenset[str] = field(default_factory=frozenset)
+    #: Prix taxé minimum par unité de base sur la dernière année (365 j),
+    #: par ingrédient — utilisé uniquement pour évaluer les essentiels
+    #: dans l'objectif (``solver/model.py::_purchases_expr_cents``),
+    #: jamais dans le rapport des montants réellement déboursés.
+    historical_low_price_cents_per_base_unit: dict[str, Decimal] = field(
+        default_factory=dict
+    )
 
 
 def load_problem_data(
@@ -192,14 +205,18 @@ def load_problem_data(
             )
         )
     )
-    pantry = {
-        ps.canonical_ingredient_id: ps.quantity_base_unit
-        for ps in session.scalars(
-            select(PantryStock).where(
-                PantryStock.household_profile_id == profile_id
+    staples = frozenset(
+        session.scalars(
+            select(Staple.canonical_ingredient_id).where(
+                Staple.household_profile_id == profile_id
             )
-        )
-    }
+        ).all()
+    )
+    historical_low_price_cents_per_base_unit = (
+        historical_min_price_per_base_unit(session, on_date)
+        if staples
+        else {}
+    )
 
     return ProblemData(
         on_date=on_date,
@@ -225,5 +242,6 @@ def load_problem_data(
         stores=stores,
         products=products,
         prices=prices,
-        pantry=pantry,
+        staples=staples,
+        historical_low_price_cents_per_base_unit=historical_low_price_cents_per_base_unit,
     )

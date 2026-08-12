@@ -142,6 +142,14 @@ class RuleBasedAppetenceScorer:
         m = recipe.max_batch_servings
         first = max(1, m // 3)
         second = max(0, (2 * m) // 3 - first)
+        # Les paliers se remplissent dans l'ordre — jamais de portion au
+        # palier 35 % tant que le palier 65 % est vide. Pour m=2, la
+        # formule brute donne second=0 (4//3-1=0) alors qu'il reste une
+        # portion après "first" : sans ce garde-fou, elle tombait dans
+        # "rest" à 35 % au lieu de 65 %. Ne change rien pour m=1 (rien ne
+        # reste après "first") ni pour m≥3 (second est déjà > 0).
+        if second == 0 and m > first:
+            second = 1
         rest = m - first - second
         segments = [UtilitySegment(first, u)]
         if second:

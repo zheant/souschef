@@ -45,8 +45,8 @@ class Plan(Base):
     created_at: Mapped[datetime] = mapped_column(default=utcnow)
     committed_at: Mapped[datetime | None]
     solver_status: Mapped[str] = mapped_column(String(32))
-    #: SolverConfig sérialisée (nécessaire au commit : enable_pantry_stock,
-    #: enable_batch_fixed_cost déterminent la comptabilité des besoins).
+    #: SolverConfig sérialisée — persistée pour audit/diagnostic, pas relue
+    #: au commit (devenu une simple validation + passage de statut).
     config: Mapped[dict] = mapped_column(JSONB)
     #: x_r par recette (id → portions).
     servings: Mapped[dict] = mapped_column(JSONB, default=dict)

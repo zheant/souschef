@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { api } from "../api";
 import type { Household, Member } from "../types";
-import { PantryPanel } from "./Pantry";
+import { StaplesPanel } from "./Staples";
 
-/** Écran 2 — Ménage : trois sous-sections (Garde-manger/Membres/
+/** Écran 2 — Ménage : trois sous-sections (Essentiels/Membres/
  *  Préférences), fusion de ce qui était trois écrans séparés dans la
  *  navigation à 5 onglets. D est calculé EN DIRECT côté client au fil de
  *  la frappe, puis confirmé par le serveur à la sauvegarde.
@@ -19,7 +19,7 @@ import { PantryPanel } from "./Pantry";
  *  développement, même si ce sont des chiffres exacts plutôt que des
  *  préférences). */
 
-type SubTab = "garde-manger" | "membres" | "preferences";
+type SubTab = "essentiels" | "membres" | "preferences";
 
 const APPETITE_LEVELS = [
   { value: 0.6, label: "Petit appétit" },
@@ -115,8 +115,8 @@ export default function HouseholdScreen(props: {
       <p className="callout">{summary}</p>
 
       <div className="subnav">
-        <button className={subTab === "garde-manger" ? "active" : ""} onClick={() => setSubTab("garde-manger")}>
-          Garde-manger
+        <button className={subTab === "essentiels" ? "active" : ""} onClick={() => setSubTab("essentiels")}>
+          Essentiels
         </button>
         <button className={subTab === "membres" ? "active" : ""} onClick={() => setSubTab("membres")}>
           Membres
@@ -126,7 +126,7 @@ export default function HouseholdScreen(props: {
         </button>
       </div>
 
-      {subTab === "garde-manger" && <PantryPanel />}
+      {subTab === "essentiels" && <StaplesPanel />}
 
       {subTab === "membres" && (
         <>
@@ -230,7 +230,7 @@ export default function HouseholdScreen(props: {
 
 /** Barre d'action collante — visible sur Membres et Préférences puisque
  *  les deux partagent le même appel api.updateHousehold et le même état de
- *  formulaire ; Garde-manger a son propre bouton Enregistrer (PantryPanel),
+ *  formulaire ; Essentiels a son propre bouton Enregistrer (StaplesPanel),
  *  indépendant. */
 function SaveBar(props: { saving: boolean; error: string | null; onSave: () => void }) {
   return (

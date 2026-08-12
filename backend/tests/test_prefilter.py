@@ -1,6 +1,7 @@
 from app.services.appetence import RuleBasedAppetenceScorer
 from app.services.prefilter import prefilter_recipes
-from tests.conftest import make_problem, make_profile, make_recipe
+from app.services.validation import min_taxed_price_per_base_unit
+from tests.conftest import make_ingredient, make_problem, make_profile, make_recipe
 
 
 def run(recipes, profile):
@@ -37,6 +38,38 @@ def test_prep_time_is_a_session_constraint():
     res = run([marathon, ok], make_profile())
     assert [x.id for x in res.surviving] == ["ok"]
     assert res.counts_by_stage["temps_preparation"] == 1
+
+
+def test_recipe_needing_an_unpriced_ingredient_is_excluded():
+    """Une recette dont un ingrédient n'a aucun produit prixé est exclue au
+    préfiltrage, comme n'importe quel autre filtre dur — évite qu'elle
+    atteigne le solveur/l'assertion 4, quel que soit le sort réservé plus
+    tard à cet ingrédient (acheté ou confirmé déjà possédé)."""
+    riz_ok = make_recipe(rid="riz_ok", ingredients=(("riz", "0", "80"),))
+    farine_sans_prix = make_recipe(
+        rid="farine_sans_prix",
+        ingredients=(("farine", "0", "50"),),
+    )
+    problem = make_problem(
+        ingredients=[make_ingredient("riz"), make_ingredient("farine")],
+        recipes=[riz_ok, farine_sans_prix],
+    )
+    priced_ids = frozenset(min_taxed_price_per_base_unit(problem))
+    assert priced_ids == {"riz"}  # aucun produit pour "farine" dans make_problem
+
+    res = prefilter_recipes(
+        problem.recipes, problem.profile, RuleBasedAppetenceScorer(problem),
+        priced_ids,
+    )
+    assert [r.id for r in res.surviving] == ["riz_ok"]
+    assert res.counts_by_stage["prix_disponible"] == 1
+
+    # None désactive le filtre (comportement historique, tests sans prix).
+    res_no_filter = prefilter_recipes(
+        problem.recipes, problem.profile, RuleBasedAppetenceScorer(problem),
+    )
+    assert {r.id for r in res_no_filter.surviving} == {"riz_ok", "farine_sans_prix"}
+    assert "prix_disponible" not in res_no_filter.counts_by_stage
 
 
 def test_truncation_keeps_best_by_score():

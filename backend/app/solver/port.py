@@ -44,11 +44,16 @@ class ObjectiveTerms:
     deplacements_cents: Decimal
     temps_cents: Decimal
     recuperation_cents: Decimal   # crédit : soustrait de l'objectif
+    #: Sixième terme (D19, docs/deviations.md) : coût, ajouté à l'objectif —
+    #: symétrique de recuperation_cents mais dans l'autre sens (pénalise le
+    #: surplus d'un ingrédient périssable plutôt que de le créditer).
+    gaspillage_cents: Decimal
     appetence_cents: Decimal      # crédit (mode objective), sinon 0
 
     def total_cents(self) -> Decimal:
         return (
             self.achats_cents + self.deplacements_cents + self.temps_cents
+            + self.gaspillage_cents
             - self.recuperation_cents - self.appetence_cents
         )
 
@@ -68,13 +73,6 @@ class Diagnostic:
     saturated_constraints: dict[str, list[str]]
     prefilter_counts: dict[str, int]
     surplus_by_ingredient: dict[str, dict]      # w_i + valorisation (cents)
-    #: Stock du garde-manger consommé par le plan, distinct du décaissement :
-    #: Σ_i min(g_i, besoin_i)·c̄_i, avec c̄_i le prix unitaire taxé minimum
-    #: courant. Un plan à faible décaissement après un commit n'est pas une
-    #: économie — c'est la consommation d'un stock déjà payé ; le front doit
-    #: pouvoir afficher les deux lectures (D13).
-    pantry_consumed_by_ingredient: dict[str, dict]
-    pantry_consumed_value_cents: Decimal
     distinct_recipes: int
     #: Nombre de FAMILLES de plats distinctes retenues (D16) — distinct de
     #: distinct_recipes : deux variantes d'échelle du même plat comptent pour

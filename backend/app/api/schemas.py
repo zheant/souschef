@@ -51,23 +51,17 @@ class HouseholdUpdate(BaseModel):
     members: list[MemberOut] | None = None
 
 
-class PantryLine(BaseModel):
+class StapleLine(BaseModel):
     canonical_ingredient_id: str
-    quantity_base_unit: float = Field(ge=0)
+    name: str
 
 
-class PantryUpdate(BaseModel):
-    """Upsert des lignes fournies ; une quantité 0 met la ligne à zéro."""
+class StaplesUpdate(BaseModel):
+    """Remplace l'ensemble complet des essentiels du ménage (pilote,
+    docs/product-pilot.md) — pas un upsert ligne par ligne, une simple
+    appartenance sans quantité ni priorité."""
 
-    lines: list[PantryLine]
-
-
-class SetPantryPriorityRequest(BaseModel):
-    """Périssables prioritaires ou obligatoires (pilote,
-    docs/product-pilot.md) — endpoint séparé de ``PUT /api/pantry`` à
-    dessein (voir ``services/household.py::update_pantry``)."""
-
-    priority: Literal["normal", "use_soon", "must_use"]
+    canonical_ingredient_ids: list[str]
 
 
 class PlanRequest(BaseModel):
@@ -86,16 +80,15 @@ class MenuLine(BaseModel):
     attributed_cost_cents_cad: str
 
 
-class PlanPantryLineOut(BaseModel):
-    """Garde-manger itemisé (pilote, docs/product-pilot.md) — distinct de
-    ``PantryLine`` (l'inventaire déclaré côté ménage) : ceci est ce que *ce
-    plan précis* consomme du stock."""
+class NeededIngredientOut(BaseModel):
+    """Ingrédient requis par le menu du plan (pilote, docs/product-pilot.md)
+    — écran de confirmation post-génération, tous les ingrédients sont
+    montrés ; ``is_staple`` pré-décoche ceux que le ménage est supposé déjà
+    avoir."""
 
     canonical_ingredient_id: str
     name: str
-    quantity_base_unit: str
-    base_unit: str
-    priority: Literal["normal", "use_soon", "must_use"]
+    is_staple: bool
 
 
 class PlanOut(BaseModel):
@@ -105,7 +98,7 @@ class PlanOut(BaseModel):
     on_date: date
     menu: list[MenuLine]
     grocery_list_by_store: list[dict]
-    pantry_lines: list[PlanPantryLineOut]
+    needed_ingredients: list[NeededIngredientOut]
     stores_visited: list[str]
     diagnostic: dict
 
@@ -120,6 +113,17 @@ class ReoptimizeRequest(BaseModel):
     config: dict = Field(default_factory=dict)
     locked_recipe_ids: list[str] = Field(default_factory=list)
     excluded_recipe_ids: list[str] = Field(default_factory=list)
+
+
+class FinalizeRequest(BaseModel):
+    """Confirmation post-génération (pilote, docs/product-pilot.md) — les
+    ingrédients dans ``confirmed_available_ids`` sont ceux que l'usager a
+    déclaré posséder déjà (le reste de ``needed_ingredients`` non coché) ;
+    le menu reste verrouillé en entier, seule la logistique d'achat peut
+    changer."""
+
+    config: dict = Field(default_factory=dict)
+    confirmed_available_ids: list[str] = Field(default_factory=list)
 
 
 class MenuChangeOut(BaseModel):

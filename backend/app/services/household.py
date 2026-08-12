@@ -1,4 +1,4 @@
-"""``HouseholdModule`` — profil du ménage et garde-manger.
+"""``HouseholdModule`` — profil du ménage et essentiels (staples).
 
 Même convention que ``services/planning.py`` : chaque fonction garde
 ``session: Session`` en premier paramètre explicite, pas de session ouverte
@@ -11,14 +11,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from decimal import Decimal
 
-from sqlalchemy import select
-from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from ..models import (
-    CanonicalIngredient, HouseholdMember, HouseholdProfile, PantryPriority,
-    PantryStock,
-)
+from ..models import CanonicalIngredient, HouseholdMember, HouseholdProfile, Staple
 from ..services.demand import compute_demand_bounds
 
 
@@ -27,8 +23,8 @@ class ProfileNotFound(LookupError):
 
 
 class UnknownIngredientError(ValueError):
-    """Ligne de garde-manger référençant un ingrédient canonique inconnu
-    (l'API traduit en 422)."""
+    """Essentiel référençant un ingrédient canonique inconnu (l'API traduit
+    en 422)."""
 
 
 @dataclass(frozen=True)
@@ -59,12 +55,9 @@ class HouseholdView:
 
 
 @dataclass(frozen=True)
-class PantryLine:
+class StapleLine:
     canonical_ingredient_id: str
-    quantity_base_unit: str
-    #: Périssables prioritaires ou obligatoires (pilote,
-    #: docs/product-pilot.md) : "normal" | "use_soon" | "must_use".
-    priority: str
+    name: str
 
 
 def get_profile(session: Session, profile_id: str) -> HouseholdView:
@@ -93,83 +86,43 @@ def update_profile(
     return _profile_view(profile)
 
 
-def get_pantry(session: Session, profile_id: str) -> tuple[PantryLine, ...]:
-    rows = session.scalars(
-        select(PantryStock).where(PantryStock.household_profile_id == profile_id)
+def get_staples(session: Session, profile_id: str) -> tuple[StapleLine, ...]:
+    rows = session.execute(
+        select(Staple.canonical_ingredient_id, CanonicalIngredient.name)
+        .join(
+            CanonicalIngredient,
+            CanonicalIngredient.id == Staple.canonical_ingredient_id,
+        )
+        .where(Staple.household_profile_id == profile_id)
+        .order_by(CanonicalIngredient.name)
     ).all()
     return tuple(
-        PantryLine(
-            canonical_ingredient_id=r.canonical_ingredient_id,
-            quantity_base_unit=str(r.quantity_base_unit),
-            priority=r.priority.value,
-        )
-        for r in rows
+        StapleLine(canonical_ingredient_id=r[0], name=r[1]) for r in rows
     )
 
 
-def update_pantry(
-    session: Session, profile_id: str, lines: list[dict]
-) -> tuple[PantryLine, ...]:
-    """Upsert de quantité **seulement**. Ne touche jamais ``priority`` : cet
-    endpoint est appelé par deux flux distincts (écran Garde-manger manuel
-    et la confirmation en deux temps de Génération, qui n'envoie jamais de
-    priorité) — si ``priority`` faisait partie de ce ``set_``, chaque
-    confirmation de garde-manger écraserait silencieusement un « doit être
-    utilisé » déjà posé. Voir ``set_pantry_priority`` pour ça, à dessein
-    sur un chemin séparé."""
+def set_staples(
+    session: Session, profile_id: str, canonical_ingredient_ids: list[str]
+) -> tuple[StapleLine, ...]:
+    """Remplace l'ensemble complet des essentiels du ménage — pas un upsert
+    ligne par ligne comme l'ancien garde-manger (qui devait préserver
+    quantité/priorité par ligne) : un essentiel est une simple appartenance,
+    sans quantité ni priorité, donc la liste est éditée comme un tout,
+    cohérent avec la sauvegarde du profil."""
     known = set(session.scalars(select(CanonicalIngredient.id)).all())
-    for line in lines:
-        if line["canonical_ingredient_id"] not in known:
-            raise UnknownIngredientError(
-                f"Ingrédient inconnu : '{line['canonical_ingredient_id']}'."
-            )
-        stmt = (
-            pg_insert(PantryStock)
-            .values(
-                household_profile_id=profile_id,
-                canonical_ingredient_id=line["canonical_ingredient_id"],
-                quantity_base_unit=Decimal(str(line["quantity_base_unit"])),
-                priority=PantryPriority.normal,
-            )
-            .on_conflict_do_update(
-                index_elements=["household_profile_id", "canonical_ingredient_id"],
-                set_={"quantity_base_unit": Decimal(str(line["quantity_base_unit"]))},
-            )
-        )
-        session.execute(stmt)
-    return get_pantry(session, profile_id)
-
-
-def set_pantry_priority(
-    session: Session, profile_id: str, canonical_ingredient_id: str, priority: str
-) -> PantryLine:
-    """Upsert de priorité **seulement** — chemin séparé de
-    ``update_pantry`` à dessein (voir sa docstring). Une ligne neuve est
-    créée avec une quantité à 0 si l'ingrédient n'était pas encore déclaré ;
-    une ligne existante ne voit que sa priorité changer."""
-    if session.get(CanonicalIngredient, canonical_ingredient_id) is None:
+    unknown = set(canonical_ingredient_ids) - known
+    if unknown:
         raise UnknownIngredientError(
-            f"Ingrédient inconnu : '{canonical_ingredient_id}'."
+            f"Ingrédient(s) inconnu(s) : {', '.join(sorted(unknown))}."
         )
-    value = PantryPriority(priority)
-    stmt = (
-        pg_insert(PantryStock)
-        .values(
-            household_profile_id=profile_id,
-            canonical_ingredient_id=canonical_ingredient_id,
-            quantity_base_unit=Decimal(0),
-            priority=value,
+    session.execute(delete(Staple).where(Staple.household_profile_id == profile_id))
+    session.flush()
+    for iid in canonical_ingredient_ids:
+        session.add(
+            Staple(household_profile_id=profile_id, canonical_ingredient_id=iid)
         )
-        .on_conflict_do_update(
-            index_elements=["household_profile_id", "canonical_ingredient_id"],
-            set_={"priority": value},
-        )
-    )
-    session.execute(stmt)
-    return next(
-        line for line in get_pantry(session, profile_id)
-        if line.canonical_ingredient_id == canonical_ingredient_id
-    )
+    session.flush()
+    return get_staples(session, profile_id)
 
 
 def _load_profile(session: Session, profile_id: str) -> HouseholdProfile:

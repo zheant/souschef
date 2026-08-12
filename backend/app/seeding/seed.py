@@ -29,10 +29,10 @@ from ..models import (
     CanonicalIngredient,
     HouseholdMember,
     HouseholdProfile,
-    PantryStock,
     Product,
     Recipe,
     RecipeIngredient,
+    Staple,
     Store,
 )
 from ..services.dish_family import dish_family_id_of
@@ -113,7 +113,7 @@ def seed_household(session: Session, seed_dir: Path) -> None:
     data = _load(seed_dir, "household.json")
     profile = dict(data["profile"])
     members = data["members"]
-    pantry = data["pantry"]
+    staples = data["staples"]
     profile["max_share_per_recipe"] = Decimal(str(profile["max_share_per_recipe"]))
     _upsert(session, HouseholdProfile, [profile], ["id"])
     _upsert(
@@ -124,13 +124,16 @@ def seed_household(session: Session, seed_dir: Path) -> None:
     )
     _upsert(
         session,
-        PantryStock,
-        [{"household_profile_id": profile["id"], **p} for p in pantry],
+        Staple,
+        [
+            {"household_profile_id": profile["id"], "canonical_ingredient_id": iid}
+            for iid in staples
+        ],
         ["household_profile_id", "canonical_ingredient_id"],
     )
     print(
         f"  household                    : 1 profil, {len(members)} membres,"
-        f" {len(pantry)} lignes de garde-manger"
+        f" {len(staples)} essentiels"
     )
 
 

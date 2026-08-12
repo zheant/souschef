@@ -1,8 +1,9 @@
 """Tests de l'API (étape 5) contre la base de test seedée (instance jouet).
 
-Le point critique est la comptabilité du ``commit`` : décrément du stock
-consommé + report des restes vers ``pantry_stock`` — c'est ce report qui rend
-σ_i honnête (docs/spec.md, section API).
+Le ``commit`` (pilote, docs/product-pilot.md — depuis le retrait du
+garde-manger) est une simple validation + passage à ``committed`` ; la
+confirmation post-génération (``needed_ingredients``/``finalize``) est le
+point qui ajuste la logistique d'achat une dernière fois avant commit.
 """
 
 from __future__ import annotations
@@ -18,7 +19,7 @@ ON = "2026-08-10"
 ALL_ON = {
     "enable_multi_store": True, "enable_batch_fixed_cost": True,
     "enable_salvage": True, "enable_time_cost": True,
-    "enable_pantry_stock": True, "enable_diversity": True,
+    "enable_staples": True, "enable_diversity": True,
 }
 
 
@@ -35,70 +36,23 @@ def test_household_roundtrip(api_client):
     api_client.put("/api/household", json={"meals_per_horizon": 4})  # restauration
 
 
-def test_pantry_roundtrip(api_client):
+def test_staples_roundtrip(api_client):
     r = api_client.put(
-        "/api/pantry",
-        json={"lines": [{"canonical_ingredient_id": "riz",
-                         "quantity_base_unit": 120}]},
+        "/api/staples", json={"canonical_ingredient_ids": ["riz", "lentille"]},
     )
     assert r.status_code == 200
-    riz = next(row for row in r.json() if row["canonical_ingredient_id"] == "riz")
-    assert riz["quantity_base_unit"].rstrip("0").rstrip(".") == "120"
-    assert riz["priority"] == "normal"  # défaut, jamais touché par cet endpoint
+    assert {row["canonical_ingredient_id"] for row in r.json()} == {"riz", "lentille"}
+
+    r = api_client.get("/api/staples")
+    assert {row["canonical_ingredient_id"] for row in r.json()} == {"riz", "lentille"}
+
+    # Remplace l'ensemble complet — pas un upsert ligne par ligne.
+    r = api_client.put("/api/staples", json={"canonical_ingredient_ids": ["oeuf"]})
+    assert {row["canonical_ingredient_id"] for row in r.json()} == {"oeuf"}
 
     r = api_client.put(
-        "/api/pantry",
-        json={"lines": [{"canonical_ingredient_id": "inexistant",
-                         "quantity_base_unit": 1}]},
+        "/api/staples", json={"canonical_ingredient_ids": ["inexistant"]},
     )
-    assert r.status_code == 422
-
-
-def test_pantry_priority_endpoint(api_client):
-    r = api_client.put("/api/pantry/riz/priority", json={"priority": "must_use"})
-    assert r.status_code == 200, r.text
-    assert r.json() == {
-        "canonical_ingredient_id": "riz", "quantity_base_unit": "0.000",
-        "priority": "must_use",
-    }
-
-    # PUT /api/pantry (quantité) ne doit jamais réinitialiser la priorité —
-    # piège identifié en conception (deux flux distincts appellent cet
-    # endpoint : Garde-manger manuel et la confirmation en deux temps de
-    # Génération, qui n'envoie jamais de priorité).
-    r = api_client.put(
-        "/api/pantry",
-        json={"lines": [{"canonical_ingredient_id": "riz",
-                         "quantity_base_unit": 300}]},
-    )
-    riz = next(row for row in r.json() if row["canonical_ingredient_id"] == "riz")
-    assert riz["priority"] == "must_use"
-
-    r = api_client.put(
-        "/api/pantry/inexistant/priority", json={"priority": "must_use"}
-    )
-    assert r.status_code == 422
-
-
-def test_generate_plan_rejects_unusable_must_use_ingredient(api_client, db_session):
-    from app.models import CanonicalIngredient, UnitKind
-
-    db_session.add(CanonicalIngredient(
-        id="epice_test", name="Épice de test", unit_kind=UnitKind.mass,
-        base_unit="g", perishability=Decimal("0"),
-        salvage_value_cents_per_base_unit=Decimal("0"),
-    ))
-    db_session.flush()
-    api_client.put(
-        "/api/pantry",
-        json={"lines": [{"canonical_ingredient_id": "epice_test",
-                         "quantity_base_unit": 50}]},
-    )
-    api_client.put(
-        "/api/pantry/epice_test/priority", json={"priority": "must_use"}
-    )
-
-    r = api_client.post("/api/plan", json={"config": ALL_ON, "on_date": ON})
     assert r.status_code == 422
 
 
@@ -178,53 +132,50 @@ def test_reoptimize_locks_replaces_and_explains(api_client):
     ).status_code == 404
 
 
-def test_commit_decrements_and_reports_to_pantry(api_client):
-    """Comptabilité vérifiée à la main. Stock initial : 100 g de riz.
-    Plan tous-drapeaux (diversité R_min=2) sur le jouet → x_riz + x_dahl.
-    besoin_riz = 80·x_riz + 40·x_dahl ; besoin_lentille = 70·x_dahl.
-    nouveau_stock_i = stock + acheté − besoin (garde-manger actif)."""
-    api_client.put(
-        "/api/pantry",
-        json={"lines": [{"canonical_ingredient_id": "riz",
-                         "quantity_base_unit": 100}]},
-    )
+def test_commit_flips_status(api_client):
+    """Le commit (pilote, docs/product-pilot.md, depuis le retrait du
+    garde-manger) est une simple validation + passage à ``committed`` —
+    plus de comptabilité de stock à reporter."""
     r = api_client.post("/api/plan", json={"config": ALL_ON, "on_date": ON})
     assert r.status_code == 200, r.text
     plan = r.json()
     assert plan["solver_status"] == "Optimal"
 
-    needs = {}
-    servings = {m["recipe_id"]: m["servings"] for m in plan["menu"]}
-    needs["riz"] = 80 * servings.get("riz_nature", 0) + 40 * servings.get("dahl_toy", 0)
-    needs["lentille"] = 70 * servings.get("dahl_toy", 0)
-    bought = {"riz": 0, "lentille": 0, "oeuf": 0}
-    for g in plan["grocery_list_by_store"]:
-        for line in g["lines"]:
-            qty = {"riz_1kg": 1000, "riz_400g": 400,
-                   "lentille_500g": 500, "oeuf_12": 12}[line["product_external_key"]]
-            iid = ("riz" if line["product_external_key"].startswith("riz")
-                   else "lentille" if line["product_external_key"].startswith("lentille")
-                   else "oeuf")
-            bought[iid] += qty * line["units"]
-
     r = api_client.post(f"/api/plan/{plan['id']}/commit")
     assert r.status_code == 200, r.text
-    after = {k: Decimal(v) for k, v in r.json()["pantry_after_commit"].items()}
-    assert after["riz"] == Decimal(100 + bought["riz"] - needs["riz"])
-    if "lentille" in after:
-        assert after["lentille"] == Decimal(bought["lentille"] - needs["lentille"])
-    assert all(v >= 0 for v in after.values())
+    assert r.json() == {"plan_id": plan["id"], "status": "committed"}
 
-    # Le garde-manger persiste et le double commit est refusé.
-    pantry = {p["canonical_ingredient_id"]: Decimal(p["quantity_base_unit"])
-              for p in api_client.get("/api/pantry").json()}
-    assert pantry["riz"] == after["riz"]
     assert api_client.post(f"/api/plan/{plan['id']}/commit").status_code == 409
+
+
+def test_finalize_locks_menu_and_confirms_available(api_client):
+    """Confirmation post-génération (pilote, docs/product-pilot.md) : le
+    menu reste verrouillé en entier, seule la logistique d'achat change
+    selon les ingrédients confirmés déjà possédés."""
+    r = api_client.post("/api/plan", json={"config": {}, "on_date": ON})
+    plan = r.json()
+    assert plan["grocery_list_by_store"]  # riz acheté, config jouet par défaut
+
+    r = api_client.post(
+        f"/api/plan/{plan['id']}/finalize",
+        json={"confirmed_available_ids": ["riz"]},
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["plan"]["solver_status"] == "Optimal"
+    assert body["plan"]["grocery_list_by_store"] == []
+    new_servings = {m["recipe_id"]: m["servings"] for m in body["plan"]["menu"]}
+    old_servings = {m["recipe_id"]: m["servings"] for m in plan["menu"]}
+    assert new_servings == old_servings  # le menu ne change jamais
+
+    assert api_client.post(
+        "/api/plan/999999/finalize", json={"confirmed_available_ids": []}
+    ).status_code == 404
 
 
 def test_reoptimize_rejects_an_already_committed_plan(api_client):
     """Une fois accepté, verrouiller/remplacer une recette doit être refusé
-    (409) — sinon le stock déjà ajusté pour ce menu se désynchronise du
+    (409) — sinon les achats déjà ajustés pour ce menu se désynchronisent du
     nouveau menu."""
     r = api_client.post("/api/plan", json={"config": ALL_ON, "on_date": ON})
     plan = r.json()
@@ -237,20 +188,17 @@ def test_reoptimize_rejects_an_already_committed_plan(api_client):
     assert r.status_code == 409
 
 
-def test_pantry_lines_exposed_on_plan(api_client):
-    """``pantry_lines`` sur ``GET``/``POST /api/plan`` (pilote,
-    docs/product-pilot.md) — le garde-manger consommé par ce plan précis,
-    résolu en nom."""
-    api_client.put(
-        "/api/pantry",
-        json={"lines": [{"canonical_ingredient_id": "riz",
-                         "quantity_base_unit": 100}]},
-    )
+def test_needed_ingredients_exposed_on_plan(api_client):
+    """``needed_ingredients`` sur ``GET``/``POST /api/plan`` (pilote,
+    docs/product-pilot.md) — tous les ingrédients requis par le menu,
+    essentiels pré-décochés via ``is_staple``."""
+    api_client.put("/api/staples", json={"canonical_ingredient_ids": ["riz"]})
     r = api_client.post("/api/plan", json={"config": ALL_ON, "on_date": ON})
     plan = r.json()
     assert plan["solver_status"] == "Optimal"
-    riz = next(l for l in plan["pantry_lines"] if l["canonical_ingredient_id"] == "riz")
-    assert riz["name"] == "Riz"
+    by_id = {l["canonical_ingredient_id"]: l for l in plan["needed_ingredients"]}
+    assert by_id["riz"]["is_staple"] is True
+    assert by_id["riz"]["name"] == "Riz"
 
     assert api_client.post(f"/api/plan/{plan['id']}/commit").status_code == 200
 

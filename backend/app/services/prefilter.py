@@ -1,7 +1,7 @@
 """Réduction du problème avant construction du modèle (docs/spec.md).
 
 1. Filtres durs : allergènes, régime, équipement manquant, temps de
-   préparation excessif ;
+   préparation excessif, ingrédient sans aucun produit prixé ;
 2. Troncature : conservation des 150 meilleures recettes par u_r.
 
 Avec |R| ≈ 1000, cette étape vaut plus qu'un meilleur solveur. Les comptes
@@ -50,6 +50,7 @@ def prefilter_recipes(
     recipes: tuple[RecipeData, ...],
     profile: ProfileData,
     scorer: AppetenceScorer,
+    priced_ingredient_ids: frozenset[str] | None = None,
     truncation_keep: int = TRUNCATION_KEEP,
     force_keep_ids: frozenset[str] = frozenset(),
     exclude_ids: frozenset[str] = frozenset(),
@@ -62,10 +63,21 @@ def prefilter_recipes(
     recette qui a survécu aux filtres durs mais est tombée hors de la
     fenêtre des 150 meilleures par score — une recette verrouillée qui ne
     passerait *plus* les filtres durs (ex. nouvelle allergie déclarée entre
-    deux générations) n'est **pas** repêchée : la sécurité prime sur le
-    verrou, et l'appelant (``services/planning.py::reoptimize_plan``) doit
-    détecter ce cas et lever une erreur explicite plutôt que de l'ignorer.
-    """
+    deux générations, ou désormais un ingrédient devenu invendable) n'est
+    **pas** repêchée : la sécurité prime sur le verrou, et l'appelant
+    (``services/planning.py::reoptimize_plan``) doit détecter ce cas et
+    lever une erreur explicite plutôt que de l'ignorer.
+
+    ``priced_ingredient_ids`` : ids d'ingrédients canoniques ayant au moins
+    un produit avec un prix valide (même ensemble que
+    ``services/validation.py::min_taxed_price_per_base_unit``, assertion 4).
+    Une recette dont AU MOINS UN ingrédient n'y figure pas est exclue ici,
+    comme n'importe quel autre filtre dur — évite à la source qu'une telle
+    recette atteigne le solveur, plutôt que de laisser l'assertion 4 la
+    bloquer plus tard sans distinguer un ingrédient qu'on veut acheter d'un
+    ingrédient confirmé déjà possédé (``confirmed_available_ids``), les deux
+    tombant sinon sur la même erreur non gérée. ``None`` désactive ce filtre
+    (tests qui ne modélisent pas de prix)."""
     counts = {"initial": len(recipes)}
 
     allergens = set(profile.allergen_flags)
@@ -88,6 +100,16 @@ def prefilter_recipes(
             + Decimal(r.min_batch_servings) * r.prep_time_marginal_h) <= tmax
     ]
     counts["temps_preparation"] = len(step)
+
+    if priced_ingredient_ids is not None:
+        step = [
+            r for r in step
+            if all(
+                ri.canonical_ingredient_id in priced_ingredient_ids
+                for ri in r.ingredients
+            )
+        ]
+        counts["prix_disponible"] = len(step)
 
     if exclude_ids:
         step = [r for r in step if r.id not in exclude_ids]

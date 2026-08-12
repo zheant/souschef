@@ -6,13 +6,14 @@ from pathlib import Path
 import pytest
 
 from app.services.appetence import RuleBasedAppetenceScorer
+from app.services.params import resolve_effective_params
 from app.services.prefilter import prefilter_recipes
-from app.services.problem_data import PriceData, ProductData
 from app.services.validation import (
     BatchBoundsError, CapacityError, DiversityInfeasibleError,
     EmptyProblemError, MissingPriceError, SalvageBoundError,
     UnitMismatchError, validate_problem,
 )
+from app.solver.config import SolverConfig
 from tests.conftest import (
     make_ingredient, make_problem, make_profile, make_recipe,
 )
@@ -26,9 +27,16 @@ def big_recipes(n=6):
     return [make_recipe(rid=f"r{i}", beta=1, m=12) for i in range(n)]
 
 
+def _params(problem, **overrides):
+    """R_min/α/ε résolus (services/params.py::resolve_effective_params) —
+    validate_problem doit toujours les recevoir déjà résolus, jamais relire
+    problem.profile directement (voir sa docstring)."""
+    return resolve_effective_params(problem.profile, SolverConfig(**overrides))
+
+
 def test_all_assertions_pass_and_bounds_returned():
     p = make_problem(recipes=big_recipes())
-    passed, bounds = validate_problem(p, p.recipes)
+    passed, bounds = validate_problem(p, p.recipes, _params(p))
     assert len(passed) == 7  # 1..6 + 6b
     assert (bounds.exact, bounds.low, bounds.high) == (Decimal("36.4"), 37, 41)
 
@@ -38,14 +46,14 @@ def test_assertion_1_salvage_bound_at_runtime_prices():
     p = make_problem(ingredients=[make_ingredient(sigma="0.25")],
                      recipes=big_recipes())
     with pytest.raises(SalvageBoundError):
-        validate_problem(p, p.recipes)
+        validate_problem(p, p.recipes, _params(p))
 
 
 def test_assertion_2_beta_zero():
     bad = [make_recipe(rid="bad", beta=0)] + big_recipes()
     p = make_problem(recipes=bad)
     with pytest.raises(BatchBoundsError):
-        validate_problem(p, p.recipes)
+        validate_problem(p, p.recipes, _params(p))
 
 
 def test_assertion_3_unit_mismatch():
@@ -54,19 +62,19 @@ def test_assertion_3_unit_mismatch():
         recipes=big_recipes(),
     )
     with pytest.raises(UnitMismatchError):
-        validate_problem(p, p.recipes)
+        validate_problem(p, p.recipes, _params(p))
 
 
 def test_assertion_4_missing_price():
     p = make_problem(recipes=big_recipes(), prices=[])
     with pytest.raises(MissingPriceError):
-        validate_problem(p, p.recipes)
+        validate_problem(p, p.recipes, _params(p))
 
 
 def test_assertion_5_no_recipes_after_prefilter():
     p = make_problem(recipes=big_recipes())
     with pytest.raises(EmptyProblemError):
-        validate_problem(p, ())
+        validate_problem(p, (), _params(p))
 
 
 def test_assertion_6_tested_against_low_bound():
@@ -74,14 +82,14 @@ def test_assertion_6_tested_against_low_bound():
     recipes = [make_recipe(rid=f"r{i}", beta=8, m=12) for i in range(6)]
     p = make_problem(profile=make_profile(r_min=5), recipes=recipes)
     with pytest.raises(DiversityInfeasibleError):
-        validate_problem(p, p.recipes)
+        validate_problem(p, p.recipes, _params(p))
 
 
 def test_assertion_6_alpha_check_is_ge_not_gt():
     """R_min = ⌈1/α⌉ exactement (4 = ⌈1/0,3⌉) doit PASSER : c'est un ≥."""
     p = make_problem(profile=make_profile(r_min=4, alpha="0.3"),
                      recipes=big_recipes())
-    passed, _ = validate_problem(p, p.recipes)
+    passed, _ = validate_problem(p, p.recipes, _params(p))
     assert "6_compatibilite_diversite" in passed
 
 
@@ -89,11 +97,69 @@ def test_capacity_against_high_bound():
     # 5 recettes m=8, α=0,3 : cap/recette = min(⌊0,3·41⌋, 8) = 8 → 40 > 37 OK
     ok = [make_recipe(rid=f"r{i}", beta=1, m=8) for i in range(5)]
     p = make_problem(recipes=ok)
-    validate_problem(p, p.recipes)
+    validate_problem(p, p.recipes, _params(p))
     # 4 recettes m=8 → capacité 32 < 37 → CapacityError
     p2 = make_problem(recipes=ok[:4])
     with pytest.raises(CapacityError):
-        validate_problem(p2, p2.recipes)
+        validate_problem(p2, p2.recipes, _params(p2))
+
+
+# ---------------------------------------------------------------------------
+# validate_problem doit lire R_min/α/ε résolus (params), jamais
+# problem.profile directement — sinon une surcharge SolverConfig est
+# honorée par le solveur mais ignorée par la validation pré-solveur, qui
+# vérifie alors des bornes différentes de celles réellement construites.
+# ---------------------------------------------------------------------------
+
+def test_assertion_6_respects_min_distinct_recipes_override():
+    """1 seule famille disponible : échoue avec R_min=4 du profil, doit
+    passer avec une surcharge SolverConfig à R_min=1. α=1,0 et m=50
+    neutralisent le contrôle R_min ≥ ⌈1/α⌉ et la capacité entière
+    (assertions 6 second volet et 6b) pour isoler uniquement le contrôle
+    sur le nombre de familles ici testé."""
+    p = make_problem(
+        profile=make_profile(r_min=4, alpha="1.0"),
+        recipes=[make_recipe(rid="r0", beta=1, m=50)],
+    )
+    with pytest.raises(DiversityInfeasibleError):
+        validate_problem(p, p.recipes, _params(p))
+
+    passed, _ = validate_problem(
+        p, p.recipes, _params(p, min_distinct_recipes=1)
+    )
+    assert "6_compatibilite_diversite" in passed
+
+
+def test_assertion_6_respects_max_share_per_recipe_override():
+    """α=0,2 du profil exige R_min ≥ ⌈1/0,2⌉=5 : R_min=4 échoue. Une
+    surcharge SolverConfig à α=0,3 (⌈1/0,3⌉=4) doit faire passer le même
+    problème sans toucher au profil."""
+    p = make_problem(
+        profile=make_profile(r_min=4, alpha="0.2"), recipes=big_recipes(n=6)
+    )
+    with pytest.raises(DiversityInfeasibleError):
+        validate_problem(p, p.recipes, _params(p))
+
+    passed, _ = validate_problem(
+        p, p.recipes, _params(p, max_share_per_recipe=0.3)
+    )
+    assert "6_compatibilite_diversite" in passed
+
+
+def test_bounds_returned_reflect_resolved_epsilon_not_raw_profile():
+    """Les bornes de demande retournées (et réutilisées telles quelles par
+    solve(), plutôt que recalculées) doivent venir de l'ε résolu — sinon
+    elles divergent silencieusement de celles que le solveur construit
+    réellement dans le modèle."""
+    p = make_problem(profile=make_profile(epsilon="0.10"), recipes=big_recipes())
+    _, bounds_profile = validate_problem(p, p.recipes, _params(p))
+    assert bounds_profile.epsilon == Decimal("0.10")
+
+    _, bounds_override = validate_problem(
+        p, p.recipes, _params(p, demand_slack_epsilon=0.5)
+    )
+    assert bounds_override.epsilon == Decimal("0.5")
+    assert bounds_override.high > bounds_profile.high
 
 
 # ---------------------------------------------------------------------------
@@ -115,7 +181,7 @@ def test_assertion_6_old_formula_missed_a_family_bias():
     ]
     p = make_problem(profile=make_profile(r_min=4), recipes=recipes)
     with pytest.raises(DiversityInfeasibleError):
-        validate_problem(p, p.recipes)
+        validate_problem(p, p.recipes, _params(p))
 
 
 def test_assertion_6_family_counted_once_with_its_smallest_beta():
@@ -129,7 +195,7 @@ def test_assertion_6_family_counted_once_with_its_smallest_beta():
         make_recipe(rid="plat_d", beta=2, m=12, dish_family_id="plat_d"),
     ]
     p = make_problem(profile=make_profile(r_min=4), recipes=recipes)
-    passed, _ = validate_problem(p, p.recipes)
+    passed, _ = validate_problem(p, p.recipes, _params(p))
     assert "6_compatibilite_diversite" in passed
 
 
@@ -147,7 +213,7 @@ def test_assertion_6_fewer_families_than_r_min_raises():
     ]
     p = make_problem(profile=make_profile(r_min=4), recipes=recipes)
     with pytest.raises(DiversityInfeasibleError):
-        validate_problem(p, p.recipes)
+        validate_problem(p, p.recipes, _params(p))
 
 
 def test_capacity_6b_does_not_double_count_family_variants():
@@ -166,7 +232,7 @@ def test_capacity_6b_does_not_double_count_family_variants():
     # tort, "plat_a" compté deux fois pour une seule famille disponible).
     p = make_problem(profile=make_profile(r_min=4), recipes=recipes)
     with pytest.raises(CapacityError):
-        validate_problem(p, p.recipes)
+        validate_problem(p, p.recipes, _params(p))
 
 
 def test_assertion_6_catches_n_repas_2_on_seed_profile_before_solver():
@@ -182,6 +248,6 @@ def test_assertion_6_catches_n_repas_2_on_seed_profile_before_solver():
         problem.recipes, problem.profile, RuleBasedAppetenceScorer(problem)
     )
     with pytest.raises(DiversityInfeasibleError) as exc_info:
-        validate_problem(problem, pre.surviving)
+        validate_problem(problem, pre.surviving, _params(problem))
     msg = str(exc_info.value)
     assert "R_min" in msg or "famille" in msg

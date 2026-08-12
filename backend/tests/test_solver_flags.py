@@ -17,7 +17,8 @@ SEED = Path(__file__).resolve().parents[2] / "seed"
 ON = date(2026, 8, 10)
 
 FLAGS = ["enable_multi_store", "enable_batch_fixed_cost", "enable_salvage",
-         "enable_time_cost", "enable_pantry_stock", "enable_diversity"]
+         "enable_perishable_penalty", "enable_time_cost", "enable_staples",
+         "enable_diversity"]
 
 
 @pytest.fixture(scope="module")
@@ -44,7 +45,8 @@ def test_main_seed_all_flags_on():
     )
     cfg = SolverConfig(
         enable_multi_store=True, enable_batch_fixed_cost=True,
-        enable_salvage=True, enable_time_cost=True, enable_pantry_stock=True,
+        enable_salvage=True, enable_perishable_penalty=True,
+        enable_time_cost=True, enable_staples=True,
         enable_diversity=True, solver_time_limit_s=120, mip_gap=0.01,
     )
     res = PulpMenuSolver().solve(problem, pre, cfg)
@@ -61,7 +63,7 @@ def test_main_seed_all_flags_on():
     assert d.objective_terms.total_cents() != 0
     assert d.prefilter_counts["troncature"] == 40
     assert len(d.assertions_passed) == 7
-    # Les portions produites sont couvertes par les achats + garde-manger :
+    # Les portions produites sont couvertes par les achats :
     # les couvertures saturées listées existent bien dans le problème.
     for iid in d.saturated_constraints["couvertures_ingredients"]:
         assert iid in problem.ingredients

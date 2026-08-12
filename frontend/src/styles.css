@@ -23,11 +23,6 @@ body {
   color: var(--ink);
   font: 15px/1.5 Georgia, "Times New Roman", serif;
 }
-.disp {
-  font-family: Arial, "Helvetica Neue", sans-serif; font-weight: 800;
-  font-stretch: condensed;
-}
-
 .shell { max-width: 980px; margin: 0 auto; padding: 0 20px 64px; }
 
 /* En-tête façon circulaire */
@@ -186,7 +181,7 @@ pre.raw {
 .result-v2 {
   --rp-paper: #f4ecd5; --rp-card: #fffdf6; --rp-ink: #221b12;
   --rp-ink-soft: #6e6249; --rp-rule: #d9cca0; --rp-deal: #a6321b;
-  --rp-fresh: #3e6b3a; --rp-pantry: #8a6a1f;
+  --rp-fresh: #3e6b3a; --rp-amber: #8a6a1f;
   background: var(--rp-paper); color: var(--rp-ink);
   font: 15px/1.5 Georgia, "Times New Roman", serif;
   border: 1px solid var(--rp-rule); border-radius: 8px; margin-bottom: 24px;
@@ -254,40 +249,9 @@ pre.raw {
 .rp-accept-note { margin: 0 20px 10px; font-size: 12px; color: var(--rp-ink-soft); font-style: italic; }
 
 .rp-store { margin: 0 16px 12px; background: var(--rp-card); border: 1px solid var(--rp-rule); border-radius: 8px; padding: 12px 14px; }
-.rp-store.rp-pantry { background: #fbf1da; border-color: #e8d6a4; }
 .rp-store-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
 .rp-store-name { font-family: Arial, sans-serif; font-weight: 800; font-size: 13px; }
 .rp-store-sub { font-family: "Courier New", monospace; font-size: 12px; color: var(--rp-ink-soft); }
-
-.rp-pantry-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--rp-rule); }
-.rp-pantry-row:first-child { border-top: none; }
-.rp-pantry-row label { flex: 1; min-width: 0; font-size: 13px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; cursor: pointer; }
-.rp-buy-btn {
-  flex: none; font-family: Arial, sans-serif; font-weight: 700; font-size: 10.5px;
-  letter-spacing: 0.02em; color: #fff; background: var(--rp-deal); border: none;
-  padding: 7px 10px; border-radius: 5px; cursor: pointer;
-}
-.rp-buy-btn:disabled { opacity: 0.5; cursor: default; }
-.rp-tag {
-  display: inline-block; font-family: Arial, sans-serif; font-size: 9px; font-weight: 800;
-  letter-spacing: 0.03em; text-transform: uppercase; background: var(--rp-pantry);
-  color: #fff8e8; padding: 1px 6px; border-radius: 8px;
-}
-.rp-tag-buy { background: var(--rp-deal); }
-
-/* Replanifier (pilote, docs/product-pilot.md) — corrige le garde-manger
-   pour de vrai (pantry_stock à 0) puis relance une réoptimisation, plutôt
-   qu'une résolution d'achat bricolée au moment d'accepter. */
-.rp-replan { display: flex; flex-direction: column; gap: 10px; }
-.rp-replan-note { margin: 0; font-size: 12.5px; color: var(--rp-ink-soft); }
-.rp-replan-check { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
-.rp-replan-btn {
-  align-self: flex-start; font-family: Arial, sans-serif; font-weight: 800;
-  text-transform: uppercase; letter-spacing: 0.03em; font-size: 12px;
-  background: var(--rp-ink); color: var(--rp-paper); border: none;
-  padding: 9px 16px; border-radius: 4px; cursor: pointer;
-}
-.rp-replan-btn:disabled { opacity: 0.6; cursor: default; }
 
 .rp-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-top: 1px solid var(--rp-rule); }
 .rp-item:first-of-type { border-top: none; }
@@ -296,7 +260,7 @@ pre.raw {
 .rp-item-brand { font-size: 11px; color: var(--rp-ink-soft); margin-top: 2px; }
 .rp-item-price { font-family: "Courier New", monospace; font-size: 13px; white-space: nowrap; padding-top: 1px; }
 .rp-promo-badge {
-  display: inline-block; background: #f3e2bd; color: var(--rp-pantry); font-family: Arial, sans-serif;
+  display: inline-block; background: #f3e2bd; color: var(--rp-amber); font-family: Arial, sans-serif;
   font-size: 10px; font-weight: 800; letter-spacing: 0.02em; padding: 2px 8px; border-radius: 20px; margin-left: 6px;
 }
 

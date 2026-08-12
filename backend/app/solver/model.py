@@ -23,12 +23,11 @@ from decimal import Decimal
 import pulp
 
 from ..services.appetence import RuleBasedAppetenceScorer
-from ..services.demand import DemandBounds, compute_demand_bounds
+from ..services.demand import DemandBounds
 from ..services.params import EffectiveParams, resolve_effective_params
 from ..services.prefilter import PrefilterResult
 from ..services.problem_data import ProblemData, ProductData, RecipeData
 from ..services.travel import TravelCosts, compute_travel_costs, haversine_km
-from ..services.needs import ingredient_needs
 from ..services.validation import min_taxed_price_per_base_unit, validate_problem
 from .config import SolverConfig
 from .port import (
@@ -99,6 +98,14 @@ class _Ctx:
             if config.enable_multi_store
             else None
         )
+        #: Prix taxé minimum par unité de base, tous produits/magasins
+        #: confondus — même fonction que l'assertion 1 (services/
+        #: validation.py), réutilisée ici comme ancrage de la pénalité de
+        #: gaspillage périssable (D19, docs/deviations.md), jamais recalculée
+        #: différemment.
+        self.min_price_per_base_unit: dict[str, Decimal] = (
+            min_taxed_price_per_base_unit(problem)
+        )
 
         self.x: dict = {}
         self.xk: dict = {}   # segments d'utilité : (recipe_id, k) → var
@@ -108,6 +115,10 @@ class _Ctx:
         self.v: dict = {}    # visite de centre commercial
         self.y = None
         self.w: dict = {}
+        #: Gaspillage périssable (D19) — variable SÉPARÉE de w_i, jamais
+        #: partagée : voir _add_perishable_waste pour pourquoi (direction
+        #: d'inégalité opposée, w_i ne peut pas servir aux deux usages).
+        self.waste: dict = {}
 
     def _used_ingredients(self) -> set[str]:
         return {
@@ -153,18 +164,10 @@ class _Ctx:
         return pulp.lpSum(terms)
 
     def supply_expr(self, ingredient_id: str):
-        pantry = (
-            float(self.problem.pantry.get(ingredient_id, 0))
-            if self.config.enable_pantry_stock
-            else 0.0
-        )
-        return (
-            pulp.lpSum(
-                float(p.package_qty_in_base_unit) * self.n[(p.id, s.id)]
-                for (p, s) in self.pairs
-                if p.canonical_ingredient_id == ingredient_id
-            )
-            + pantry
+        return pulp.lpSum(
+            float(p.package_qty_in_base_unit) * self.n[(p.id, s.id)]
+            for (p, s) in self.pairs
+            if p.canonical_ingredient_id == ingredient_id
         )
 
 
@@ -175,11 +178,12 @@ class _Ctx:
 #: Drapeaux qui modifient l'équation de couverture des ingrédients — les
 #: paniers ne sont PAS comparables entre configurations qui en diffèrent
 #: (signalement obligatoire, docs/deviations.md D11) :
-#: - enable_batch_fixed_cost : retire/ajoute â^fixe_ir aux besoins ;
-#: - enable_pantry_stock : retire/ajoute g_i à l'approvisionnement.
-FLAGS_ALTERING_NEEDS = frozenset(
-    {"enable_batch_fixed_cost", "enable_pantry_stock"}
-)
+#: - enable_batch_fixed_cost : retire/ajoute â^fixe_ir aux besoins.
+#: enable_staples n'en fait PAS partie (contrairement à l'ancien
+#: enable_pantry_stock qu'il remplace) : il ne change que le prix vu par
+#: l'objectif, jamais la couverture/le besoin — un plan avec/sans
+#: enable_staples reste comparable.
+FLAGS_ALTERING_NEEDS = frozenset({"enable_batch_fixed_cost"})
 
 
 def _flag_signaling(config: SolverConfig) -> dict[str, list[str]]:
@@ -228,6 +232,9 @@ def _add_variables(m: pulp.LpProblem, c: _Ctx) -> None:
     if c.config.enable_salvage:
         for iid in c._used_ingredients():
             c.w[iid] = pulp.LpVariable(f"w_{iid}", lowBound=0)
+    if c.config.enable_perishable_penalty:
+        for iid in c._used_ingredients():
+            c.waste[iid] = pulp.LpVariable(f"gaspillage_{iid}", lowBound=0)
 
 
 # ---------------------------------------------------------------------------
@@ -242,8 +249,13 @@ def _add_demand(m: pulp.LpProblem, c: _Ctx) -> None:
 
 
 def _add_coverage(m: pulp.LpProblem, c: _Ctx) -> None:
-    """Couverture des ingrédients, stock initial inclus."""
+    """Couverture des ingrédients. Un ingrédient confirmé disponible pour ce
+    plan précis (pilote, docs/product-pilot.md — ``finalize_plan``) n'a pas
+    besoin d'être acheté : la contrainte n'est simplement pas posée pour
+    lui, jamais une valeur de stock injectée dans supply_expr."""
     for iid in sorted(c._used_ingredients()):
+        if iid in c.config.confirmed_available_ids:
+            continue
         m += (
             c.supply_expr(iid) >= c.demand_expr(iid),
             f"couverture_{iid}",
@@ -279,35 +291,6 @@ def _add_locked_recipes(m: pulp.LpProblem, c: _Ctx) -> None:
         m += c.x[rid] == servings, f"verrouillage_{rid}"
         if rid in c.delta:
             m += c.delta[rid] == 1, f"verrouillage_delta_{rid}"
-
-
-#: Fraction minimale du stock déclaré qu'un ingrédient « doit être utilisé »
-#: doit voir consommée (pilote, docs/product-pilot.md) — pas 1,0 : « cette
-#: contrainte ne signifie pas automatiquement que toute la quantité doit
-#: être consommée, puisque les quantités déclarées peuvent être
-#: approximatives ». Constante système, pas configurable par l'utilisateur
-#: (le produit ne demande qu'un bouton, pas un curseur).
-MUST_USE_PANTRY_MIN_FRACTION = 0.5
-
-
-def _add_must_use_pantry(m: pulp.LpProblem, c: _Ctx) -> None:
-    """demand_expr(i) ≥ 0,5·g_i pour chaque ingrédient marqué « doit être
-    utilisé » (pilote, docs/product-pilot.md) — réutilise demand_expr, déjà
-    là pour la couverture, pas de nouveau calcul de besoin. Inconditionnel
-    (tuple vide = no-op) mais sans effet si enable_pantry_stock est
-    inactif : g_i n'est même pas dans le modèle sans ce drapeau, imposer une
-    fraction d'un stock qui n'existe pas dans le modèle n'aurait aucun sens.
-    """
-    if not c.config.enable_pantry_stock:
-        return
-    for iid in c.config.must_use_pantry_ids:
-        g_i = float(c.problem.pantry.get(iid, 0))
-        if g_i <= 0:
-            continue
-        m += (
-            c.demand_expr(iid) >= MUST_USE_PANTRY_MIN_FRACTION * g_i,
-            f"doit_utiliser_{iid}",
-        )
 
 
 def _add_diversity(m: pulp.LpProblem, c: _Ctx) -> None:
@@ -388,6 +371,29 @@ def _add_surplus(m: pulp.LpProblem, c: _Ctx) -> None:
         m += w <= c.supply_expr(iid) - c.demand_expr(iid), f"surplus_{iid}"
 
 
+def _add_perishable_waste(m: pulp.LpProblem, c: _Ctx) -> None:
+    """gaspillage_i ≥ approvisionnement − besoin (D19, docs/deviations.md).
+    Inégalité MIROIR de _add_surplus, à dessein — pas une réutilisation de
+    w_i. w_i est crédité (l'objectif le maximise) : une borne haute (≤) lui
+    suffit, l'optimum sature naturellement vers le haut. gaspillage_i est
+    pénalisé (l'objectif le minimise) : une borne haute ne ferait
+    qu'autoriser le solveur à le laisser à 0 quel que soit le surplus réel,
+    annulant toute pression de sélection — vérifié en pratique en tentant
+    d'abord de réutiliser w_i (aucun effet observé). Il faut une borne
+    BASSE : ≥ force gaspillage_i à refléter le vrai surplus, la pression de
+    minimisation le sature naturellement vers le bas (jamais en dessous de
+    ce vrai surplus), sans risque de −∞ contrairement à w_i avec un ≥ : ici
+    le coefficient dans l'objectif est positif (un coût), pas négatif (un
+    crédit) — gonfler gaspillage_i ne profite jamais au solveur.
+    ``lowBound=0`` sur la variable couvre le cas d'un ingrédient confirmé
+    disponible (confirmed_available_ids, services/planning.py::
+    finalize_plan) où la couverture n'est pas imposée : approvisionnement −
+    besoin peut alors être négatif, et gaspillage_i doit rester à 0, pas
+    devenir un crédit caché."""
+    for iid, g in c.waste.items():
+        m += g >= c.supply_expr(iid) - c.demand_expr(iid), f"gaspillage_{iid}"
+
+
 def _add_symmetry_breaking(m: pulp.LpProblem, c: _Ctx) -> None:
     """À prix taxé égal pour un même produit, ordre lexicographique des
     magasins : le magasin lexicographiquement second ne sert ce produit que si
@@ -422,10 +428,30 @@ def _add_appetence_constraint(m: pulp.LpProblem, c: _Ctx) -> None:
 # ---------------------------------------------------------------------------
 
 def _purchases_expr_cents(c: _Ctx):
+    """Objectif seulement — jamais le rapport (``_build_result``/
+    ``_objective_terms`` recalculent toujours au prix réel payé,
+    ``PurchaseLine.unit_price_cents_cad``). Pour un produit dont
+    l'ingrédient est un essentiel (staple) du ménage et si
+    ``enable_staples``, biaise le prix vu par le solveur vers le plus bas
+    entre le prix courant et le prix historique le plus bas de la dernière
+    année — jamais en dessous du prix courant réel, seulement une
+    hypothèse favorable qui influence quelles recettes sont choisies."""
+    def unit_price_cents(p: ProductData, s) -> Decimal:
+        price = Decimal(c.price_cents[(p.id, s.id)])
+        if c.config.enable_staples and p.canonical_ingredient_id in c.problem.staples:
+            historical = c.problem.historical_low_price_cents_per_base_unit.get(
+                p.canonical_ingredient_id
+            )
+            if historical is not None:
+                current_per_unit = price * (1 + p.tax_rate) / p.package_qty_in_base_unit
+                if historical < current_per_unit:
+                    price = (
+                        historical * p.package_qty_in_base_unit / (1 + p.tax_rate)
+                    )
+        return price
+
     return pulp.lpSum(
-        float(
-            Decimal(c.price_cents[(p.id, s.id)]) * (1 + p.tax_rate)
-        ) * c.n[(p.id, s.id)]
+        float(unit_price_cents(p, s) * (1 + p.tax_rate)) * c.n[(p.id, s.id)]
         for (p, s) in c.pairs
     )
 
@@ -461,6 +487,46 @@ def _salvage_expr_cents(c: _Ctx):
     )
 
 
+#: Sixième terme d'objectif (D19, docs/deviations.md) : σ_i ne peut pas
+#: porter une pénalité de gaspillage — il est déjà à 0 pour les ingrédients
+#: réellement périssables du seed (coriandre, épinard) et
+#: `salvage_nonneg >= 0` l'empêche structurellement d'aller négatif. Cette
+#: constante est donc une quantité SÉPARÉE de σ_i, jamais une transformation
+#: de sa valeur — un multiple du prix taxé minimum par unité de base (même
+#: fonction d'ancrage que le plafond de σ_i, assertion 1), pas un montant $
+#: inventé. Constante système, pas configurable (même famille que l'ancien
+#: MUST_USE_PANTRY_MIN_FRACTION) : un bouton, pas un curseur.
+#:
+#: Valeur choisie empiriquement, pas déduite : sur l'instance jouet (œuf
+#: forcé à périssabilité 1,0, diversité forcée), un ratio ≤ 0,15 — pensé par
+#: analogie avec le plafond ≤ 0,8 de σ_i — s'est révélé n'avoir AUCUN effet
+#: sur la sélection de recettes (le gaspillage réel restait absorbé sans
+#: broncher, noyé sous les termes achats/appétence de plusieurs centaines de
+#: cents). L'effet n'apparaît qu'à partir de ratio ≈ 1, se stabilise dès 2
+#: (`omelette_toy` passe de 1 à 3 portions, le maximum que le surplus
+#: d'œufs peut absorber compte tenu de `max_batch_servings`) et reste stable
+#: jusqu'à 20 sans dégénérer davantage — voir
+#: `test_perishable_penalty_shifts_recipe_selection`. 2,0 retenu : premier
+#: palier qui produit l'effet plein, pas juste amorcé.
+PERISHABLE_WASTE_PENALTY_RATIO = 2.0
+
+
+def _perishable_waste_expr_cents(c: _Ctx):
+    """Pénalise, plutôt que de simplement ne pas créditer, le surplus d'un
+    ingrédient périssable — sinon le coût d'achat déjà compté au terme 1
+    laisse le solveur indifférent à combien il en reste (voir D19). Somme
+    plutôt que soustraite : c'est un coût additionnel, pas un crédit.
+    Utilise c.waste (voir _add_perishable_waste), jamais c.w — variables
+    distinctes à dessein."""
+    return pulp.lpSum(
+        float(c.problem.ingredients[iid].perishability)
+        * PERISHABLE_WASTE_PENALTY_RATIO
+        * float(c.min_price_per_base_unit.get(iid, Decimal(0)))
+        * g
+        for iid, g in c.waste.items()
+    )
+
+
 def _appetence_expr_cents(c: _Ctx):
     terms = []
     for r in c.recipes:
@@ -493,11 +559,12 @@ class PulpMenuSolver:
         config: SolverConfig,
     ) -> SolveResult:
         params = resolve_effective_params(problem.profile, config)
-        assertions_passed, _ = validate_problem(problem, prefiltered.surviving)
-        bounds = compute_demand_bounds(
-            problem.profile.meals_per_horizon,
-            list(problem.profile.appetite_coefficients),
-            Decimal(str(params.demand_slack_epsilon.value)),
+        # validate_problem calcule déjà les bornes de demande avec le même
+        # params résolu (R_min/α/ε) — les réutiliser telles quelles plutôt
+        # que de les recalculer garantit qu'elles ne peuvent jamais diverger
+        # de ce que la validation vient de vérifier.
+        assertions_passed, bounds = validate_problem(
+            problem, prefiltered.surviving, params
         )
         c = _Ctx(
             problem, prefiltered, config, params, bounds,
@@ -510,7 +577,6 @@ class PulpMenuSolver:
         _add_coverage(m, c)
         _add_batch_coherence(m, c)
         _add_locked_recipes(m, c)
-        _add_must_use_pantry(m, c)
         if config.enable_diversity:
             _add_diversity(m, c)
         if config.enable_variant_exclusion:
@@ -520,6 +586,8 @@ class PulpMenuSolver:
             _add_symmetry_breaking(m, c)
         if config.enable_salvage:
             _add_surplus(m, c)
+        if config.enable_perishable_penalty:
+            _add_perishable_waste(m, c)
         if config.appetence_mode == "constraint":
             _add_appetence_constraint(m, c)
 
@@ -530,6 +598,8 @@ class PulpMenuSolver:
             objective += _time_expr_cents(c)
         if config.enable_salvage:
             objective -= _salvage_expr_cents(c)
+        if config.enable_perishable_penalty:
+            objective += _perishable_waste_expr_cents(c)
         if config.appetence_mode == "objective":
             objective -= _appetence_expr_cents(c)
         m += objective
@@ -597,11 +667,17 @@ class PulpMenuSolver:
             for iid, w in c.w.items()
             if (w.value() or 0) > _EPS
         }
+        waste = {
+            iid: Decimal(str(g.value() or 0)).quantize(Decimal("0.001"))
+            for iid, g in c.waste.items()
+            if (g.value() or 0) > _EPS
+        }
 
-        terms = self._objective_terms(c, servings, cooked, purchases, surplus, visited)
+        terms = self._objective_terms(
+            c, servings, cooked, purchases, surplus, waste, visited
+        )
         total = sum(servings.values())
         saturated = self._saturated(c, m, servings, visited)
-        pantry_consumed, pantry_value = self._pantry_consumption(c, servings, cooked)
 
         diag = Diagnostic(
             solver_status=status,
@@ -623,8 +699,6 @@ class PulpMenuSolver:
                 }
                 for iid, q in surplus.items()
             },
-            pantry_consumed_by_ingredient=pantry_consumed,
-            pantry_consumed_value_cents=pantry_value,
             distinct_recipes=len(servings),
             distinct_dish_families=len(
                 {r.dish_family_id for r in c.recipes if servings.get(r.id, 0) > 0}
@@ -650,7 +724,9 @@ class PulpMenuSolver:
             surplus_by_ingredient=surplus, diagnostic=diag,
         )
 
-    def _objective_terms(self, c, servings, cooked, purchases, surplus, visited):
+    def _objective_terms(
+        self, c, servings, cooked, purchases, surplus, waste, visited
+    ):
         cfg = c.config
         achats = sum(
             (line.taxed_total_cents_cad for line in purchases), Decimal(0)
@@ -680,6 +756,20 @@ class PulpMenuSolver:
             ),
             Decimal(0),
         )
+        # D19 — pas de garde sur cfg.enable_perishable_penalty : waste est
+        # déjà vide si le drapeau est inactif (c.waste n'a alors jamais été
+        # peuplé), donc ce bloc calcule 0 naturellement, même motif que
+        # recuperation ci-dessus. waste ≠ surplus : variables distinctes
+        # (voir _add_perishable_waste).
+        gaspillage = sum(
+            (
+                q * c.problem.ingredients[iid].perishability
+                * Decimal(str(PERISHABLE_WASTE_PENALTY_RATIO))
+                * c.min_price_per_base_unit.get(iid, Decimal(0))
+                for iid, q in waste.items()
+            ),
+            Decimal(0),
+        )
         appetence = Decimal(0)
         if cfg.appetence_mode == "objective":
             for r in c.recipes:
@@ -693,34 +783,9 @@ class PulpMenuSolver:
             deplacements_cents=deplacements.quantize(Decimal("0.01")),
             temps_cents=temps.quantize(Decimal("0.01")),
             recuperation_cents=recuperation.quantize(Decimal("0.01")),
+            gaspillage_cents=gaspillage.quantize(Decimal("0.01")),
             appetence_cents=appetence.quantize(Decimal("0.01")),
         )
-
-    def _pantry_consumption(self, c, servings, cooked):
-        """Σ min(g_i, besoin_i)·c̄_i — valeur du stock déjà payé consommé par
-        ce plan (D13). Zéro si le garde-manger n'était pas dans le modèle."""
-        if not c.config.enable_pantry_stock or not c.problem.pantry:
-            return {}, Decimal("0.00")
-        needs = ingredient_needs(
-            c.problem, servings, cooked,
-            include_fixed=c.config.enable_batch_fixed_cost,
-        )
-        unit_price = min_taxed_price_per_base_unit(c.problem)
-        detail: dict[str, dict] = {}
-        total = Decimal(0)
-        for iid, g in c.problem.pantry.items():
-            consumed = min(g, needs.get(iid, Decimal(0)))
-            if consumed <= 0:
-                continue
-            value = (consumed * unit_price.get(iid, Decimal(0))).quantize(
-                Decimal("0.01")
-            )
-            detail[iid] = {
-                "quantite_base_unit": str(consumed),
-                "valeur_cents": str(value),
-            }
-            total += value
-        return detail, total.quantize(Decimal("0.01"))
 
     def _saturated(self, c, m, servings, visited) -> dict[str, list[str]]:
         out: dict[str, list[str]] = {
@@ -771,8 +836,6 @@ class PulpMenuSolver:
             saturated_constraints={},
             prefilter_counts=prefiltered.counts_by_stage,
             surplus_by_ingredient={},
-            pantry_consumed_by_ingredient={},
-            pantry_consumed_value_cents=Decimal("0"),
             distinct_recipes=0,
             distinct_dish_families=0,
             max_share_of_demand=None,

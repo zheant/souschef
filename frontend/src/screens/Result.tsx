@@ -7,11 +7,16 @@ import type {
 
 /** Écran 3 — Résultat (piste « circulaire du quartier », disposition « P »,
  *  docs/product-pilot.md) : deux onglets internes — Cette semaine (coût à
- *  l'épicerie, temps de cuisine, menu) et Épicerie (garde-manger + listes
- *  par magasin). Le détail de l'optimisation en 5 termes (5_essentiel au
- *  mode développeur, cf. l'onglet Diagnostic) reste disponible mais replié
- *  derrière la barre — l'usager courant n'a besoin que de ce qu'il dépense
- *  à l'épicerie et du temps que ça lui prend.
+ *  l'épicerie, temps de cuisine, menu) et Épicerie (listes par magasin). Le
+ *  détail de l'optimisation en 5 termes (5_essentiel au mode développeur,
+ *  cf. l'onglet Diagnostic) reste disponible mais replié derrière la barre
+ *  — l'usager courant n'a besoin que de ce qu'il dépense à l'épicerie et du
+ *  temps que ça lui prend.
+ *
+ *  Pas de section garde-manger (pilote, docs/product-pilot.md — retiré au
+ *  profit des essentiels) : la correction de ce que l'usager possède déjà
+ *  se fait AVANT ce plan, à la confirmation post-génération
+ *  (`Planning.tsx`), jamais ici.
  *
  *  Angle mort assumé : les photos de plat sont des dégradés de couleur
  *  dérivés de l'id de la recette, pas de vraies photos — l'app n'a aucune
@@ -39,13 +44,14 @@ const DISH_ICON = (
   </svg>
 );
 
-type TermKey = "achats" | "deplacements" | "temps" | "recuperation" | "appetence";
+type TermKey = "achats" | "deplacements" | "temps" | "recuperation" | "gaspillage" | "appetence";
 const TERM_LABELS: [TermKey, string, boolean, number][] = [
   // clé, libellé, crédit?, opacité du segment (même dégradé que le prototype)
   ["achats", "Achats", false, 1],
   ["deplacements", "Déplacements", false, 0.7],
   ["temps", "Temps", false, 0.45],
   ["recuperation", "Récupération", true, 0.6],
+  ["gaspillage", "Gaspillage", false, 0.85],
   ["appetence", "Appétence", true, 1],
 ];
 
@@ -142,8 +148,6 @@ export default function ResultScreen(props: {
   const [ingredients, setIngredients] = useState<RecipeIngredientLine[] | null>(null);
   const [ingredientsError, setIngredientsError] = useState<string | null>(null);
 
-  const [buyInsteadIds, setBuyInsteadIds] = useState<Set<string>>(new Set());
-  const [fixRecipes, setFixRecipes] = useState(true);
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [accepted, setAccepted] = useState(false);
   const [committing, setCommitting] = useState(false);
@@ -152,8 +156,6 @@ export default function ResultScreen(props: {
   // Nouveau plan chargé (génération, remplacement) : rien de local ne
   // survit à un plan différent — même motif que les tranches précédentes.
   useEffect(() => {
-    setBuyInsteadIds(new Set());
-    setFixRecipes(true);
     setChecked({});
     setAccepted(plan?.status === "committed");
     setBarDetailed(false);
@@ -183,7 +185,6 @@ export default function ResultScreen(props: {
   const groceryTotalCents = currentPlan.grocery_list_by_store
     .reduce((s, g) => s + Number(g.subtotal_cents_cad), 0);
   const totalTimeH = currentPlan.menu.reduce((s, m) => s + Number(m.prep_time_h), 0);
-  const pantryValueCents = Number(currentPlan.diagnostic.pantry_consumed_value_cents);
 
   const t = currentPlan.diagnostic.objective_terms_cents;
   const termAbsSum = t
@@ -228,35 +229,6 @@ export default function ResultScreen(props: {
     } catch (e) {
       setIngredientsError(String(e));
     }
-  }
-
-  function toggleBuyInstead(id: string) {
-    setBuyInsteadIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
-  }
-
-  /** « Replanifier » (pilote, docs/product-pilot.md) : corrige réellement
-   *  le garde-manger (met les ingrédients marqués « à acheter » à 0 dans
-   *  pantry_stock — pas seulement au commit) puis relance une vraie
-   *  réoptimisation. Remplace une tentative précédente qui recalculait un
-   *  achat de remplacement au moment d'accepter — fragile en pratique
-   *  (double-achat, quantités qui ne collaient jamais à ce qu'un panier
-   *  optimal aurait choisi). Laisser le solveur décider, comme pour
-   *  Remplacer, est la version solide. */
-  async function replan() {
-    try {
-      await api.updatePantry(
-        [...buyInsteadIds].map((id) => ({ canonical_ingredient_id: id, quantity_base_unit: 0 }))
-      );
-    } catch (e) {
-      setReoptimizeError(String(e));
-      return;
-    }
-    const lockedRecipeIds = fixRecipes ? currentPlan.menu.map((m) => m.recipe_id) : [];
-    await callReoptimize(lockedRecipeIds, [], { ...props.config, enable_pantry_stock: true });
   }
 
   function toggleChecked(key: string) {
@@ -307,22 +279,10 @@ export default function ResultScreen(props: {
               {!barDetailed && (
                 <>
                   <div className="rp-splitbar">
-                    <span style={{
-                      width: `${pantryValueCents > 0 ? (groceryTotalCents / (groceryTotalCents + pantryValueCents)) * 100 : 100}%`,
-                      background: "var(--rp-deal)",
-                    }} />
-                    {pantryValueCents > 0 && (
-                      <span style={{
-                        width: `${(pantryValueCents / (groceryTotalCents + pantryValueCents)) * 100}%`,
-                        background: "var(--rp-pantry)",
-                      }} />
-                    )}
+                    <span style={{ width: "100%", background: "var(--rp-deal)" }} />
                   </div>
                   <div className="rp-legend">
                     <span><span className="rp-sw" style={{ background: "var(--rp-deal)" }} />Acheté</span>
-                    {pantryValueCents > 0 && (
-                      <span><span className="rp-sw" style={{ background: "var(--rp-pantry)" }} />Garde-manger</span>
-                    )}
                   </div>
                   <div className="rp-bar-hint">Détail de l'optimisation ›</div>
                 </>
@@ -358,8 +318,7 @@ export default function ResultScreen(props: {
 
           {accepted && (
             <p className="rp-accept-note">
-              Menu verrouillé — plan déjà accepté, le stock du garde-manger a
-              été ajusté en fonction de ce menu.
+              Menu verrouillé — plan déjà accepté.
             </p>
           )}
 
@@ -404,53 +363,6 @@ export default function ResultScreen(props: {
 
       {tab === "epicerie" && (
         <>
-          {currentPlan.pantry_lines.length > 0 && (
-            <>
-              <div className="rp-section-label">Garde-manger — à récupérer</div>
-              <div className="rp-store rp-pantry">
-                {currentPlan.pantry_lines.map((l) => (
-                  <div className="rp-pantry-row" key={l.canonical_ingredient_id}>
-                    <label>
-                      <input type="checkbox" />
-                      {l.name} — {Number(l.quantity_base_unit).toFixed(0)} {l.base_unit}
-                      {l.priority === "use_soon" && <span className="rp-tag">Bientôt</span>}
-                      {buyInsteadIds.has(l.canonical_ingredient_id) && (
-                        <span className="rp-tag rp-tag-buy">À acheter</span>
-                      )}
-                    </label>
-                    <button
-                      className="rp-buy-btn"
-                      disabled={accepted}
-                      onClick={() => toggleBuyInstead(l.canonical_ingredient_id)}
-                    >
-                      {buyInsteadIds.has(l.canonical_ingredient_id) ? "Annuler" : "À acheter"}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-
-          {buyInsteadIds.size > 0 && !accepted && (
-            <div className="rp-store rp-replan">
-              <p className="rp-replan-note">
-                {buyInsteadIds.size} ingrédient{buyInsteadIds.size > 1 ? "s" : ""} marqué
-                {buyInsteadIds.size > 1 ? "s" : ""} « à acheter » — le garde-manger sera mis
-                à 0 pour {buyInsteadIds.size > 1 ? "eux" : "lui"} et le plan sera réoptimisé.
-              </p>
-              <label className="rp-replan-check">
-                <input
-                  type="checkbox" checked={fixRecipes}
-                  onChange={(e) => setFixRecipes(e.target.checked)}
-                />
-                Fixer les recettes de la semaine
-              </label>
-              <button className="rp-replan-btn" onClick={replan} disabled={reoptimizing}>
-                {reoptimizing ? "Replanification…" : "Replanifier"}
-              </button>
-            </div>
-          )}
-
           <div className="rp-section-label">Épicerie</div>
           {itinerary.length > 1 && (
             <p className="muted" style={{ margin: "0 16px 10px" }}>

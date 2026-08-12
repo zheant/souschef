@@ -8,7 +8,8 @@ import type { Plan, SolverConfigInput } from "../types";
 
 const FLAGS: (keyof SolverConfigInput)[] = [
   "enable_multi_store", "enable_batch_fixed_cost", "enable_salvage",
-  "enable_time_cost", "enable_pantry_stock", "enable_diversity",
+  "enable_perishable_penalty", "enable_time_cost", "enable_staples",
+  "enable_diversity",
 ];
 
 export default function DiagnosticScreen(props: {
@@ -90,8 +91,6 @@ export default function DiagnosticScreen(props: {
                   </td></tr>
                 <tr><td>Drapeaux altérant les besoins</td>
                   <td className="num">{(d.flag_effects.alterent_les_besoins_en_ingredients ?? []).join(", ") || "aucun"}</td></tr>
-                <tr><td>Stock consommé (déjà payé)</td>
-                  <td className="num">{(Number(d.pantry_consumed_value_cents) / 100).toFixed(2)} $</td></tr>
                 <tr><td>Assertions passées</td>
                   <td className="num">{d.assertions_passed.length}/7</td></tr>
               </tbody>
