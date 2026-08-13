@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api, cents } from "../api";
 import { describeChanges } from "../changes";
 import type {
@@ -44,6 +44,33 @@ const DISH_ICON = (
   </svg>
 );
 
+const CLOCK_ICON = (
+  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <path d="M12 6v6l4 2" />
+  </svg>
+);
+
+const PORTIONS_ICON = (
+  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+  </svg>
+);
+
+const CHECK_ICON = (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 6L9 17l-5-5" />
+  </svg>
+);
+
+const SWAP_ICON = (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 1l4 4-4 4M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 01-4 4H3" />
+  </svg>
+);
+
 type TermKey = "achats" | "deplacements" | "temps" | "recuperation" | "gaspillage" | "appetence";
 const TERM_LABELS: [TermKey, string, boolean, number][] = [
   // clé, libellé, crédit?, opacité du segment (même dégradé que le prototype)
@@ -54,82 +81,6 @@ const TERM_LABELS: [TermKey, string, boolean, number][] = [
   ["gaspillage", "Gaspillage", false, 0.85],
   ["appetence", "Appétence", true, 1],
 ];
-
-/** Glissement à réserver d'espace réel plutôt que translater le contenu :
- *  la carte rétrécit (flex) pour faire de la place aux actions au lieu de
- *  glisser le nom hors-champ — c'est ce qui garde le nom entièrement
- *  visible pendant le geste (leçon du prototype interactif). */
-function SwipeRow(props: {
-  revealWidth: number;
-  /** Fonction plutôt que ReactNode brut : chaque instance a son propre
-   *  `close`, pas un état partagé entre les cartes (une carte ouverte ne
-   *  doit fermer qu'elle-même). */
-  actions: (close: () => void) => React.ReactNode;
-  onTap?: () => void;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  const actionsRef = useRef<HTMLDivElement>(null);
-  const state = useRef({ open: false, dragging: false, moved: false, startX: 0, startWidth: 0 });
-
-  function setWidth(w: number, animate: boolean) {
-    const el = actionsRef.current;
-    if (!el) return;
-    el.style.transition = animate ? "width 0.18s ease" : "none";
-    el.style.width = `${w}px`;
-  }
-
-  function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
-    e.currentTarget.setPointerCapture(e.pointerId);
-    const s = state.current;
-    s.dragging = true; s.moved = false; s.startX = e.clientX;
-    s.startWidth = s.open ? props.revealWidth : 0;
-  }
-  function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
-    const s = state.current;
-    if (!s.dragging) return;
-    const dx = e.clientX - s.startX;
-    if (Math.abs(dx) > 6) s.moved = true;
-    if (!s.moved) return;
-    setWidth(Math.min(props.revealWidth, Math.max(0, s.startWidth - dx)), false);
-  }
-  function endDrag(e: React.PointerEvent<HTMLDivElement>) {
-    const s = state.current;
-    if (!s.dragging) return;
-    s.dragging = false;
-    if (!s.moved) return;
-    const dx = e.clientX - s.startX;
-    const w = s.startWidth - dx;
-    if (w > props.revealWidth / 2) { setWidth(props.revealWidth, true); s.open = true; }
-    else { setWidth(0, true); s.open = false; }
-  }
-  function onClick() {
-    const s = state.current;
-    if (s.moved) { s.moved = false; return; }
-    if (s.open) { setWidth(0, true); s.open = false; return; }
-    props.onTap?.();
-  }
-  function close() {
-    const s = state.current;
-    if (s.open) { setWidth(0, true); s.open = false; }
-  }
-
-  return (
-    <div className={`rp-swipe-row ${props.className ?? ""}`}>
-      <div
-        className="rp-swipe-content"
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={endDrag}
-        onPointerCancel={endDrag}
-        onClick={onClick}
-      >
-        {props.children}
-      </div>
-      <div className="rp-swipe-actions" ref={actionsRef}>{props.actions(close)}</div>
-    </div>
-  );
-}
 
 export default function ResultScreen(props: {
   plan: Plan | null; household: Household; stores: Store[]; config: SolverConfigInput;
@@ -270,7 +221,7 @@ export default function ResultScreen(props: {
 
       {tab === "semaine" && (
         <>
-          <div className="rp-hero">
+          <div className={`rp-cost-card${barDetailed ? " rp-cost-card--detail" : ""}`}>
             <div className="rp-hero-label">Coût à l'épicerie</div>
             <div className="rp-hero-amount">
               {cents(groceryTotalCents)} <span className="rp-time">· {totalTimeH.toFixed(2)} h de cuisine</span>
@@ -279,10 +230,10 @@ export default function ResultScreen(props: {
               {!barDetailed && (
                 <>
                   <div className="rp-splitbar">
-                    <span style={{ width: "100%", background: "var(--rp-deal)" }} />
+                    <span style={{ width: "100%", background: "rgba(255,255,255,0.95)" }} />
                   </div>
                   <div className="rp-legend">
-                    <span><span className="rp-sw" style={{ background: "var(--rp-deal)" }} />Acheté</span>
+                    <span><span className="rp-sw" style={{ background: "rgba(255,255,255,0.95)" }} />Acheté</span>
                   </div>
                   <div className="rp-bar-hint">Détail de l'optimisation ›</div>
                 </>
@@ -323,40 +274,35 @@ export default function ResultScreen(props: {
           )}
 
           {currentPlan.menu.map((m) => (
-            <SwipeRow
-              key={m.recipe_id}
-              className="rp-recipe-row"
-              revealWidth={148}
-              onTap={() => openDetail(m.recipe_id)}
-              actions={(close) => (
-                <>
+            <div className="rp-recipe-row" key={m.recipe_id}>
+              <div className="rp-recipe-card" onClick={() => openDetail(m.recipe_id)}>
+                <div className={`rp-photo ${photoClassFor(m.recipe_id)}`}>{DISH_ICON}</div>
+                <div className="rp-recipe-actions">
                   <button
-                    className="rp-keep"
+                    aria-label="Garder" title="Garder"
                     disabled={reoptimizing || accepted}
-                    onClick={(e) => { e.stopPropagation(); close(); }}
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    Garder
+                    {CHECK_ICON}
                   </button>
                   <button
-                    className="rp-replace"
+                    className="rp-replace" aria-label="Remplacer" title="Remplacer"
                     disabled={reoptimizing || accepted}
                     onClick={(e) => { e.stopPropagation(); replace(m.recipe_id); }}
                   >
-                    {replacingId === m.recipe_id ? "…" : "Remplacer"}
+                    {replacingId === m.recipe_id ? "…" : SWAP_ICON}
                   </button>
-                </>
-              )}
-            >
-              <div className="rp-recipe-card">
-                <div className="rp-recipe-name">{m.name}</div>
-                <div className="rp-recipe-row2">
-                  <div className={`rp-photo ${photoClassFor(m.recipe_id)}`}>{DISH_ICON}</div>
+                </div>
+                <div className="rp-recipe-body">
+                  <div className="rp-recipe-name">{m.name}</div>
                   <div className="rp-recipe-meta">
-                    {m.servings} portions · {Number(m.prep_time_h).toFixed(2)} h · {cents(m.attributed_cost_cents_cad)}
+                    <span className="rp-chip">{CLOCK_ICON} {Number(m.prep_time_h).toFixed(2)} h</span>
+                    <span className="rp-chip">{PORTIONS_ICON} {m.servings} portions</span>
+                    <span className="rp-recipe-price">{cents(m.attributed_cost_cents_cad)}</span>
                   </div>
                 </div>
               </div>
-            </SwipeRow>
+            </div>
           ))}
         </>
       )}
