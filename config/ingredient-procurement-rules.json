@@ -1,0 +1,756 @@
+{
+  "product_conversions": [
+    {
+      "canonical_ingredient_id": "tomate_conserve",
+      "from_unit_kind": "volume",
+      "from_base_unit": "ml",
+      "canonical_units_per_source_unit": "1.01437",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Canadian Nutrient File 2026, food 2462: 100 ml = 101.437 g"
+    },
+    {
+      "canonical_ingredient_id": "pate_tomate",
+      "from_unit_kind": "volume",
+      "from_base_unit": "ml",
+      "canonical_units_per_source_unit": "1.16238",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Canadian Nutrient File 2026, food 6579: 100 ml = 116.238 g"
+    },
+    {
+      "canonical_ingredient_id": "haricot_noir_conserve",
+      "from_unit_kind": "volume",
+      "from_base_unit": "ml",
+      "canonical_units_per_source_unit": "1.01437",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Canadian Nutrient File 2026, food 3254: 100 ml = 101.437 g"
+    },
+    {
+      "canonical_ingredient_id": "haricot_blanc_conserve",
+      "from_unit_kind": "volume",
+      "from_base_unit": "ml",
+      "canonical_units_per_source_unit": "1.10735",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Canadian Nutrient File 2026, food 3276: 100 ml = 110.735 g"
+    },
+    {
+      "canonical_ingredient_id": "haricot_lima_conserve",
+      "from_unit_kind": "volume",
+      "from_base_unit": "ml",
+      "canonical_units_per_source_unit": "1.01860",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Canadian Nutrient File 2026, food 3290: 100 ml = 101.860 g"
+    },
+    {
+      "canonical_ingredient_id": "pois_chiche_conserve",
+      "from_unit_kind": "volume",
+      "from_base_unit": "ml",
+      "canonical_units_per_source_unit": "1.01437",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Canadian Nutrient File 2026, food 3279: 100 ml = 101.437 g"
+    },
+    {
+      "canonical_ingredient_id": "miel",
+      "from_unit_kind": "mass",
+      "from_base_unit": "g",
+      "canonical_units_per_source_unit": "0.698113",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Canadian Nutrient File 2026, food 4294: 100 ml = 143.243 g"
+    },
+    {
+      "canonical_ingredient_id": "creme_sure",
+      "from_unit_kind": "volume",
+      "from_base_unit": "ml",
+      "canonical_units_per_source_unit": "0.9721",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Canadian Nutrient File 2026, food 139 (14% M.G.): 100 ml = 97.21 g"
+    },
+    {
+      "canonical_ingredient_id": "capre",
+      "from_unit_kind": "volume",
+      "from_base_unit": "ml",
+      "canonical_units_per_source_unit": "0.581333",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Canadian Nutrient File 2026, food 4890: 15 ml égouttées = 8.72 g"
+    },
+    {
+      "canonical_ingredient_id": "cornichon_aneth",
+      "from_unit_kind": "volume",
+      "from_base_unit": "ml",
+      "canonical_units_per_source_unit": "0.6044",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Canadian Nutrient File 2026, food 2495: 100 ml haché = 60.44 g"
+    },
+    {
+      "canonical_ingredient_id": "laitue_iceberg",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "539",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Canadian Nutrient File 2026, food 2398: 1 tête moyenne (15 cm dia) = 539 g; Super C vend la laitue iceberg à l'unité"
+    },
+    {
+      "canonical_ingredient_id": "fenouil_bulbe",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "234",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Canadian Nutrient File 2026, food 2350: 1 bulbe = 234 g; Super C vend le fenouil à l'unité"
+    },
+    {
+      "canonical_ingredient_id": "pain_tranche_blanc",
+      "from_unit_kind": "mass",
+      "from_base_unit": "g",
+      "canonical_units_per_source_unit": "0.0277778",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Canadian Nutrient File 2026, food 4066: 1 tranche = 36 g (1/36 tranche par gramme)"
+    },
+    {
+      "canonical_ingredient_id": "oignon_vert",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "105",
+      "confidence": "estimated",
+      "provenance": "FCÉN 2026 food 2144: 1 tige moyenne = 15 g, x 7 tiges par botte. Super C publie « 1 botte » sans masse; le nombre de tiges est une estimation Souschef, à remplacer par une pesée"
+    },
+    {
+      "canonical_ingredient_id": "celeri",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "400",
+      "confidence": "estimated",
+      "provenance": "FCÉN 2026 food 2386: 1 tige moyenne = 40 g, x 10 tiges par pied. Super C publie « Vendu individuellement » sans masse; le nombre de tiges est une estimation Souschef, à remplacer par une pesée"
+    },
+    {
+      "canonical_ingredient_id": "persil_plat",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "60",
+      "confidence": "estimated",
+      "provenance": "FCÉN 2026 food 2405: 10 brins = 10 g, x 60 brins par botte. Super C publie « 1 botte » sans masse; le nombre de brins est une estimation Souschef, à remplacer par une pesée"
+    },
+    {
+      "canonical_ingredient_id": "persil_frise",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "60",
+      "confidence": "estimated",
+      "provenance": "FCÉN 2026 food 2405: 10 brins = 10 g, x 60 brins par botte. Super C publie « 1 botte » sans masse; le nombre de brins est une estimation Souschef, à remplacer par une pesée"
+    },
+    {
+      "canonical_ingredient_id": "chou_frise",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "200",
+      "confidence": "estimated",
+      "provenance": "Aucune mesure de botte au FCÉN 2026 pour le chou frisé; 200 g par botte, estimation Souschef, à remplacer par une pesée"
+    },
+    {
+      "canonical_ingredient_id": "feuille_laurier",
+      "from_unit_kind": "mass",
+      "from_base_unit": "g",
+      "canonical_units_per_source_unit": "5",
+      "confidence": "estimated",
+      "provenance": "Le FCÉN 2026 (food 172) ne publie que 5 ml émietté = 0.612 g, jamais le poids d'une feuille entière; 0.2 g par feuille retenu (pot de 20 g ≈ 100 feuilles), estimation Souschef"
+    },
+    {
+      "canonical_ingredient_id": "mais_conserve",
+      "from_unit_kind": "volume",
+      "from_base_unit": "ml",
+      "canonical_units_per_source_unit": "1.08205",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Canadian Nutrient File 2026, food 2069 (maïs sucré en conserve, saumure, solides et liquide): 100 ml = 108.205 g"
+    },
+    {
+      "canonical_ingredient_id": "chipotle_adobo",
+      "from_unit_kind": "volume",
+      "from_base_unit": "ml",
+      "canonical_units_per_source_unit": "0.5748",
+      "confidence": "estimated",
+      "provenance": "FCÉN 2026 food 2477 (jalapeño en conserve, solides et liquide): 100 ml haché = 57.48 g. Le chipotle est un jalapeño fumé, mais la sauce adobo n'est pas la saumure du FCÉN: rapprochement estimé par Souschef"
+    },
+    {
+      "canonical_ingredient_id": "melasse",
+      "from_unit_kind": "mass",
+      "from_base_unit": "g",
+      "canonical_units_per_source_unit": "0.714286",
+      "confidence": "estimated",
+      "provenance": "Aucun poids-mesure au FCÉN 2026 pour la mélasse; densité usuelle 1.40 g/ml retenue (0.714286 ml par gramme), estimation Souschef à remplacer par une mesure"
+    },
+    {
+      "canonical_ingredient_id": "pain_pita",
+      "from_unit_kind": "mass",
+      "from_base_unit": "g",
+      "canonical_units_per_source_unit": "0.0166667",
+      "confidence": "estimated",
+      "provenance": "FCÉN 2026 food 3708: 1/2 pita blanc de 16.5 cm = 30 g, donc 60 g par pita. Le diamètre n'est pas publié par le détaillant, l'appariement de taille reste une estimation Souschef"
+    },
+    {
+      "canonical_ingredient_id": "chataigne_eau",
+      "from_unit_kind": "volume",
+      "from_base_unit": "ml",
+      "canonical_units_per_source_unit": "0.59172",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Canadian Nutrient File 2026, food 2275 (châtaignes d'eau en conserve, solides et liquide): 100 ml tranches = 59.172 g"
+    },
+    {
+      "canonical_ingredient_id": "lentille_conserve",
+      "from_unit_kind": "volume",
+      "from_base_unit": "ml",
+      "canonical_units_per_source_unit": "1.01437",
+      "confidence": "estimated",
+      "provenance": "Aucune mesure de lentilles en conserve au FCÉN 2026; densité transposée des pois chiches en conserve (FCÉN 3279, 100 ml = 101.437 g), légumineuse en conserve de format comparable. Transposition assumée, pas une mesure de la lentille"
+    },
+    {
+      "canonical_ingredient_id": "creme_champignon_condensee",
+      "from_unit_kind": "volume",
+      "from_base_unit": "ml",
+      "canonical_units_per_source_unit": "1.05",
+      "confidence": "estimated",
+      "provenance": "Aucune mesure de soupe condensée au FCÉN 2026; densité 1.05 g/ml retenue pour une soupe condensée, estimation Souschef à remplacer par une mesure"
+    },
+    {
+      "canonical_ingredient_id": "olive_verte",
+      "from_unit_kind": "volume",
+      "from_base_unit": "ml",
+      "canonical_units_per_source_unit": "0.65",
+      "confidence": "estimated",
+      "provenance": "Aucune mesure d'olives au FCÉN 2026; 0.65 g/ml retenu pour des olives en saumure au pot, estimation Souschef à remplacer par une pesée du contenu égoutté"
+    },
+    {
+      "canonical_ingredient_id": "olive_kalamata",
+      "from_unit_kind": "volume",
+      "from_base_unit": "ml",
+      "canonical_units_per_source_unit": "0.65",
+      "confidence": "estimated",
+      "provenance": "Aucune mesure d'olives au FCÉN 2026; 0.65 g/ml retenu pour des olives en saumure au pot, estimation Souschef à remplacer par une pesée du contenu égoutté"
+    },
+    {
+      "canonical_ingredient_id": "creme_glace_vanille",
+      "from_unit_kind": "volume",
+      "from_base_unit": "ml",
+      "canonical_units_per_source_unit": "0.55",
+      "confidence": "estimated",
+      "provenance": "Aucune mesure de crème glacée au FCÉN 2026; 0.55 g/ml retenu (la crème glacée est foisonnée d'air), estimation Souschef à remplacer par une mesure"
+    },
+    {
+      "canonical_ingredient_id": "laitue_romaine",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "300",
+      "confidence": "estimated",
+      "provenance": "FCÉN 2026 food 2116: 1 feuille = 10 g, x 30 feuilles par pied. Super C vend la romaine à l'unité sans masse; le nombre de feuilles est une estimation Souschef, à remplacer par une pesée"
+    },
+    {
+      "canonical_ingredient_id": "cannelle_baton",
+      "from_unit_kind": "mass",
+      "from_base_unit": "g",
+      "canonical_units_per_source_unit": "0.4",
+      "confidence": "estimated",
+      "provenance": "Le FCÉN 2026 (food 178) ne publie que la cannelle moulue, jamais le poids d'un bâton entier; 2.5 g par bâton retenu (pot de 70 g ≈ 28 bâtons), estimation Souschef"
+    },
+    {
+      "canonical_ingredient_id": "mais",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "90",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Canadian Nutrient File 2026, food 2388: rendement d'un épi moyen (17 à 19 cm) = 90 g de grains; Super C vend le maïs sucré à l'épi"
+    },
+    {
+      "canonical_ingredient_id": "gousse_ail",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "8",
+      "confidence": "estimated",
+      "provenance": "Health Canada, Canadian Nutrient File 2026, food 2394 : 1 gousse = 3 g et 1 bulbe = 24 g, donc 8 gousses par bulbe. Super C vend l'ail à la pièce (« 5 unités par emballage ») ; lire une pièce vendue comme un bulbe entier reste une hypothèse Souschef, à remplacer par un comptage. Sans cette conversion, un bulbe entier était facturé comme une seule gousse."
+    },
+    {
+      "canonical_ingredient_id": "gousse_ail",
+      "from_unit_kind": "mass",
+      "from_base_unit": "g",
+      "canonical_units_per_source_unit": "0.333333",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Canadian Nutrient File 2026, food 2394 : 1 gousse d'ail cru = 3 g"
+    },
+    {
+      "canonical_ingredient_id": "tortilla_mais",
+      "from_unit_kind": "mass",
+      "from_base_unit": "g",
+      "canonical_units_per_source_unit": "0.04",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 4048 : 1 tortilla de maïs de 15,2 à 17,8 cm = 25 g. Le détaillant vend le paquet à la masse, la recette compte des tortillas."
+    },
+    {
+      "canonical_ingredient_id": "piment_jalapeno",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "15",
+      "confidence": "audited_conversion",
+      "provenance": "Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "poivron_rouge",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "119",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 2484 : 1 poivron rouge moyen = 119 g Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "poivron_melange",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "119",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 2484 : 1 poivron moyen = 119 g, toutes couleurs confondues Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "carotte",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "61",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 2380 : 1 carotte moyenne = 61 g Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "tomate",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "123",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 2460 : 1 tomate moyenne entière = 123 g Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "citron",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "58",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 1587 : 1 citron moyen sans pelure = 58 g Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "lime",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "67",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 1593 : 1 lime = 67 g Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "concombre",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "201",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 4848 : 1 concombre moyen pelé = 201 g Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "patate_douce",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "130",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 2240 : 1 patate douce moyenne = 130 g Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "pomme_de_terre",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "213",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 2505 : 1 pomme de terre moyenne, chair et pelure = 213 g Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "poireau",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "89",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 2396 : 1 poireau (bulbe et portion inférieure) = 89 g Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "peche",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "150",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 1728 : 1 pêche moyenne = 150 g Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "poire",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "202",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 7213 : 1 poire moyenne = 202 g Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "orange",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "131",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 1722 : 1 orange moyenne = 131 g Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "pomme",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "161",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 1697 : 1 pomme moyenne sans pelure = 161 g Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "figue",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "50",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 1711 : 1 figue moyenne = 50 g Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "asperge",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "16",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 1990 : 1 tige d'asperge moyenne = 16 g Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "chou",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "23",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 2361 : 1 feuille de chou moyenne = 23 g Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "avocat",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "201",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 1511 : 1 avocat = 201 g Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "mangue",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "207",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 1603 : 1 mangue = 207 g Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "aubergine",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "458",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 2088 : 1 aubergine pelée = 458 g Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "betterave",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "82",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 2500 : 1 betterave de 5 cm = 82 g Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "brocoli",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "151",
+      "confidence": "audited_conversion",
+      "provenance": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 2374 : 1 tige de brocoli = 151 g Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "boulette_veau_preparee",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "30",
+      "confidence": "estimated",
+      "provenance": "Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "lasagne_seche",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "20.833333",
+      "confidence": "estimated",
+      "provenance": "Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "pate_brisee",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "200",
+      "confidence": "estimated",
+      "provenance": "Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "rutabaga",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "386",
+      "confidence": "estimated",
+      "provenance": "Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "chipotle_adobo",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "10",
+      "confidence": "estimated",
+      "provenance": "Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "bonbon",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "10",
+      "confidence": "estimated",
+      "provenance": "Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "oignon",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "150",
+      "confidence": "estimated",
+      "provenance": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 2401, ne publie que « 1 gros oignon = 150 g » — aucune mesure moyenne; retenu pour un oignon entier Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "oignon_jaune",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "150",
+      "confidence": "estimated",
+      "provenance": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 2401, ne publie que « 1 gros oignon = 150 g »; retenu pour un oignon jaune entier Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "oignon_rouge",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "150",
+      "confidence": "estimated",
+      "provenance": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 2401, ne publie que « 1 gros oignon = 150 g »; retenu pour un oignon rouge entier Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "echalote_francaise",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "30",
+      "confidence": "estimated",
+      "provenance": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 2326, ne publie aucune mesure de compte pour l'échalote; 30 g par échalote, estimation Souschef à remplacer par une pesée Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "courgette",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "200",
+      "confidence": "estimated",
+      "provenance": "Aucune mesure de courgette crue au FCÉN 2026; 200 g par courgette moyenne, estimation Souschef à remplacer par une pesée Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "clou_girofle",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "0.1",
+      "confidence": "estimated",
+      "provenance": "Aucune mesure de clou entier au FCÉN 2026 (la cannelle et le laurier posent le même problème); 0,1 g par clou, estimation Souschef Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "romarin_frais",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "1.5",
+      "confidence": "estimated",
+      "provenance": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 4723, ne publie que le romarin haché au volume; 1,5 g par tige, estimation Souschef à remplacer par une pesée Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "champignon_non_precise",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "227",
+      "confidence": "estimated",
+      "provenance": "La ligne source compte des barquettes, pas des champignons : format vendu au détail de 227 g, estimation Souschef Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "saucisse_toulouse",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "100",
+      "confidence": "estimated",
+      "provenance": "Format de détail usuel : 100 g par saucisse de Toulouse, estimation Souschef à remplacer par un format publié Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "pate_phyllo",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "20",
+      "confidence": "estimated",
+      "provenance": "Boîte vendue 454 g pour une vingtaine de feuilles : 20 g par feuille, estimation Souschef Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "pain_levain",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "550",
+      "confidence": "estimated",
+      "provenance": "Format vendu chez le détaillant (« Pain au levain, 550 g ») : 550 g par pain, estimation Souschef Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "filet_anchois",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "4",
+      "confidence": "estimated",
+      "provenance": "Boîte vendue 48 g pour une douzaine de filets : 4 g par filet, estimation Souschef Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "escalope_veau",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "100",
+      "confidence": "estimated",
+      "provenance": "100 g par escalope, estimation Souschef à remplacer par un format publié Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "prosciutto",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "15",
+      "confidence": "estimated",
+      "provenance": "Paquet vendu 100 g pour environ sept tranches : 15 g par tranche, estimation Souschef Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "bretzel_mini",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "3",
+      "confidence": "estimated",
+      "provenance": "3 g par mini-bretzel, estimation Souschef Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "boulette_boeuf_preparee",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "30",
+      "confidence": "estimated",
+      "provenance": "30 g par boulette, aligné sur l'équivalence déjà curée pour la boulette de veau préparée Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    },
+    {
+      "canonical_ingredient_id": "aile_poulet",
+      "from_unit_kind": "count",
+      "from_base_unit": "unit",
+      "canonical_units_per_source_unit": "90",
+      "confidence": "estimated",
+      "provenance": "90 g par aile entière crue avec os, estimation Souschef à remplacer par un format publié Le détaillant vend aussi cet ingrédient à la pièce ; la même équivalence sert au besoin de la recette et au format du produit, pour que les deux ne puissent pas diverger."
+    }
+  ],
+  "supply_rules": [
+    {
+      "ingredient_id": "eau",
+      "kind": "essential",
+      "confidence": "exact",
+      "provenance": "Politique Souschef: eau du robinet, aucun achat d'épicerie"
+    },
+    {
+      "ingredient_id": "persil_frais_non_precise",
+      "kind": "derived",
+      "source_ingredient_id": "persil_plat",
+      "source_qty_per_target_unit": "1",
+      "confidence": "audited_conversion",
+      "provenance": "La recette ne précise pas la variété de persil frais; le persil plat frais la satisfait gramme pour gramme et constitue le même achat"
+    },
+    {
+      "ingredient_id": "jaune_oeuf",
+      "kind": "derived",
+      "source_ingredient_id": "oeuf",
+      "source_qty_per_target_unit": "1",
+      "confidence": "audited_conversion",
+      "provenance": "Une séparation d'un œuf entier fournit un jaune"
+    },
+    {
+      "ingredient_id": "beurre_non_precise",
+      "kind": "derived",
+      "source_ingredient_id": "beurre",
+      "source_qty_per_target_unit": "1",
+      "confidence": "audited_conversion",
+      "provenance": "La recette ne précise pas la variante; le beurre salé la satisfait gramme pour gramme et constitue le même achat."
+    },
+    {
+      "ingredient_id": "sucre_non_precise",
+      "kind": "derived",
+      "source_ingredient_id": "sucre_blanc",
+      "source_qty_per_target_unit": "1",
+      "confidence": "audited_conversion",
+      "provenance": "La recette ne précise pas la variante; le sucre blanc la satisfait gramme pour gramme et constitue le même achat."
+    },
+    {
+      "ingredient_id": "poivre_non_precise",
+      "kind": "derived",
+      "source_ingredient_id": "poivre_noir",
+      "source_qty_per_target_unit": "1",
+      "confidence": "audited_conversion",
+      "provenance": "La recette ne précise pas la variante; le poivre noir la satisfait gramme pour gramme et constitue le même achat."
+    },
+    {
+      "ingredient_id": "cumin_non_precise",
+      "kind": "derived",
+      "source_ingredient_id": "cumin_moulu",
+      "source_qty_per_target_unit": "1",
+      "confidence": "audited_conversion",
+      "provenance": "La recette ne précise pas la variante; le cumin moulu la satisfait gramme pour gramme et constitue le même achat."
+    },
+    {
+      "ingredient_id": "riz_non_precise",
+      "kind": "derived",
+      "source_ingredient_id": "riz_blanc_long",
+      "source_qty_per_target_unit": "1",
+      "confidence": "audited_conversion",
+      "provenance": "La recette ne précise pas la variante; le riz blanc à grain long la satisfait gramme pour gramme et constitue le même achat."
+    },
+    {
+      "ingredient_id": "champignon_non_precise",
+      "kind": "derived",
+      "source_ingredient_id": "champignon_blanc",
+      "source_qty_per_target_unit": "1",
+      "confidence": "audited_conversion",
+      "provenance": "La recette ne précise pas la variante; le champignon blanc la satisfait gramme pour gramme et constitue le même achat."
+    },
+    {
+      "ingredient_id": "lait_non_precise",
+      "kind": "derived",
+      "source_ingredient_id": "lait_325",
+      "source_qty_per_target_unit": "1",
+      "confidence": "estimated",
+      "provenance": "La recette ne précise pas la variante; le lait 3,25 % est la variante retenue par défaut. Sans cette règle, le devis prenait la variante la moins chère du rayon, quelle que soit son identité."
+    },
+    {
+      "ingredient_id": "huile_non_precisee",
+      "kind": "derived",
+      "source_ingredient_id": "huile_vegetale",
+      "source_qty_per_target_unit": "1",
+      "confidence": "estimated",
+      "provenance": "La recette ne précise pas la variante; l'huile végétale est la variante retenue par défaut. Sans cette règle, le devis prenait la variante la moins chère du rayon, quelle que soit son identité."
+    },
+    {
+      "ingredient_id": "basilic_non_precise",
+      "kind": "derived",
+      "source_ingredient_id": "basilic_seche",
+      "source_qty_per_target_unit": "1",
+      "confidence": "estimated",
+      "provenance": "La recette ne précise pas la variante; le basilic séché est la variante retenue par défaut. Sans cette règle, le devis prenait la variante la moins chère du rayon, quelle que soit son identité."
+    },
+    {
+      "ingredient_id": "moutarde_non_precisee",
+      "kind": "derived",
+      "source_ingredient_id": "moutarde_dijon",
+      "source_qty_per_target_unit": "1",
+      "confidence": "estimated",
+      "provenance": "La recette ne précise pas la variante; la moutarde de Dijon est la variante retenue par défaut. Sans cette règle, le devis prenait la variante la moins chère du rayon, quelle que soit son identité."
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "comment": "Un produit composé n'est pas l'ingrédient qu'il contient. Chaque marqueur ci-dessous disqualifie un produit pour un ingrédient canonique, SAUF si le marqueur fait partie de l'identité du canonique lui-même (son nom ou l'un de ses alias) : « Pain au levain » reste un pain, « Sauce BBQ » reste une sauce barbecue, « Céréales de riz croquant » reste une céréale. La comparaison se fait par mots entiers sur les libellés normalisés, jamais par sous-chaîne. Volontairement absents, parce qu'ils produisaient des faux rejets vérifiés : « sandwich » (« Bifteck sandwich d'intérieur de ronde » est une coupe de bœuf), « beignet » (« Pêche beignet » est une variété de pêche), « soupe » (« Soupe crème de champignons condensée » EST l'ingrédient attendu).",
+  "composed_product_markers": [
+    "craquelin",
+    "crouton",
+    "croûton",
+    "bagel",
+    "naan",
+    "biscuit",
+    "gaufre",
+    "muffin",
+    "brioche",
+    "chausson",
+    "pizza",
+    "burrito",
+    "taquito",
+    "quiche",
+    "saucisse",
+    "collation",
+    "grignotine",
+    "croustille",
+    "trempette",
+    "kit a salade",
+    "melange pour salade",
+    "nugget",
+    "pogo",
+    "barre tendre",
+    "cereale",
+    "gateau",
+    "tarte",
+    "pain",
+    "cornichon",
+    "aromate"
+  ],
+  "disqualifying_markers_by_ingredient": {
+    "cheddar": [
+      "sans gras",
+      "produit de fromage",
+      "a base de plantes",
+      "à base de plantes"
+    ],
+    "mozzarella": [
+      "a base de plantes",
+      "à base de plantes"
+    ],
+    "parmesan": [
+      "a base de plantes",
+      "à base de plantes"
+    ]
+  },
+  "comment_par_ingredient": "Un marqueur peut être légitime pour un ingrédient et disqualifiant pour un autre : un bouillon de poulet « sans gras » reste un bouillon de poulet, un cheddar « sans gras » n'est pas du cheddar mais une préparation de fromage écrémée — et comme elle est deux fois moins chère au 100 g, elle gagnait systématiquement la sélection. Cette liste reste courte et vérifiée cas par cas : elle ne remplace pas un attribut « forme d'achat » sur l'ingrédient canonique, qui reste à faire.",
+  "wholesale_format_markers": [
+    "caisse",
+    "demi caisse",
+    "cageot",
+    "boisseau",
+    "minot",
+    "palette"
+  ],
+  "comment_formats_de_gros": "Un titre qui annonce un contenant de gros ne publie pas la quantite qu'il contient. La garde ne mord que si une equivalence a la piece allait lui etre appliquee : « Demi caisse de figues fraiches » vendue « 1 ea » prenait « 1 figue moyenne = 50 g », soit la caisse entiere facturee au poids d'une figue (200 $/kg). « Caisse trio de tomates cerises » publie 680 g, n'a besoin d'aucune conversion, et reste chiffrable.",
+  "restricted_categories": [
+    {
+      "category_fragment": "/bieres-et-vins",
+      "allowed_canonical_ingredient_ids": [
+        "vin_rouge_sec",
+        "vin_blanc_sec",
+        "biere_blonde",
+        "cidre_pomme"
+      ],
+      "reason": "rayon_alcool_ingredient_non_alcoolise"
+    }
+  ],
+  "comment_rayons_reserves": "Le rayon est la preuve du detaillant, pas une devinette sur le titre. Verifie produit par produit sur le catalogue Super C 2026-W33 : le rayon bieres-et-vins apparie 20 produits, dont 4 a tort — 2 bieres vers « miel » (dont la biere au miel qui gagnait la composition du panier dans 8 recettes) et 2 boissons alcoolisees vers « eau ». Les 16 autres vont vers les 4 ingredients autorises ci-dessus. Un marqueur pose sur le titre (« biere », « vin ») avait ete essaye d'abord et rejetait a tort « Sauce barbecue avec biere Guinness », « Filets d'aiglefin en pate a la biere » et « Vinaigre de vin blanc »."
+}
