@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "source": "cook_french_recipe_corpus",
+  "reviewed_on": "2026-08-13",
+  "reviewer": "codex_manual_review",
+  "additions": [
+    {"id": "cognac", "family_id": "boissons", "name": "Cognac ou brandy", "english_name": "Cognac or brandy", "unit_kind": "volume", "base_unit": "ml", "aliases": ["cognac", "brandy"]},
+    {"id": "confiture_abricot", "family_id": "sucres", "name": "Confiture d’abricots", "english_name": "Apricot jam", "unit_kind": "volume", "base_unit": "ml", "aliases": ["confiture d'abricots", "gelée de pommes"]},
+    {"id": "feuillage_fenouil", "family_id": "herbes", "name": "Feuillage de fenouil", "english_name": "Fennel fronds", "unit_kind": "volume", "base_unit": "ml", "aliases": ["feuillage de fenouil", "frondes de fenouil"]},
+    {"id": "fromage_vegetalien", "family_id": "fromages", "name": "Fromage végétalien", "english_name": "Vegan cheese", "unit_kind": "mass", "base_unit": "g", "aliases": ["fromage vegan", "fromage végétal"]},
+    {"id": "cardamome_graine", "family_id": "epices", "name": "Graines de cardamome", "english_name": "Cardamom seeds", "unit_kind": "volume", "base_unit": "ml", "aliases": ["graines de cardamome"]},
+    {"id": "jambon_fume_epaule", "family_id": "porc", "name": "Jambon fumé dans l’épaule", "english_name": "Smoked picnic shoulder ham", "unit_kind": "mass", "base_unit": "g", "aliases": ["jambon fumé dans l'épaule", "jambon picnic"]},
+    {"id": "jarret_porc", "family_id": "porc", "name": "Jarret de porc", "english_name": "Pork hock", "unit_kind": "mass", "base_unit": "g", "aliases": ["jarrets de porc", "pattes de cochon"]},
+    {"id": "jus_cornichon", "family_id": "sauces", "name": "Jus de cornichon", "english_name": "Pickle juice", "unit_kind": "volume", "base_unit": "ml", "aliases": ["jus de cornichon", "saumure de cornichon"]},
+    {"id": "aubergine_grillee", "family_id": "legumes", "name": "Aubergines grillées", "english_name": "Grilled eggplant", "unit_kind": "volume", "base_unit": "ml", "aliases": ["aubergines grillées"]},
+    {"id": "poudre_boisson_aromatisee", "family_id": "boissons", "name": "Poudre pour boisson aromatisée", "english_name": "Flavoured drink powder", "unit_kind": "volume", "base_unit": "ml", "aliases": ["poudre pour boissons aromatisées"]},
+    {"id": "boulette_porc_preparee", "family_id": "porc", "name": "Boulettes de porc préparées", "english_name": "Prepared pork meatballs", "unit_kind": "mass", "base_unit": "g", "aliases": ["boulettes de porc cuites", "boulettes de porc préparées"]},
+    {"id": "sirop_aromatise", "family_id": "boissons", "name": "Sirop aromatisé", "english_name": "Flavoured syrup", "unit_kind": "volume", "base_unit": "ml", "aliases": ["sirop aromatisé", "sirop à la framboise bleue"]}
+  ]
+}

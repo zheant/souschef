@@ -5164,5 +5164,201 @@
     "external_id": "7824",
     "source_version": "2026",
     "notes": "Correspondance exacte avec un nom ou alias déjà approuvé; aucun nouveau canon créé."
+  },
+  {
+    "canonical_ingredient_id": "fromage_brie",
+    "source": "cnf",
+    "external_id": "20",
+    "source_version": "2026",
+    "notes": "Fromage simple explicitement identifié dans le FCÉN; requis par des produits Super C admissibles."
+  },
+  {
+    "canonical_ingredient_id": "fromage_camembert",
+    "source": "cnf",
+    "external_id": "21",
+    "source_version": "2026",
+    "notes": "Fromage simple explicitement identifié dans le FCÉN; requis par des produits Super C admissibles."
+  },
+  {
+    "canonical_ingredient_id": "fromage_gouda",
+    "source": "cnf",
+    "external_id": "109",
+    "source_version": "2026",
+    "notes": "Fromage simple explicitement identifié dans le FCÉN; requis par des produits Super C admissibles."
+  },
+  {
+    "canonical_ingredient_id": "creme_cafe",
+    "source": "cnf",
+    "external_id": "136",
+    "source_version": "2026",
+    "notes": "Le FCÉN reconnaît la crème à café comme identité culinaire; le pourcentage commercial demeure un attribut du produit."
+  },
+  {
+    "canonical_ingredient_id": "pates_seches",
+    "source": "cnf",
+    "external_id": "4515",
+    "source_version": "2026",
+    "notes": "Identité générique de pâtes sèches appuyée par le FCÉN; la forme commerciale ne justifie pas un nouveau canon."
+  },
+  {
+    "canonical_ingredient_id": "laitue_boston",
+    "source": "cnf",
+    "external_id": "2115",
+    "source_version": "2026",
+    "notes": "Légume cru simple explicitement identifié dans le FCÉN; requis par des produits Super C admissibles."
+  },
+  {
+    "canonical_ingredient_id": "laitue_frisee",
+    "source": "cnf",
+    "external_id": "2117",
+    "source_version": "2026",
+    "notes": "Légume cru simple explicitement identifié dans le FCÉN; requis par des produits Super C admissibles."
+  },
+  {
+    "canonical_ingredient_id": "laitue_feuilles_rouges",
+    "source": "cnf",
+    "external_id": "5412",
+    "source_version": "2026",
+    "notes": "Légume cru simple explicitement identifié dans le FCÉN; requis par des produits Super C admissibles."
+  },
+  {
+    "canonical_ingredient_id": "cerise_douce",
+    "source": "cnf",
+    "external_id": "1531",
+    "source_version": "2026",
+    "notes": "Fruit cru simple explicitement identifié dans le FCÉN; requis par des produits Super C admissibles."
+  },
+  {
+    "canonical_ingredient_id": "saumon_rose_conserve",
+    "source": "cnf",
+    "external_id": "7082",
+    "source_version": "2026",
+    "notes": "Poisson en conserve simple explicitement identifié dans le FCÉN; requis par des produits Super C admissibles."
+  },
+  {
+    "canonical_ingredient_id": "bifteck_boeuf",
+    "source": "cnf",
+    "external_id": "6169",
+    "source_version": "2026",
+    "notes": "Coupe de boeuf crue générique explicitement identifiée dans le FCÉN; utilisée lorsque le libellé commercial ne permet pas une coupe plus précise."
+  },
+  {
+    "canonical_ingredient_id": "shortening_vegetal",
+    "source": "cnf",
+    "external_id": "7785",
+    "source_version": "2026",
+    "notes": "Matière grasse de cuisson explicitement identifiée dans le FCÉN; ce n'est ni une collation ni un plat préparé."
+  },
+  {
+    "canonical_ingredient_id": "foie_veau",
+    "source": "cnf",
+    "external_id": "3617",
+    "source_version": "2026",
+    "notes": "Abat cru simple explicitement identifié dans le FCÉN; requis par des produits Super C admissibles."
+  },
+  {
+    "canonical_ingredient_id": "viande_cerf",
+    "source": "cnf",
+    "external_id": "3579",
+    "source_version": "2026",
+    "notes": "Viande de gibier crue explicitement identifiée dans le FCÉN; le libellé commercial cerf est relié à la venaison."
+  },
+  {
+    "canonical_ingredient_id": "viande_bison",
+    "source": "cnf",
+    "external_id": "3571",
+    "source_version": "2026",
+    "notes": "Viande de gibier crue explicitement identifiée dans le FCÉN; requise par un produit Super C admissible."
+  },
+  {
+    "canonical_ingredient_id": "viande_cheval",
+    "source": "cnf",
+    "external_id": "3585",
+    "source_version": "2026",
+    "notes": "Viande de gibier crue explicitement identifiée dans le FCÉN; requise par un produit Super C admissible."
+  },
+  {
+    "canonical_ingredient_id": "gigot_agneau",
+    "source": "cnf",
+    "external_id": "3432",
+    "source_version": "2026",
+    "notes": "Coupe d'agneau crue explicitement identifiée dans le FCÉN; requise par un produit Super C admissible."
+  },
+  {
+    "canonical_ingredient_id": "fromage_brick",
+    "source": "cnf",
+    "external_id": "19",
+    "source_version": "2026",
+    "notes": "Fromage simple explicitement identifié dans le FCÉN; requis par un produit Super C admissible."
+  },
+  {
+    "canonical_ingredient_id": "tomate_sechee",
+    "source": "cnf",
+    "external_id": "2348",
+    "source_version": "2026",
+    "notes": "État simple de tomate explicitement identifié dans le FCÉN; requis par des produits Super C admissibles."
+  },
+  {
+    "canonical_ingredient_id": "edulcorant_stevia",
+    "source": "cnf",
+    "external_id": "7245",
+    "source_version": "2026",
+    "notes": "Édulcorant de cuisine explicitement identifié dans le FCÉN; distinct des bonbons et collations exclus."
+  },
+  {
+    "canonical_ingredient_id": "edulcorant_sucralose",
+    "source": "cnf",
+    "external_id": "5975",
+    "source_version": "2026",
+    "notes": "Édulcorant de cuisine explicitement identifié dans le FCÉN; distinct des bonbons et collations exclus."
+  },
+  {
+    "canonical_ingredient_id": "crevette_cuite",
+    "source": "cnf",
+    "external_id": "3212",
+    "source_version": "2026",
+    "notes": "État cuit simple de la crevette explicitement identifié dans le FCÉN; distinct de la crevette crue."
+  },
+  {
+    "canonical_ingredient_id": "kefir_nature",
+    "source": "cnf",
+    "external_id": "6999",
+    "source_version": "2026",
+    "notes": "Produit laitier fermenté nature explicitement identifié dans le FCÉN et utilisable comme ingrédient culinaire."
+  },
+  {
+    "canonical_ingredient_id": "lait_concentre_sucre",
+    "source": "cnf",
+    "external_id": "68",
+    "source_version": "2026",
+    "notes": "Ingrédient laitier de cuisson explicitement identifié dans le FCÉN; distinct du lait évaporé non sucré."
+  },
+  {
+    "canonical_ingredient_id": "choucroute_conserve",
+    "source": "cnf",
+    "external_id": "2201",
+    "source_version": "2026",
+    "notes": "Légume fermenté simple explicitement identifié dans le FCÉN et utilisable dans un repas."
+  },
+  {
+    "canonical_ingredient_id": "boisson_avoine_non_sucree",
+    "source": "cnf",
+    "external_id": "7808",
+    "source_version": "2026",
+    "notes": "Boisson végétale non sucrée pouvant remplacer le lait en cuisine, appuyée par l'entrée avoine-quinoa du FCÉN."
+  },
+  {
+    "canonical_ingredient_id": "boisson_amande_non_sucree",
+    "source": "cnf",
+    "external_id": "7802",
+    "source_version": "2026",
+    "notes": "Boisson végétale nature non sucrée utilisable en cuisine et explicitement identifiée dans le FCÉN."
+  },
+  {
+    "canonical_ingredient_id": "sirop_mais",
+    "source": "cnf",
+    "external_id": "4323",
+    "source_version": "2026",
+    "notes": "Sucre liquide simple utilisé comme ingrédient de cuisson; explicitement identifié dans le FCÉN et distinct des confiseries finies."
   }
 ]

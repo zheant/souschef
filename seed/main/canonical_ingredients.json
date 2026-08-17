@@ -10258,5 +10258,405 @@
     "perishability": null,
     "salvage_value_cents_per_base_unit": null,
     "density_g_per_ml": null
+  },
+  {
+    "id": "fromage_brie",
+    "family_id": "fromages",
+    "name": "Fromage brie",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "fromage_camembert",
+    "family_id": "fromages",
+    "name": "Fromage camembert",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "fromage_gouda",
+    "family_id": "fromages",
+    "name": "Fromage gouda",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "creme_cafe",
+    "family_id": "produits_laitiers",
+    "name": "Crème à café",
+    "unit_kind": "volume",
+    "base_unit": "ml",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "pates_seches",
+    "family_id": "pates",
+    "name": "Pâtes sèches",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "laitue_boston",
+    "family_id": "legumes",
+    "name": "Laitue Boston",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "laitue_frisee",
+    "family_id": "legumes",
+    "name": "Laitue frisée",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "laitue_feuilles_rouges",
+    "family_id": "legumes",
+    "name": "Laitue à feuilles rouges",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "cerise_douce",
+    "family_id": "fruits",
+    "name": "Cerise douce",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "saumon_rose_conserve",
+    "family_id": "poissons",
+    "name": "Saumon rose en conserve",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "bifteck_boeuf",
+    "family_id": "boeuf",
+    "name": "Bifteck de bœuf",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "shortening_vegetal",
+    "family_id": "huiles",
+    "name": "Shortening végétal",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "foie_veau",
+    "family_id": "veau",
+    "name": "Foie de veau",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "viande_cerf",
+    "family_id": "agneau",
+    "name": "Viande de cerf",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "viande_bison",
+    "family_id": "agneau",
+    "name": "Viande de bison",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "viande_cheval",
+    "family_id": "agneau",
+    "name": "Viande de cheval",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "gigot_agneau",
+    "family_id": "agneau",
+    "name": "Gigot d'agneau",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "fromage_brick",
+    "family_id": "fromages",
+    "name": "Fromage brick",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "tomate_sechee",
+    "family_id": "tomates",
+    "name": "Tomates séchées",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "edulcorant_stevia",
+    "family_id": "sucres",
+    "name": "Édulcorant de stévia",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "edulcorant_sucralose",
+    "family_id": "sucres",
+    "name": "Édulcorant au sucralose",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "crevette_cuite",
+    "family_id": "fruits_de_mer",
+    "name": "Crevettes cuites",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "kefir_nature",
+    "family_id": "produits_laitiers",
+    "name": "Kéfir nature",
+    "unit_kind": "volume",
+    "base_unit": "ml",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "lait_concentre_sucre",
+    "family_id": "produits_laitiers",
+    "name": "Lait concentré sucré",
+    "unit_kind": "volume",
+    "base_unit": "ml",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "choucroute_conserve",
+    "family_id": "conserves",
+    "name": "Choucroute en conserve",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "boisson_avoine_non_sucree",
+    "family_id": "boissons",
+    "name": "Boisson d’avoine non sucrée",
+    "unit_kind": "volume",
+    "base_unit": "ml",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "boisson_amande_non_sucree",
+    "family_id": "boissons",
+    "name": "Boisson d’amande non sucrée",
+    "unit_kind": "volume",
+    "base_unit": "ml",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "sirop_mais",
+    "family_id": "sucres",
+    "name": "Sirop de maïs",
+    "unit_kind": "volume",
+    "base_unit": "ml",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "cognac",
+    "family_id": "boissons",
+    "name": "Cognac ou brandy",
+    "unit_kind": "volume",
+    "base_unit": "ml",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "confiture_abricot",
+    "family_id": "sucres",
+    "name": "Confiture d’abricots",
+    "unit_kind": "volume",
+    "base_unit": "ml",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "feuillage_fenouil",
+    "family_id": "herbes",
+    "name": "Feuillage de fenouil",
+    "unit_kind": "volume",
+    "base_unit": "ml",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "fromage_vegetalien",
+    "family_id": "fromages",
+    "name": "Fromage végétalien",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "cardamome_graine",
+    "family_id": "epices",
+    "name": "Graines de cardamome",
+    "unit_kind": "volume",
+    "base_unit": "ml",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "jambon_fume_epaule",
+    "family_id": "porc",
+    "name": "Jambon fumé dans l’épaule",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "jarret_porc",
+    "family_id": "porc",
+    "name": "Jarret de porc",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "jus_cornichon",
+    "family_id": "sauces",
+    "name": "Jus de cornichon",
+    "unit_kind": "volume",
+    "base_unit": "ml",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "aubergine_grillee",
+    "family_id": "legumes",
+    "name": "Aubergines grillées",
+    "unit_kind": "volume",
+    "base_unit": "ml",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "poudre_boisson_aromatisee",
+    "family_id": "boissons",
+    "name": "Poudre pour boisson aromatisée",
+    "unit_kind": "volume",
+    "base_unit": "ml",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "boulette_porc_preparee",
+    "family_id": "porc",
+    "name": "Boulettes de porc préparées",
+    "unit_kind": "mass",
+    "base_unit": "g",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
+  },
+  {
+    "id": "sirop_aromatise",
+    "family_id": "boissons",
+    "name": "Sirop aromatisé",
+    "unit_kind": "volume",
+    "base_unit": "ml",
+    "perishability": null,
+    "salvage_value_cents_per_base_unit": null,
+    "density_g_per_ml": null
   }
 ]

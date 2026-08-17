@@ -143,6 +143,7 @@ def normalize_offers(session: Session) -> dict[str, int]:
                 valid_to=date.fromisoformat(p["valid_to"]),
                 is_promo=p.get("is_promo", False),
                 regular_price_cents_cad=p.get("regular_price_cents_cad"),
+                pricing_confidence=p.get("pricing_confidence", "exact"),
             )
             .on_conflict_do_update(
                 index_elements=["product_id", "store_id", "valid_from"],
@@ -151,6 +152,7 @@ def normalize_offers(session: Session) -> dict[str, int]:
                     "valid_to": date.fromisoformat(p["valid_to"]),
                     "is_promo": p.get("is_promo", False),
                     "regular_price_cents_cad": p.get("regular_price_cents_cad"),
+                    "pricing_confidence": p.get("pricing_confidence", "exact"),
                 },
             )
         )

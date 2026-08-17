@@ -1,0 +1,31 @@
+{
+  "source_selected": 200,
+  "source_retained": 157,
+  "imported_ready": 121,
+  "review_required": 0,
+  "desserts_excluded": 36,
+  "by_source": {
+    "bon_pour_toi": {
+      "ready": 36,
+      "review": 0,
+      "excluded": 12
+    },
+    "la_cuisine_de_jean_philippe": {
+      "ready": 10,
+      "review": 0,
+      "excluded": 3
+    },
+    "ricardo": {
+      "ready": 75,
+      "review": 0,
+      "excluded": 21
+    }
+  },
+  "unknown_canonical_ids": [],
+  "source_path": "C:\\Simulations\\Deepseek\\Cook\\data\\recipe_sources\\french_recipe_corpus_200.json",
+  "active_recipe_total": 161,
+  "preexisting_recipes": 40,
+  "imported_recipes_path": "C:\\Simulations\\Deepseek\\Souschef\\souschef\\seed\\main\\imported_recipes.json",
+  "review_path": "C:\\Simulations\\Deepseek\\Souschef\\souschef\\data\\recipe-import-review\\cook-recipes-review.json",
+  "excluded_path": "C:\\Simulations\\Deepseek\\Souschef\\souschef\\data\\recipe-import-review\\cook-recipes-excluded.json"
+}

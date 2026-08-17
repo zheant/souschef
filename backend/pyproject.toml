@@ -12,6 +12,7 @@ dependencies = [
     "alembic>=1.13",
     "psycopg2-binary>=2.9",
     "pulp>=2.8",
+    "playwright>=1.55,<2",
 ]
 
 [project.optional-dependencies]

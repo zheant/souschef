@@ -1,0 +1,248 @@
+{
+  "source": "cnf",
+  "source_version": "2026",
+  "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD",
+  "reviewer": "maxi-catalog-curation-v1",
+  "decisions": [
+    {
+      "source_version": "2026",
+      "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD",
+      "food_code": "3212",
+      "reviewer": "maxi-catalog-curation-v1",
+      "candidate_snapshot": {
+        "food_code": "3212",
+        "food_description_fr": "Crustacés, crevette, espèces diverses, à vapeur ou bouillies",
+        "food_description_en": "Crustaceans, shrimp, mixed species, boiled or steamed",
+        "cnf_food_group_code": "15",
+        "cnf_food_group_description_fr": "Produits de poissons, mollusques et crustacés"
+      },
+      "action": "create_variant",
+      "canonical_ingredient_id": null,
+      "canonical": {
+        "id": "crevette_cuite",
+        "family_id": "fruits_de_mer",
+        "name": "Crevettes cuites",
+        "unit_kind": "mass",
+        "base_unit": "g",
+        "perishability": null,
+        "salvage_value_cents_per_base_unit": null,
+        "density_g_per_ml": null
+      },
+      "rationale": "État cuit simple de la crevette explicitement identifié dans le FCÉN; distinct de la crevette crue.",
+      "aliases": [
+        {
+          "language": "en",
+          "alias": "Cooked shrimp"
+        }
+      ],
+      "acknowledged_similar_ids": [
+        "crevette_crue"
+      ]
+    },
+    {
+      "source_version": "2026",
+      "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD",
+      "food_code": "6999",
+      "reviewer": "maxi-catalog-curation-v1",
+      "candidate_snapshot": {
+        "food_code": "6999",
+        "food_description_fr": "Kéfir, nature, faible en gras (0,5-1,9% M.G.)",
+        "food_description_en": "Kefir, plain, low fat (0.5-1.9% M.F.)",
+        "cnf_food_group_code": "1",
+        "cnf_food_group_description_fr": "Produits laitiers et d'oeufs"
+      },
+      "action": "create_variant",
+      "canonical_ingredient_id": null,
+      "canonical": {
+        "id": "kefir_nature",
+        "family_id": "produits_laitiers",
+        "name": "Kéfir nature",
+        "unit_kind": "volume",
+        "base_unit": "ml",
+        "perishability": null,
+        "salvage_value_cents_per_base_unit": null,
+        "density_g_per_ml": null
+      },
+      "rationale": "Produit laitier fermenté nature explicitement identifié dans le FCÉN et utilisable comme ingrédient culinaire.",
+      "aliases": [
+        {
+          "language": "en",
+          "alias": "Plain kefir"
+        }
+      ],
+      "acknowledged_similar_ids": [
+        "yogourt_nature"
+      ]
+    },
+    {
+      "source_version": "2026",
+      "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD",
+      "food_code": "68",
+      "reviewer": "maxi-catalog-curation-v1",
+      "candidate_snapshot": {
+        "food_code": "68",
+        "food_description_fr": "Lait, concentré, sucré, conserve",
+        "food_description_en": "Milk, condensed, sweetened, canned",
+        "cnf_food_group_code": "1",
+        "cnf_food_group_description_fr": "Produits laitiers et d'oeufs"
+      },
+      "action": "create_variant",
+      "canonical_ingredient_id": null,
+      "canonical": {
+        "id": "lait_concentre_sucre",
+        "family_id": "produits_laitiers",
+        "name": "Lait concentré sucré",
+        "unit_kind": "volume",
+        "base_unit": "ml",
+        "perishability": null,
+        "salvage_value_cents_per_base_unit": null,
+        "density_g_per_ml": null
+      },
+      "rationale": "Ingrédient laitier de cuisson explicitement identifié dans le FCÉN; distinct du lait évaporé non sucré.",
+      "aliases": [
+        {
+          "language": "en",
+          "alias": "Sweetened condensed milk"
+        }
+      ],
+      "acknowledged_similar_ids": [
+        "lait_evapore"
+      ]
+    },
+    {
+      "source_version": "2026",
+      "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD",
+      "food_code": "2201",
+      "reviewer": "maxi-catalog-curation-v1",
+      "candidate_snapshot": {
+        "food_code": "2201",
+        "food_description_fr": "Choucroute, conserve, solides et liquide",
+        "food_description_en": "Sauerkraut, canned, solids and liquid",
+        "cnf_food_group_code": "11",
+        "cnf_food_group_description_fr": "Légumes et produits végétaux"
+      },
+      "action": "create_variant",
+      "canonical_ingredient_id": null,
+      "canonical": {
+        "id": "choucroute_conserve",
+        "family_id": "conserves",
+        "name": "Choucroute en conserve",
+        "unit_kind": "mass",
+        "base_unit": "g",
+        "perishability": null,
+        "salvage_value_cents_per_base_unit": null,
+        "density_g_per_ml": null
+      },
+      "rationale": "Légume fermenté simple explicitement identifié dans le FCÉN et utilisable dans un repas.",
+      "aliases": [
+        {
+          "language": "en",
+          "alias": "Canned sauerkraut"
+        }
+      ],
+      "acknowledged_similar_ids": [
+        "chou"
+      ]
+    },
+    {
+      "source_version": "2026",
+      "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD",
+      "food_code": "7808",
+      "reviewer": "maxi-catalog-curation-v1",
+      "candidate_snapshot": {
+        "food_code": "7808",
+        "food_description_fr": "Boisson à base de plantes, avoine et quinoa, non sucrée, enrichie, longue conservation",
+        "food_description_en": "Plant-based beverage, oat and quinoa beverage, unsweetened, fortified, shelf-stable",
+        "cnf_food_group_code": "14",
+        "cnf_food_group_description_fr": "Boissons"
+      },
+      "action": "create_variant",
+      "canonical_ingredient_id": null,
+      "canonical": {
+        "id": "boisson_avoine_non_sucree",
+        "family_id": "boissons",
+        "name": "Boisson d’avoine non sucrée",
+        "unit_kind": "volume",
+        "base_unit": "ml",
+        "perishability": null,
+        "salvage_value_cents_per_base_unit": null,
+        "density_g_per_ml": null
+      },
+      "rationale": "Boisson végétale non sucrée pouvant remplacer le lait en cuisine, appuyée par l'entrée avoine-quinoa du FCÉN.",
+      "aliases": [
+        {
+          "language": "en",
+          "alias": "Unsweetened oat beverage"
+        }
+      ],
+      "acknowledged_similar_ids": [
+        "lait_vegetal_non_precise"
+      ]
+    },
+    {
+      "source_version": "2026",
+      "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD",
+      "food_code": "7802",
+      "reviewer": "maxi-catalog-curation-v1",
+      "candidate_snapshot": {
+        "food_code": "7802",
+        "food_description_fr": "Boisson à base de plantes, amande, nature, non sucrée, enrichie, réfrigérée et/ou longue conservation",
+        "food_description_en": "Plant-based beverage, almond beverage, plain, unsweetened, fortified, refrigerated and/or shelf-stable",
+        "cnf_food_group_code": "14",
+        "cnf_food_group_description_fr": "Boissons"
+      },
+      "action": "create_variant",
+      "canonical_ingredient_id": null,
+      "canonical": {
+        "id": "boisson_amande_non_sucree",
+        "family_id": "boissons",
+        "name": "Boisson d’amande non sucrée",
+        "unit_kind": "volume",
+        "base_unit": "ml",
+        "perishability": null,
+        "salvage_value_cents_per_base_unit": null,
+        "density_g_per_ml": null
+      },
+      "rationale": "Boisson végétale nature non sucrée utilisable en cuisine et explicitement identifiée dans le FCÉN.",
+      "aliases": [
+        {
+          "language": "en",
+          "alias": "Unsweetened almond beverage"
+        }
+      ],
+      "acknowledged_similar_ids": [
+        "lait_vegetal_non_precise"
+      ]
+    },
+    {
+      "source_version": "2026",
+      "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD",
+      "food_code": "4323",
+      "reviewer": "maxi-catalog-curation-v1",
+      "candidate_snapshot": {
+        "food_code": "4323",
+        "food_description_fr": "Confiseries, sirop de maïs, clair",
+        "food_description_en": "Sweets, syrup, corn, light",
+        "cnf_food_group_code": "19",
+        "cnf_food_group_description_fr": "Sucreries"
+      },
+      "action": "create_variant",
+      "canonical_ingredient_id": null,
+      "canonical": {
+        "id": "sirop_mais",
+        "family_id": "sucres",
+        "name": "Sirop de maïs",
+        "unit_kind": "volume",
+        "base_unit": "ml",
+        "perishability": null,
+        "salvage_value_cents_per_base_unit": null,
+        "density_g_per_ml": null
+      },
+      "rationale": "Sucre liquide simple utilisé comme ingrédient de cuisson; explicitement identifié dans le FCÉN et distinct des confiseries finies.",
+      "aliases": [
+        {"language": "en", "alias": "Corn syrup"}
+      ],
+      "acknowledged_similar_ids": ["sucre_non_precise"]
+    }
+  ]
+}

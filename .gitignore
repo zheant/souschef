@@ -9,3 +9,10 @@ venv/
 *.egg-info/
 *.tsbuildinfo
 .claude/settings.local.json
+data/catalogue-captures/
+data/catalogue-reports/
+data/browser-profiles/
+# Archive Sante Canada retelechargeable, pas une decision de curation
+data/cnf_fcen_all-files-data_*.zip
+# Captures de debogage des adaptateurs web
+data/*-debug.png

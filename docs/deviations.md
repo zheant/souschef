@@ -824,3 +824,39 @@ Les 333 créations similaires enregistrent les ids comparés comme acquittés;
 `scripts/generate_catalog.py` fusionne ces décisions et régénère ingrédients,
 alias, crosswalks et événements d'audit. Les identifiants historiques utilisés
 par les recettes, produits et essentiels sont tous préservés.
+
+
+## D23 — Maxi et Super C sont capturés en parallèle, puis filtrés par le canon
+
+**Décision.** Le lanceur démarre deux collecteurs indépendants dans un pool de
+deux tâches. `MaxiBrowserExtractor` sélectionne explicitement le magasin 7552
+dans un profil Edge persistant et séparé; `SuperCWebExtractor` sélectionne le
+magasin public 640 et parcourt les rayons configurés. Chaque page devient une
+capture JSON horodatée. L'import ne débute qu'après la réussite des deux
+sources, puis emprunte le seul chemin permis : `RawOfferDTO` →
+`staging.raw_offer` → normalisation → `market.price`.
+
+**Frontière culinaire.** Les catégories par défaut excluent collations,
+friandises, boissons et plats préparés. La catégorie reste toutefois un filtre
+d'acquisition, jamais une preuve d'identité : seul un alias canonique non
+ambigu et un format fixe autorisent l'import. Un produit composé, un snack ou
+un article à poids variable demeure auditable dans le rapport sans entrer
+dans le marché. Aucun poids moyen n'est inventé.
+
+**Prix et charge.** Le prix courant, le prix régulier lorsqu'il est affiché et
+le marqueur de promotion sont séparés. Un marqueur promotionnel reste vrai
+même si le site omet le prix régulier. Le client espace ses requêtes de dix
+secondes et applique une attente croissante sur HTTP 429. Les captures et
+rapports sont locaux et rejouables; aucune collecte ne se produit dans une
+requête API.
+
+**Navigateur Maxi.** Le site Maxi refuse présentement le navigateur sans
+interface. Le collecteur lance donc Edge en mode visible, avec un profil
+d'automatisation distinct et une cadence lente. Il valide le cookie de magasin
+avant d'accepter une page et conserve une capture d'écran diagnostique sur
+échec. Une éventuelle vérification du site reste une intervention humaine; le
+collecteur n'emploie aucun module de furtivité ni contournement.
+
+**Reprise.** Une exécution utilise un dossier `run-*` propre. Le manifeste
+`_complete.json` est écrit atomiquement seulement après la dernière page; la
+reprise explicite sélectionne uniquement une exécution complète de la semaine.

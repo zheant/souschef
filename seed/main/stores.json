@@ -30,5 +30,21 @@
     "lat": 45.532,
     "lng": -73.5905,
     "shopping_center_id": null
+  },
+  {
+    "external_key": "maxi_7552",
+    "banner": "Maxi",
+    "address": "350 rue Bouvier, Québec, QC",
+    "lat": 46.841111,
+    "lng": -71.270482,
+    "shopping_center_id": null
+  },
+  {
+    "external_key": "superc_640",
+    "banner": "Super C",
+    "address": "4545 boul. de l'Auvergne, Québec, QC G2C 1H7",
+    "lat": 46.82575,
+    "lng": -71.35268,
+    "shopping_center_id": null
   }
 ]

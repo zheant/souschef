@@ -28,6 +28,10 @@ class RawOfferDTO(BaseModel):
     price_cents_cad: int = Field(ge=0)
     regular_price_cents_cad: int | None = Field(default=None, ge=0)
     is_promo: bool = False
+    pricing_confidence: str = Field(
+        default="exact",
+        pattern=r"^(exact|audited_conversion|estimated|incomplete)$",
+    )
     valid_from: str  # ISO date
     valid_to: str    # ISO date
 

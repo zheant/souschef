@@ -22,7 +22,7 @@ class PurchaseLine:
     product_external_key: str
     store_id: int
     store_external_key: str
-    units: int                       # n_ps
+    units: int | float               # n_ps; continu si vente au poids sans incrément
     unit_price_cents_cad: int        # c_ps
     taxed_total_cents_cad: Decimal   # n·c·(1+t)
     #: Rabais et économies affichés (pilote, docs/product-pilot.md) — une

@@ -19,6 +19,7 @@ from decimal import Decimal
 
 from sqlalchemy import (
     CheckConstraint,
+    Enum,
     ForeignKey,
     Index,
     Numeric,
@@ -31,6 +32,18 @@ from .base import Base, TimestampMixin
 
 SCHEMA = "market"
 CATALOG = "catalog"
+
+
+class SaleMode(str, enum.Enum):
+    fixed_package = "fixed_package"
+    variable_weight = "variable_weight"
+
+
+class PricingConfidence(str, enum.Enum):
+    exact = "exact"
+    audited_conversion = "audited_conversion"
+    estimated = "estimated"
+    incomplete = "incomplete"
 
 
 class Store(TimestampMixin, Base):
@@ -59,6 +72,11 @@ class Product(TimestampMixin, Base):
     __table_args__ = (
         UniqueConstraint("external_key"),
         CheckConstraint("package_qty_in_base_unit > 0", name="package_qty_positive"),
+        CheckConstraint(
+            "purchase_increment_in_base_unit IS NULL OR "
+            "purchase_increment_in_base_unit > 0",
+            name="purchase_increment_positive",
+        ),
         CheckConstraint("tax_rate >= 0 AND tax_rate < 1", name="tax_rate_range"),
         {"schema": SCHEMA},
     )
@@ -76,6 +94,24 @@ class Product(TimestampMixin, Base):
     package_qty_in_base_unit: Mapped[Decimal] = mapped_column(Numeric(12, 3))
     #: Libellé d'origine du format, à des fins d'affichage ("900 g", "2 L").
     package_unit: Mapped[str] = mapped_column(String(32))
+    #: Pour ``variable_weight``, ``package_qty_in_base_unit`` est la quantité
+    #: de référence du prix (souvent 1 000 g), pas un emballage inventé.
+    sale_mode: Mapped[SaleMode] = mapped_column(
+        Enum(SaleMode, name="sale_mode", schema=SCHEMA),
+        default=SaleMode.fixed_package,
+    )
+    #: Incrément minimal achetable dans la base_unit. NULL signifie que la
+    #: page publie un prix au poids sans incrément massique exploitable.
+    purchase_increment_in_base_unit: Mapped[Decimal | None] = mapped_column(
+        Numeric(12, 3), nullable=True
+    )
+    quantity_confidence: Mapped[PricingConfidence] = mapped_column(
+        Enum(PricingConfidence, name="pricing_confidence", schema=SCHEMA),
+        default=PricingConfidence.exact,
+    )
+    quantity_provenance: Mapped[str | None] = mapped_column(
+        String(512), nullable=True
+    )
     #: t_p — taux de taxe combiné applicable au produit (0 pour la plupart des
     #: aliments de base).
     tax_rate: Mapped[Decimal] = mapped_column(Numeric(7, 5))
@@ -107,6 +143,10 @@ class Price(Base):
     valid_to: Mapped[date]
     is_promo: Mapped[bool] = mapped_column(default=False)
     regular_price_cents_cad: Mapped[int | None]
+    pricing_confidence: Mapped[PricingConfidence] = mapped_column(
+        Enum(PricingConfidence, name="pricing_confidence", schema=SCHEMA),
+        default=PricingConfidence.exact,
+    )
 
     product: Mapped[Product] = relationship(back_populates="prices")
     store: Mapped[Store] = relationship(back_populates="prices")

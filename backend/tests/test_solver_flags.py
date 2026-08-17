@@ -1,6 +1,6 @@
 """Chaque drapeau doit produire un modèle valide et résoluble SEUL — et le jeu
-de seed principal (40 recettes, 83 produits, 4 magasins) doit se résoudre avec
-tout activé."""
+de seed principal doit se résoudre avec tout activé. Les recettes importées
+sans produit tarifé sont éliminées par le même préfiltre que la production."""
 
 from datetime import date
 from decimal import Decimal
@@ -10,6 +10,7 @@ import pytest
 
 from app.services.appetence import RuleBasedAppetenceScorer
 from app.services.prefilter import prefilter_recipes
+from app.services.validation import min_taxed_price_per_base_unit
 from app.solver import PulpMenuSolver, SolverConfig
 from tests.seed_loader import problem_from_seed_dir
 
@@ -41,7 +42,10 @@ def test_main_seed_all_flags_on():
     Σx ∈ [37, 41] ; K = 2 arrêts ; R_min = 4 ; α = 0,3."""
     problem = problem_from_seed_dir(SEED / "main", ON)
     pre = prefilter_recipes(
-        problem.recipes, problem.profile, RuleBasedAppetenceScorer(problem)
+        problem.recipes,
+        problem.profile,
+        RuleBasedAppetenceScorer(problem),
+        frozenset(min_taxed_price_per_base_unit(problem)),
     )
     cfg = SolverConfig(
         enable_multi_store=True, enable_batch_fixed_cost=True,
@@ -61,7 +65,9 @@ def test_main_seed_all_flags_on():
     assert res.purchases                                           # on achète
     d = res.diagnostic
     assert d.objective_terms.total_cents() != 0
-    assert d.prefilter_counts["troncature"] == 40
+    # L'import Cook ajoute une recette entièrement couverte par le catalogue
+    # tarifé; elle rejoint donc les candidates avant la limite du préfiltre.
+    assert d.prefilter_counts["troncature"] == 41
     assert len(d.assertions_passed) == 7
     # Les portions produites sont couvertes par les achats :
     # les couvertures saturées listées existent bien dans le problème.
