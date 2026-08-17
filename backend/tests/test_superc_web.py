@@ -7,6 +7,7 @@ from urllib.error import HTTPError
 
 from app.adapters.superc_web import (
     DEALS_PATH,
+    SuperCCaptureIncomplete,
     SuperCPageParser,
     SuperCWebExtractor,
     _deals_page_path,
@@ -232,9 +233,13 @@ def test_extractor_persists_each_page_through_callback(monkeypatch):
 def test_duplicate_page_does_not_stop_the_remaining_catalogue(monkeypatch):
     extractor = SuperCWebExtractor("640", request_delay_seconds=0)
     monkeypatch.setattr(extractor, "_verify_store", lambda html: None)
-    first = HTML.replace('data-total-results="81"', 'data-total-results="6"')
+    # 4 produits annoncés, 2 tuiles par page : l'estimation donne 2 pages.
+    # La page 2 est un doublon, donc les 2 derniers produits ne peuvent
+    # arriver qu'en page 3 — au-delà de l'estimation. S'arrêter dessus
+    # tronquait le rayon de moitié en silence.
+    first = HTML.replace('data-total-results="81"', 'data-total-results="4"')
     third = first.replace("059749892582", "999999999991").replace(
-        "059749892599", "999999999992"
+        "4011", "999999999992"
     )
     responses = iter([first, first, third])
     monkeypatch.setattr(
@@ -245,6 +250,86 @@ def test_duplicate_page_does_not_stop_the_remaining_catalogue(monkeypatch):
 
     assert len(pages) == 2
     assert pages[1]["products"][0]["retailer_product_id"] == "999999999991"
+    assert sum(len(page["products"]) for page in pages) == 4
+
+
+def _extractor(monkeypatch, responses):
+    extractor = SuperCWebExtractor("640", request_delay_seconds=0)
+    monkeypatch.setattr(extractor, "_verify_store", lambda html: None)
+    stream = iter(responses)
+    monkeypatch.setattr(
+        extractor, "_request", lambda url, **_kwargs: next(stream, responses[-1])
+    )
+    return extractor
+
+
+def test_a_listing_without_an_announced_total_is_refused_not_capped_at_one_page():
+    """Test discriminant : `total or len(products)` donnait ceil(n/n) = 1.
+
+    Un attribut renommé côté site suffisait à réduire un rayon entier à sa
+    première page, sans qu'aucun compteur ne bouge et sans qu'aucune
+    exception ne soit levée.
+    """
+    parser = SuperCPageParser()
+    parser.feed(HTML.replace(' data-total-results="81"', ""))
+
+    assert parser.total_results is None
+    assert parser.products, "la page expose bien des tuiles"
+
+    try:
+        _expected_page_count(parser, "category")
+    except SuperCCaptureIncomplete:
+        pass
+    else:
+        raise AssertionError(
+            "Sans total annoncé, le rayon était silencieusement plafonné à 1 page."
+        )
+
+
+def test_a_first_page_without_tiles_is_refused_when_the_listing_claims_results(
+    monkeypatch,
+):
+    """Un rayon vide et une lecture cassée rendaient tous deux []."""
+    extractor = _extractor(
+        monkeypatch, ['<div class="plpGridList" data-total-results="5"></div>']
+    )
+
+    try:
+        extractor.capture_category("fruits-et-legumes/fruits")
+    except SuperCCaptureIncomplete:
+        pass
+    else:
+        raise AssertionError(
+            "5 résultats annoncés et aucune tuile lue devait être refusé."
+        )
+
+
+def test_a_listing_that_yields_fewer_products_than_announced_is_refused(monkeypatch):
+    """Le compte annoncé était rapporté au `progress`, jamais confronté.
+
+    C'est la troncature que produit une pagination qui ne lie qu'une fenêtre
+    de pages : la capture s'arrête, rend un rayon amputé, et rien ne le dit.
+    """
+    first = HTML.replace('data-total-results="81"', 'data-total-results="10"')
+    empty = '<div class="plpGridList" data-total-results="10"></div>'
+    extractor = _extractor(monkeypatch, [first, empty, empty, empty])
+
+    try:
+        extractor.capture_category("fruits-et-legumes/fruits")
+    except SuperCCaptureIncomplete as error:
+        assert "10" in str(error), "l'écart doit nommer les deux nombres"
+    else:
+        raise AssertionError("2 produits sur 10 annoncés devait être refusé.")
+
+
+def test_an_explicitly_bounded_capture_stays_legitimate(monkeypatch):
+    """`max_pages` est la seule troncature que l'appelant a demandée."""
+    first = HTML.replace('data-total-results="81"', 'data-total-results="10"')
+    extractor = _extractor(monkeypatch, [first])
+
+    pages = extractor.capture_category("fruits-et-legumes/fruits", max_pages=1)
+
+    assert len(pages) == 1
 
 
 class _Response:

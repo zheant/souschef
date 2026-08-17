@@ -1,10 +1,40 @@
 """Contrats du collecteur navigateur Maxi, sans lancer de navigateur."""
 
 from app.adapters.maxi_web import (
+    _money,
     _page_url,
     normalize_category_url,
     product_from_snapshot,
 )
+
+
+def test_price_needs_a_currency_anchor_and_multi_buy_is_divided():
+    """Test discriminant : le premier nombre du texte n'est pas le prix.
+
+    Sans ancre de devise, « 2/5,00 $ » se lisait 2,00 $ — un rabais de
+    circulaire devenait le prix le plus bas du rayon et remportait chaque
+    sélection en aval. Super C porte déjà cette ancre ; c'est Maxi qui
+    divergeait.
+    """
+    # Le défaut nommé : un multi-achat vaut son quotient, pas son premier
+    # nombre ni son montant total.
+    assert _money("2/5,00 $") == "2.50"
+    assert _money("2 pour 5,00 $") == "2.50"
+    assert _money("3 for $5.00") == "1.67"
+
+    # Les deux positions du symbole que Maxi rend selon la langue de la fiche.
+    assert _money("5,00 $") == "5.00"
+    assert _money("$5.00") == "5.00"
+
+    # Sans devise mais sans ambiguïté non plus : un seul nombre reste lisible,
+    # pour ne pas perdre les fiches dont le DOM ne porte pas le symbole.
+    assert _money("14.99") == "14.99"
+
+    # Plusieurs nombres et aucune devise : c'est exactement le cas où
+    # l'ancienne lecture prenait le mauvais. Refuser coûte moins cher.
+    assert _money("2 kg, 0,75 / 100 g") is None
+    assert _money("") is None
+    assert _money(None) is None
 
 
 def test_category_url_is_restricted_to_maxi_and_drops_query_string():

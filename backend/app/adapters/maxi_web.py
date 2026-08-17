@@ -12,6 +12,7 @@ import random
 import re
 import time
 from datetime import datetime, timezone
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 from typing import Callable
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
@@ -20,7 +21,21 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 BASE_URL = "https://www.maxi.ca"
 _MAXI_HOSTS = {"maxi.ca", "www.maxi.ca"}
 _MAXI_DEALS_PATHS = {"/fr/collection/deals-centre-value"}
-_MONEY = re.compile(r"(\d+(?:[.,]\d{1,2})?)")
+# Le premier nombre d'un texte de prix n'est pas le prix : « 2/5,00 $ » se
+# lisait 2,00 $. Il faut une ancre de devise, comme superc_web._MONEY en porte
+# déjà une. Maxi rend le symbole des deux côtés selon la langue de la fiche
+# (« 5,00 $ » en français, « $5.00 » en anglais), donc les deux sont acceptés.
+_MONEY = re.compile(r"\$\s*(\d+(?:[.,]\d{1,2})?)|(\d+(?:[.,]\d{1,2})?)\s*\$")
+# Multi-achat : le montant affiché couvre plusieurs articles, le prix unitaire
+# est le quotient. Notation courante en circulaire, pas une interprétation.
+# Le compte tient sur deux chiffres et le montant porte ses cents : sans ces
+# deux bornes, « 0,75 / 100 g » (un prix unitaire) se lirait comme un
+# multi-achat de 75 articles, et le code d'un produit collé à un « / » aussi.
+_MULTI_BUY = re.compile(
+    r"\b(\d{1,2})\s*(?:/|pour|for)\s*\$?\s*(\d+[.,]\d{2})\s*\$?",
+    re.IGNORECASE,
+)
+_ANY_NUMBER = re.compile(r"\d+(?:[.,]\d{1,2})?")
 _RETRYABLE_STATUS_CODES = {403, 408, 425, 429, 500, 502, 503, 504}
 
 
@@ -280,10 +295,32 @@ def _page_url(category_url: str, page: int) -> str:
 
 
 def _money(value: object) -> str | None:
-    match = _MONEY.search(str(value or "").replace("\u00a0", " "))
-    if match is None:
-        return None
-    return match.group(1).replace(",", ".")
+    """Prix unitaire d'un texte de tuile, ou None si le texte est ambigu.
+
+    Trois cas, dans cet ordre : un multi-achat se divise ; un nombre ancr\u00e9 \u00e0
+    la devise est le prix ; un texte sans ancre n'est accept\u00e9 que s'il ne
+    contient qu'un seul nombre \u2014 plusieurs nombres sans devise, c'est
+    exactement le cas o\u00f9 l'ancienne lecture prenait le mauvais, et deviner
+    co\u00fbte plus cher que refuser.
+    """
+    text = str(value or "").replace("\u00a0", " ")
+
+    multi = _MULTI_BUY.search(text)
+    if multi is not None:
+        count = int(multi.group(1))
+        if count > 0:
+            total = Decimal(multi.group(2).replace(",", "."))
+            unit = (total / count).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            return str(unit)
+
+    match = _MONEY.search(text)
+    if match is not None:
+        return (match.group(1) or match.group(2)).replace(",", ".")
+
+    numbers = _ANY_NUMBER.findall(text)
+    if len(numbers) == 1:
+        return numbers[0].replace(",", ".")
+    return None
 
 
 def _optional_text(value: object) -> str | None:

@@ -62,6 +62,8 @@ _UNIT_ALIASES = {
 }
 _MASS_VOLUME_UNITS = {"kg", "g", "mg", "lb", "lbs", "oz", "l", "ml"}
 _RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
+# Pages consécutives sans aucun produit nouveau avant d'arrêter la lecture.
+_MAX_EMPTY_PAGES = 2
 logger = logging.getLogger(__name__)
 
 
@@ -169,6 +171,16 @@ class _ProductBuilder:
             "category_url": self.attrs.get("data-category-url"),
             "in_listing": not inactive and "rupture de stock" not in full_text,
         }
+
+
+class SuperCCaptureIncomplete(RuntimeError):
+    """La capture n'a pas pu prouver qu'elle a parcouru tout le rayon.
+
+    Une capture tronquée en silence est pire qu'une capture absente : elle
+    entre en base comme un rayon complet, et chaque devis en aval hérite d'un
+    catalogue amputé sans que rien ne le signale. La seule troncature
+    légitime est celle que l'appelant demande explicitement (`max_pages`).
+    """
 
 
 class SuperCPageParser(HTMLParser):
@@ -296,12 +308,24 @@ class SuperCWebExtractor:
     ) -> list[dict]:
         captures: list[dict] = []
         expected_pages: int | None = None
+        announced: int | None = None
         page = 1
         seen: set[str] = set()
 
-        while expected_pages is None or page <= expected_pages:
+        empty_streak = 0
+
+        while True:
             if max_pages is not None and page > max_pages:
                 break
+            if expected_pages is not None and page > expected_pages:
+                # L'estimation du nombre de pages suppose que chaque page
+                # rapporte autant de tuiles que la première. Une page dupliquée
+                # ou partielle décale tout le reste : s'arrêter sur
+                # l'estimation laissait alors des produits annoncés jamais lus.
+                # Tant que le rayon en annonce qu'on n'a pas vus, il reste des
+                # pages à lire.
+                if announced is None or len(seen) >= announced:
+                    break
             page_path = (
                 _deals_page_path(path, page)
                 if listing_kind == "weekly_deals"
@@ -312,6 +336,8 @@ class SuperCWebExtractor:
             self._verify_store(html)
             parser = SuperCPageParser()
             parser.feed(html)
+            if announced is None:
+                announced = parser.total_results
             products = [
                 product
                 for product in parser.products
@@ -319,6 +345,16 @@ class SuperCWebExtractor:
             ]
             if not products:
                 if expected_pages is None:
+                    if parser.total_results:
+                        # Le rayon annonce des résultats et la page n'expose
+                        # aucune tuile : c'est la lecture qui est cassée, pas
+                        # le rayon qui est vide. Rendre [] ici rendait les
+                        # deux cas indiscernables pour l'appelant.
+                        raise SuperCCaptureIncomplete(
+                            f"Super C annonce {parser.total_results} résultats "
+                            f"pour {path} mais la première page n'expose "
+                            "aucune tuile produit."
+                        )
                     break
                 if progress is not None:
                     progress(
@@ -327,8 +363,15 @@ class SuperCWebExtractor:
                         len(seen),
                         parser.total_results or len(seen),
                     )
+                # Garde-fou : le site peut resservir indéfiniment sa dernière
+                # page au-delà du dernier index réel. Sans elle, la boucle
+                # tournerait sans fin dès que le total annoncé est inatteignable.
+                empty_streak += 1
+                if empty_streak >= _MAX_EMPTY_PAGES:
+                    break
                 page += 1
                 continue
+            empty_streak = 0
             seen.update(product["retailer_product_id"] for product in products)
             captured_at = datetime.now(timezone.utc).isoformat()
             payload = {
@@ -353,6 +396,18 @@ class SuperCWebExtractor:
                     parser.total_results or len(seen),
                 )
             page += 1
+
+        # `max_pages` est la seule troncature légitime : l'appelant l'a
+        # demandée. Sans elle, une capture qui rend moins de produits que le
+        # rayon n'en annonce est tronquée — que ce soit parce que la
+        # pagination ne liait qu'une fenêtre de pages, parce qu'une page a
+        # cessé de se lire, ou parce que le compte de pages était sous-estimé.
+        # Le nombre était déjà là, il n'était simplement jamais confronté.
+        if max_pages is None and announced is not None and len(seen) < announced:
+            raise SuperCCaptureIncomplete(
+                f"{path} : {len(seen)} produits capturés sur les {announced} "
+                f"annoncés par Super C ({len(captures)} page(s) lue(s))."
+            )
         return captures
 
     def _select_store(self, identity: _HttpIdentity) -> None:
@@ -519,8 +574,22 @@ def _expected_page_count(parser: SuperCPageParser, listing_kind: str) -> int:
         ]
         if linked_pages:
             return max(linked_pages)
-    total = parser.total_results or len(parser.products)
-    return max(1, math.ceil(total / len(parser.products)))
+    if parser.total_results is None:
+        # Sans total annoncé, `total = len(products)` donnait ceil(n/n) = 1 :
+        # le rayon entier se réduisait silencieusement à sa première page. Un
+        # attribut renommé côté site suffisait à amputer tout le catalogue
+        # sans qu'aucun compteur ne bouge.
+        raise SuperCCaptureIncomplete(
+            "Super C n'annonce plus data-total-results et aucun lien de page "
+            "n'est exploitable : impossible de savoir combien de pages lire."
+        )
+    if not parser.products:
+        raise SuperCCaptureIncomplete(
+            "Super C annonce "
+            f"{parser.total_results} résultats mais la page n'expose aucune "
+            "tuile produit : la lecture des tuiles est cassée."
+        )
+    return max(1, math.ceil(parser.total_results / len(parser.products)))
 
 
 def _first_money(value: str) -> str | None:

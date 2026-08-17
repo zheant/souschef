@@ -178,6 +178,69 @@ def test_complete_capture_rejects_an_implausibly_small_catalogue():
     )
 
 
+class _PartlyTruncatedExtractor:
+    """Un rayon tronqué, un rayon sain — dans cet ordre."""
+
+    def __init__(self, *_args, **_kwargs):
+        self.visited: list[str] = []
+
+    def capture_category(self, category, *, max_pages, progress, page_captured):
+        self.visited.append(category)
+        if "fruits" in category:
+            raise weekly.SuperCCaptureIncomplete(
+                f"{category} : 2 produits capturés sur les 40 annoncés."
+            )
+        payload = {
+            "captured_at": "2026-08-13T12:00:00+00:00",
+            "products": [{"retailer_product_id": "1", "is_promo": False}],
+        }
+        page_captured(1, payload)
+        return [payload]
+
+
+def test_a_truncated_listing_fails_the_run_without_costing_the_other_listings(
+    tmp_path, monkeypatch
+):
+    """Le rayon tronqué ne doit ni passer inaperçu, ni faire perdre les autres.
+
+    L'extracteur lève désormais au lieu de rendre un rayon amputé. Sans
+    agrégation, cette exception tuerait la capture au premier rayon fautif —
+    ce fichier valide pourtant déjà l'échelle globale à la fin, pas au fil
+    de l'eau.
+    """
+    extractors: list[_PartlyTruncatedExtractor] = []
+
+    def build(*args, **kwargs):
+        extractor = _PartlyTruncatedExtractor(*args, **kwargs)
+        extractors.append(extractor)
+        return extractor
+
+    monkeypatch.setattr(weekly, "SuperCWebExtractor", build)
+
+    try:
+        weekly._capture_superc(
+            config={"store_id": "640", "categories": []},
+            output_root=tmp_path,
+            period=weekly.circular_period(date(2026, 8, 13)),
+            run_id="run-test",
+            reuse=False,
+            category_overrides=[
+                "/allees/fruits-et-legumes/fruits",
+                "/allees/garde-manger/farine",
+            ],
+            max_pages=None,
+        )
+    except RuntimeError as error:
+        assert "tronquée" in str(error)
+        assert "40 annoncés" in str(error), "l'écart doit rester nommé"
+    else:
+        raise AssertionError("Un rayon tronqué devait faire échouer la capture.")
+
+    # Le second rayon a bien été visité et écrit malgré l'échec du premier.
+    assert len(extractors[0].visited) == 2
+    assert list(tmp_path.rglob("page-001.json")), "la page saine devait être écrite"
+
+
 @dataclass(frozen=True)
 class _Decision:
     source_product_id: str

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal
+from types import SimpleNamespace
 
 import pytest
 
@@ -339,3 +340,64 @@ def test_grocery_line_reports_savings_on_a_real_promo(db_session):
     ).quantize(Decimal("0.01"))
     assert Decimal(line["savings_cents_cad"]) == expected
     assert Decimal(view.grocery_list_by_store[0]["savings_cents_cad"]) == expected
+
+
+class _ScalarsSession:
+    """Session minimale : ``_grocery_list`` ne fait que quatre ``scalars(...)``
+    dans un ordre fixe (produits, ingrédients, recettes, recettes). Assez pour
+    exercer le calcul des économies sans PostgreSQL — le seed ne contient
+    aucun produit vendu au poids, et c'est précisément ce cas qui cassait."""
+
+    def __init__(self, batches):
+        self._batches = list(batches)
+
+    def scalars(self, _statement):
+        return self._batches.pop(0)
+
+
+def test_savings_survive_a_variable_weight_product_on_promo():
+    """Test discriminant : ``units`` est un flottant pour un produit au poids.
+
+    ``PurchaseLine.units`` est ``int | float`` — continu quand la vente se
+    fait au poids sans incrément. Multiplier un ``Decimal`` par ce flottant
+    lève ``TypeError``, donc ``POST /api/plan`` rendait 500 dès qu'un tel
+    produit était en promotion. Atteint avec des données normales, pas un
+    cas limite.
+    """
+    product = SimpleNamespace(
+        id=1,
+        canonical_ingredient_id="oignon_jaune",
+        brand="Selection",
+        package_unit="kg",
+        tax_rate=Decimal("0.05"),
+    )
+    ingredient = SimpleNamespace(id="oignon_jaune", name="Oignon jaune")
+    recipe = SimpleNamespace(
+        id="chili",
+        name="Chili",
+        ingredients=[SimpleNamespace(canonical_ingredient_id="oignon_jaune")],
+    )
+    plan = SimpleNamespace(
+        servings={"chili": 4},
+        purchases=[
+            {
+                "product_id": 1,
+                "product_external_key": "oignon_vrac",
+                "store_external_key": "superc_640",
+                "units": 0.35,
+                "unit_price_cents_cad": 210,
+                "taxed_total_cents_cad": "77.18",
+                "is_promo": True,
+                "regular_price_cents_cad": 250,
+            }
+        ],
+    )
+
+    groups = planning._grocery_list(
+        _ScalarsSession([[product], [ingredient], [recipe], [recipe]]), plan
+    )
+
+    line = groups[0]["lines"][0]
+    # 40 c d'écart x 0,35 kg x 1,05 de taxe = 14,70 c
+    assert Decimal(line["savings_cents_cad"]) == Decimal("14.70")
+    assert Decimal(groups[0]["savings_cents_cad"]) == Decimal("14.70")

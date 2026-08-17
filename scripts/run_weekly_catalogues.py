@@ -33,6 +33,7 @@ from app.adapters.maxi_capture import (
 from app.adapters.maxi_web import MaxiBrowserExtractor, normalize_category_url
 from app.adapters.superc_capture import SuperCCaptureAdapter
 from app.adapters.superc_web import (
+    SuperCCaptureIncomplete,
     SuperCWebExtractor,
     normalize_category_path,
     normalize_deals_path,
@@ -482,6 +483,7 @@ def _capture_superc(
     deal_product_count = 0
     deal_promotion_count = 0
     distinct_product_ids: set[str] = set()
+    incomplete_listings: list[str] = []
     print(
         f"[Super C] Magasin {config['store_id']} — {len(categories)} rayon(s), "
         f"{len(deal_targets)} cible(s) rabais",
@@ -523,18 +525,33 @@ def _capture_superc(
             if listing_kind == "weekly_deals"
             else extractor.capture_category
         )
-        pages = capture(
-            category,
-            max_pages=max_pages,
-            progress=show_progress,
-            page_captured=save_page,
-        )
+        try:
+            pages = capture(
+                category,
+                max_pages=max_pages,
+                progress=show_progress,
+                page_captured=save_page,
+            )
+        except SuperCCaptureIncomplete as error:
+            # Un rayon tronqué ne doit pas coûter la capture des autres : les
+            # pages déjà lues sont sur le disque, et ce fichier valide déjà
+            # l'échelle globale à la fin plutôt qu'au fil de l'eau. L'écart
+            # est retenu et rejeté après coup, jamais avalé.
+            print(f"  ÉCHEC — {error}", flush=True)
+            incomplete_listings.append(str(error))
+            continue
         if listing_kind == "weekly_deals":
             products, promotions = _deal_capture_counts("Super C", pages)
             deal_product_count += products
             deal_promotion_count += promotions
     if page_count == 0:
         raise RuntimeError("Super C n'a retourné aucun produit.")
+    if incomplete_listings:
+        raise RuntimeError(
+            "Capture Super C tronquée sur "
+            f"{len(incomplete_listings)} rayon(s) :\n  - "
+            + "\n  - ".join(incomplete_listings)
+        )
     complete_catalogue = category_overrides is None and max_pages is None
     _validate_capture_scale(
         "Super C", len(distinct_product_ids - {""}), config, complete_catalogue
