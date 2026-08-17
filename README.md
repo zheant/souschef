@@ -101,18 +101,142 @@ la normalisation, ni (plus tard) au solveur, à l'API ou au front-end. Même
 principe pour le catalogue de recettes : `RecipeSourcePort.load_all()` /
 `json_recipe_source.py`.
 
+## Catalogues hebdomadaires Maxi + Super C
+
+`scripts/run_weekly_catalogues.py` démarre simultanément la capture de **Maxi
+7552** et des rayons publics de **Super C Neufchâtel (magasin 640, 4545 boul.
+de l'Auvergne)**. Après la réussite des deux sources, il rapproche les produits
+aux slugs canoniques puis fait passer les offres par `staging` et
+`normalize_offers` dans une seule transaction.
+
+Les rayons et les pages de rabais hebdomadaires des deux bannières sont des
+listes éditables dans `config/catalogues.json`. Chaque passage complet capture
+explicitement le Centre des offres Maxi et la grille « Toutes les promotions »
+de Super C, en plus des rayons. Le manifeste et le rapport inscrivent les
+`deal_targets`; une ancienne capture sans ces cibles ne peut pas être rejouée
+comme complète. Les listes livrées couvrent fruits, légumes, viandes,
+poissons, produits laitiers, œufs, ingrédients de garde-manger et ingrédients
+surgelés, ainsi que les catégories mixtes nécessaires aux recettes importées :
+boulangerie, charcuterie, aliments végétariens, boissons, bières et vins. Même
+si une catégorie mixte contient un produit composé, seuls les rapprochements
+canoniques non ambigus deviennent des `market.product`. Les snacks et plats
+composés restent exclus par leur identité. Les produits au poids conservent le
+prix unitaire et l'incrément publiés; ils ne sont plus rejetés ni transformés
+en emballage fictif.
+Le rapprochement porte sur tout le catalogue canonique; le sous-ensemble
+référencé par `seed/main/recipes.json` n'est calculé que comme mesure de
+couverture et sera filtré plus tard par le solveur.
+Les promotions sont conservées, y compris lorsque Super C marque un rabais
+sans afficher de prix régulier barré.
+
+La période est dérivée automatiquement selon la circulaire jeudi-mercredi.
+Maxi utilise une fenêtre Edge visible et un profil séparé sous `data/`; ce mode
+est nécessaire parce que le site refuse actuellement Edge sans interface. Si
+le site demande une vérification, la fenêtre reste ouverte le temps configuré
+pour la compléter. Il ne faut ni fermer cette fenêtre ni utiliser le profil
+Edge personnel. Maxi espace ses pages de 4 à 5 secondes. Super C est limité à
+une requête toutes les 10 à 12 secondes et rejoue avec
+attente sur HTTP 429 et erreurs transitoires; un passage complet prend donc
+plusieurs minutes. Le client respecte aussi les deux formes de `Retry-After`
+(secondes ou date HTTP). Pour une prévisualisation courte, sans base de
+données :
+
+```powershell
+.\.venv\Scripts\python.exe scripts\run_weekly_catalogues.py `
+  --maxi-max-pages 1 `
+  --superc-category fruits-et-legumes/fines-herbes-fraiches --max-pages 1
+```
+
+Pour le lancement complet, installer le backend, démarrer PostgreSQL,
+appliquer les migrations et le seed, puis double-cliquer `run_catalogues.cmd`
+(ou lancer la commande suivante). La fenêtre de commande lance Maxi et Super C
+ensemble et affiche leur progression indépendamment :
+
+```powershell
+.\.venv\Scripts\python.exe scripts\run_weekly_catalogues.py --apply
+```
+
+La rotation de proxys HTTP/HTTPS est facultative et ne se déclenche qu'après
+une erreur transitoire. Chaque proxy conserve ses propres cookies et refait la
+sélection du magasin avant de reprendre. Les adresses — et surtout leurs
+identifiants — ne doivent pas être ajoutées à `config/catalogues.json` : les
+charger depuis la variable d'environnement configurée, sous forme de liste
+JSON. Sous PowerShell :
+
+```powershell
+$env:SOUSCHEF_SUPERC_PROXIES='["http://proxy-1.example:8080","https://proxy-2.example:8443"]'
+.\.venv\Scripts\python.exe scripts\run_weekly_catalogues.py --apply
+```
+
+Sans cette variable, le collecteur utilise simplement la connexion directe.
+Les délais, la variation aléatoire, le nombre de reprises, le délai maximal et
+le nom de la variable sont configurables dans `config/catalogues.json`.
+
+Un passage complet met aussi à jour `data/catalogue-registry/maxi.json` et
+`superc.json`, les listes maîtresses indexées par identifiant commercial et
+UPC. Les produits qui disparaissent deviennent inactifs, sans perdre leur
+décision. Les fichiers `*-canonical-gaps.json` isolent les produits actifs sans
+aucun candidat canonique; les passages limités ne modifient jamais ces listes.
+
+Les captures structurées et le rapport détaillé sont écrits sous `data/` et
+ignorés par Git. Chaque source écrit dans un dossier `run-*` isolé et ne pose
+son manifeste `_complete.json` qu'après la dernière page; une exécution
+partielle ne peut donc pas être rejouée par erreur. Les options
+`--reuse-maxi-captures` et `--reuse-superc-captures` rejouent la dernière
+exécution complète de la semaine, qui est aussi validée contre la période.
+En complément, `data/catalogue-registry/maxi-indexed-titles.json` conserve un
+instantané daté des titres publiquement indexés. La commande
+`scripts/curate_maxi_indexed_titles.py` les classe vers le canon et produit
+`config/maxi-title-match-overrides.json`. Ces règles par titre sont rejouées
+sur les futurs UPC capturés; elles ne constituent ni une capture de prix ni une
+garantie d'exhaustivité pour un magasin donné.
+
+La couverture et les prix de recettes se vérifient sans PostgreSQL. Les deux
+commandes suivantes produisent respectivement les causes exclusives de lacune
+et les devis (coût consommé, décaissement, économies et confiance) :
+
+```powershell
+.\.venv\Scripts\python.exe scripts\audit_recipe_pricing_coverage.py `
+  --week 2026-W33 --superc-root data\catalogue-captures\superc\2026-W33 `
+  --minimum-complete-recipes 28
+
+.\.venv\Scripts\python.exe scripts\quote_recipes.py `
+  --week 2026-W33 --superc-root data\catalogue-captures\superc\2026-W33 `
+  --json-output data\catalogue-reports\recipe-quotes-2026-W33.json
+```
+
+L'API expose les mêmes calculs par `GET /api/recipe-quotes`; la sémantique des
+montants est fixée dans `docs/adr-recipe-pricing-semantics.md`.
+
 ## Données de seed
 
-- `seed/main/` — 1 026 ingrédients canoniques répartis dans 31 familles, avec
-  1 159 alias français/anglais et 738 références FCÉN auditées. Périssabilité
+- `seed/main/` — 1 066 ingrédients canoniques répartis dans 31 familles, avec
+  1 220 alias français/anglais et 766 références FCÉN auditées. Périssabilité
   et valeur de récupération restent à `null`; 6 densités déjà établies sont
-  conservées. Les 40 recettes et les
-  83 produits de démonstration utilisent le sous-ensemble historique de 23
-  ingrédients.
+  conservées. Le catalogue actif contient 40 recettes de démonstration et 121
+  recettes réelles validées provenant de Ricardo, Bon pour toi et La cuisine
+  de Jean-Philippe. Les 83 produits de démonstration utilisent le sous-ensemble
+  historique de 23 ingrédients.
 - `seed/toy/` — instance jouet (3 recettes, 4 produits, 1 magasin) dont
   l'optimum sera vérifié à la main par un test à l'étape 4.
 - `scripts/generate_seed.py` — générateur déterministe des JSON ; le contrat
-  du projet reste les JSON versionnés, jamais le script.
+  du projet reste les JSON versionnés, jamais le script. Il conserve les
+  recettes réelles de `seed/main/imported_recipes.json` à chaque régénération.
+
+### Recettes importées depuis Cook
+
+`scripts/import_cook_recipes.py` convertit le corpus français du projet Cook
+vers le format de `seed/main/recipes.json`. Une recette entre dans le catalogue
+actif seulement si ses portions, ses bornes de lot, son temps et toutes ses
+identités et quantités d'ingrédients sont connus. Les décisions manuelles,
+équivalences vérifiées, estimations déclarées et omissions hors calcul sont
+versionnées dans `config/cook_recipe_curation.json`. Les desserts sont exclus
+dans `data/recipe-import-review/cook-recipes-excluded.json`; la file
+`cook-recipes-review.json` est actuellement vide.
+
+```powershell
+.\.venv\Scripts\python.exe scripts\import_cook_recipes.py
+```
 
 ## Importer les candidats d'ingrédients FCÉN 2026
 
@@ -190,7 +314,7 @@ backend/
     api/          # routes FastAPI (transport HTTP seulement), schémas,
                   # dépendances injectables
     seeding/      # commande de seeding idempotente (ports injectables)
-  tests/          # pytest — 118 tests : optima manuels, API, substituabilité,
+  tests/          # pytest — 141 tests : optima manuels, API, substituabilité,
                   # modules applicatifs (planning/household/catalog)
   alembic/        # migrations (0001 : schéma initial complet)
 docs/             # spec.md (versionnée, intouchée) + deviations.md

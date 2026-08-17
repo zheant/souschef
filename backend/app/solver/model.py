@@ -220,8 +220,14 @@ def _add_variables(m: pulp.LpProblem, c: _Ctx) -> None:
         if c.needs_delta:
             c.delta[r.id] = pulp.LpVariable(f"delta_{r.id}", cat=pulp.LpBinary)
     for (p, s) in c.pairs:
+        category = (
+            pulp.LpContinuous
+            if p.sale_mode == "variable_weight"
+            and p.purchase_increment_in_base_unit is None
+            else pulp.LpInteger
+        )
         c.n[(p.id, s.id)] = pulp.LpVariable(
-            f"n_{p.id}_{s.id}", lowBound=0, cat=pulp.LpInteger
+            f"n_{p.id}_{s.id}", lowBound=0, cat=category
         )
     if c.config.enable_multi_store:
         for s in c.stores:
@@ -645,7 +651,13 @@ class PulpMenuSolver:
 
         purchases: list[PurchaseLine] = []
         for (p, s) in c.pairs:
-            units = int(round(c.n[(p.id, s.id)].value() or 0))
+            raw_units = c.n[(p.id, s.id)].value() or 0
+            units = (
+                round(float(raw_units), 3)
+                if p.sale_mode == "variable_weight"
+                and p.purchase_increment_in_base_unit is None
+                else int(round(raw_units))
+            )
             if units == 0:
                 continue
             cents = c.price_cents[(p.id, s.id)]
@@ -655,7 +667,7 @@ class PulpMenuSolver:
                     store_id=s.id, store_external_key=s.external_key,
                     units=units, unit_price_cents_cad=cents,
                     taxed_total_cents_cad=(
-                        Decimal(units) * Decimal(cents) * (1 + p.tax_rate)
+                        Decimal(str(units)) * Decimal(cents) * (1 + p.tax_rate)
                     ).quantize(Decimal("0.01")),
                     is_promo=c.price_is_promo.get((p.id, s.id), False),
                     regular_price_cents_cad=c.regular_price_cents.get((p.id, s.id)),

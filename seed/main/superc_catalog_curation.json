@@ -1,0 +1,260 @@
+{
+  "source": "cnf",
+  "source_version": "2026",
+  "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD",
+  "reviewer": "superc-catalog-curation-v1",
+  "decisions": [
+    {
+      "source_version": "2026",
+      "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD",
+      "food_code": "20",
+      "reviewer": "superc-catalog-curation-v1",
+      "candidate_snapshot": {
+        "food_code": "20",
+        "food_description_fr": "Fromage brie",
+        "food_description_en": "Cheese, brie",
+        "cnf_food_group_code": "1",
+        "cnf_food_group_description_fr": "Produits laitiers et succédanés"
+      },
+      "action": "create_variant",
+      "canonical_ingredient_id": null,
+      "canonical": {
+        "id": "fromage_brie",
+        "family_id": "fromages",
+        "name": "Fromage brie",
+        "unit_kind": "mass",
+        "base_unit": "g",
+        "perishability": null,
+        "salvage_value_cents_per_base_unit": null,
+        "density_g_per_ml": null
+      },
+      "rationale": "Fromage simple explicitement identifié dans le FCÉN; requis par des produits Super C admissibles.",
+      "aliases": [{"language": "en", "alias": "Brie cheese"}],
+      "acknowledged_similar_ids": []
+    },
+    {
+      "source_version": "2026",
+      "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD",
+      "food_code": "21",
+      "reviewer": "superc-catalog-curation-v1",
+      "candidate_snapshot": {
+        "food_code": "21",
+        "food_description_fr": "Fromage camembert",
+        "food_description_en": "Cheese, camembert",
+        "cnf_food_group_code": "1",
+        "cnf_food_group_description_fr": "Produits laitiers et succédanés"
+      },
+      "action": "create_variant",
+      "canonical_ingredient_id": null,
+      "canonical": {
+        "id": "fromage_camembert",
+        "family_id": "fromages",
+        "name": "Fromage camembert",
+        "unit_kind": "mass",
+        "base_unit": "g",
+        "perishability": null,
+        "salvage_value_cents_per_base_unit": null,
+        "density_g_per_ml": null
+      },
+      "rationale": "Fromage simple explicitement identifié dans le FCÉN; requis par des produits Super C admissibles.",
+      "aliases": [{"language": "en", "alias": "Camembert cheese"}],
+      "acknowledged_similar_ids": []
+    },
+    {
+      "source_version": "2026",
+      "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD",
+      "food_code": "109",
+      "reviewer": "superc-catalog-curation-v1",
+      "candidate_snapshot": {
+        "food_code": "109",
+        "food_description_fr": "Fromage gouda",
+        "food_description_en": "Cheese, gouda",
+        "cnf_food_group_code": "1",
+        "cnf_food_group_description_fr": "Produits laitiers et succédanés"
+      },
+      "action": "create_variant",
+      "canonical_ingredient_id": null,
+      "canonical": {
+        "id": "fromage_gouda",
+        "family_id": "fromages",
+        "name": "Fromage gouda",
+        "unit_kind": "mass",
+        "base_unit": "g",
+        "perishability": null,
+        "salvage_value_cents_per_base_unit": null,
+        "density_g_per_ml": null
+      },
+      "rationale": "Fromage simple explicitement identifié dans le FCÉN; requis par des produits Super C admissibles.",
+      "aliases": [{"language": "en", "alias": "Gouda cheese"}],
+      "acknowledged_similar_ids": []
+    },
+    {
+      "source_version": "2026",
+      "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD",
+      "food_code": "136",
+      "reviewer": "superc-catalog-curation-v1",
+      "candidate_snapshot": {
+        "food_code": "136",
+        "food_description_fr": "Crème à café (crème de table), 18% M.G.",
+        "food_description_en": "Cream, table (coffee), 18% M.F.",
+        "cnf_food_group_code": "1",
+        "cnf_food_group_description_fr": "Produits laitiers et succédanés"
+      },
+      "action": "create_variant",
+      "canonical_ingredient_id": null,
+      "canonical": {
+        "id": "creme_cafe",
+        "family_id": "produits_laitiers",
+        "name": "Crème à café",
+        "unit_kind": "volume",
+        "base_unit": "ml",
+        "perishability": null,
+        "salvage_value_cents_per_base_unit": null,
+        "density_g_per_ml": null
+      },
+      "rationale": "Le FCÉN reconnaît la crème à café comme identité culinaire; le pourcentage commercial demeure un attribut du produit.",
+      "aliases": [{"language": "en", "alias": "Coffee cream"}],
+      "acknowledged_similar_ids": ["creme_15", "creme_35"]
+    },
+    {
+      "source_version": "2026",
+      "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD",
+      "food_code": "4515",
+      "reviewer": "superc-catalog-curation-v1",
+      "candidate_snapshot": {
+        "food_code": "4515",
+        "food_description_fr": "Pâtes (spaghetti, macaroni), enrichi, sec",
+        "food_description_en": "Pasta (spaghetti, macaroni), enriched, dry",
+        "cnf_food_group_code": "20",
+        "cnf_food_group_description_fr": "Céréales, grains et pâtes"
+      },
+      "action": "create_variant",
+      "canonical_ingredient_id": null,
+      "canonical": {
+        "id": "pates_seches",
+        "family_id": "pates",
+        "name": "Pâtes sèches",
+        "unit_kind": "mass",
+        "base_unit": "g",
+        "perishability": null,
+        "salvage_value_cents_per_base_unit": null,
+        "density_g_per_ml": null
+      },
+      "rationale": "Identité générique de pâtes sèches appuyée par le FCÉN; la forme commerciale ne justifie pas un nouveau canon.",
+      "aliases": [{"language": "en", "alias": "Dry pasta"}],
+      "acknowledged_similar_ids": ["spaghetti", "macaroni"]
+    },
+    {
+      "source_version": "2026", "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD", "food_code": "2115", "reviewer": "superc-catalog-curation-v1",
+      "candidate_snapshot": {"food_code": "2115", "food_description_fr": "Laitue, butterhead (Boston)", "food_description_en": "Lettuce, butterhead (Boston)", "cnf_food_group_code": "11", "cnf_food_group_description_fr": "Légumes et produits végétaux"},
+      "action": "create_variant", "canonical_ingredient_id": null,
+      "canonical": {"id": "laitue_boston", "family_id": "legumes", "name": "Laitue Boston", "unit_kind": "mass", "base_unit": "g", "perishability": null, "salvage_value_cents_per_base_unit": null, "density_g_per_ml": null},
+      "rationale": "Légume cru simple explicitement identifié dans le FCÉN; requis par des produits Super C admissibles.", "aliases": [{"language": "en", "alias": "Boston lettuce"}], "acknowledged_similar_ids": ["laitue_romaine", "laitue_iceberg"]
+    },
+    {
+      "source_version": "2026", "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD", "food_code": "2117", "reviewer": "superc-catalog-curation-v1",
+      "candidate_snapshot": {"food_code": "2117", "food_description_fr": "Laitue, frisée", "food_description_en": "Lettuce, looseleaf", "cnf_food_group_code": "11", "cnf_food_group_description_fr": "Légumes et produits végétaux"},
+      "action": "create_variant", "canonical_ingredient_id": null,
+      "canonical": {"id": "laitue_frisee", "family_id": "legumes", "name": "Laitue frisée", "unit_kind": "mass", "base_unit": "g", "perishability": null, "salvage_value_cents_per_base_unit": null, "density_g_per_ml": null},
+      "rationale": "Légume cru simple explicitement identifié dans le FCÉN; requis par des produits Super C admissibles.", "aliases": [{"language": "en", "alias": "Looseleaf lettuce"}], "acknowledged_similar_ids": ["laitue_romaine", "laitue_iceberg"]
+    },
+    {
+      "source_version": "2026", "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD", "food_code": "5412", "reviewer": "superc-catalog-curation-v1",
+      "candidate_snapshot": {"food_code": "5412", "food_description_fr": "Laitue, feuilles rouges", "food_description_en": "Lettuce, red leaf", "cnf_food_group_code": "11", "cnf_food_group_description_fr": "Légumes et produits végétaux"},
+      "action": "create_variant", "canonical_ingredient_id": null,
+      "canonical": {"id": "laitue_feuilles_rouges", "family_id": "legumes", "name": "Laitue à feuilles rouges", "unit_kind": "mass", "base_unit": "g", "perishability": null, "salvage_value_cents_per_base_unit": null, "density_g_per_ml": null},
+      "rationale": "Légume cru simple explicitement identifié dans le FCÉN; requis par des produits Super C admissibles.", "aliases": [{"language": "en", "alias": "Red leaf lettuce"}], "acknowledged_similar_ids": ["laitue_frisee"]
+    },
+    {
+      "source_version": "2026", "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD", "food_code": "1531", "reviewer": "superc-catalog-curation-v1",
+      "candidate_snapshot": {"food_code": "1531", "food_description_fr": "Cerise sucrée (guigne), crue", "food_description_en": "Cherry, sweet, raw", "cnf_food_group_code": "9", "cnf_food_group_description_fr": "Fruits et jus de fruits"},
+      "action": "create_variant", "canonical_ingredient_id": null,
+      "canonical": {"id": "cerise_douce", "family_id": "fruits", "name": "Cerise douce", "unit_kind": "mass", "base_unit": "g", "perishability": null, "salvage_value_cents_per_base_unit": null, "density_g_per_ml": null},
+      "rationale": "Fruit cru simple explicitement identifié dans le FCÉN; requis par des produits Super C admissibles.", "aliases": [{"language": "en", "alias": "Sweet cherry"}], "acknowledged_similar_ids": ["cerise_sure"]
+    },
+    {
+      "source_version": "2026", "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD", "food_code": "7082", "reviewer": "superc-catalog-curation-v1",
+      "candidate_snapshot": {"food_code": "7082", "food_description_fr": "Poisson, saumon, rose, conserve, égoutté, sans peau et os", "food_description_en": "Fish, salmon, pink, canned, drained, without skin and bones", "cnf_food_group_code": "15", "cnf_food_group_description_fr": "Produits de poissons, mollusques et crustacés"},
+      "action": "create_variant", "canonical_ingredient_id": null,
+      "canonical": {"id": "saumon_rose_conserve", "family_id": "poissons", "name": "Saumon rose en conserve", "unit_kind": "mass", "base_unit": "g", "perishability": null, "salvage_value_cents_per_base_unit": null, "density_g_per_ml": null},
+      "rationale": "Poisson en conserve simple explicitement identifié dans le FCÉN; requis par des produits Super C admissibles.", "aliases": [{"language": "en", "alias": "Canned pink salmon"}], "acknowledged_similar_ids": ["saumon_rose"]
+    },
+    {
+      "source_version": "2026", "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD", "food_code": "6169", "reviewer": "superc-catalog-curation-v1",
+      "candidate_snapshot": {"food_code": "6169", "food_description_fr": "Boeuf, coupes diverses, bifteck/rôti, maigre et gras, cru", "food_description_en": "Beef, composite cuts, steak/roast, lean and fat, raw", "cnf_food_group_code": "13", "cnf_food_group_description_fr": "Produits de boeuf"},
+      "action": "create_variant", "canonical_ingredient_id": null,
+      "canonical": {"id": "bifteck_boeuf", "family_id": "boeuf", "name": "Bifteck de bœuf", "unit_kind": "mass", "base_unit": "g", "perishability": null, "salvage_value_cents_per_base_unit": null, "density_g_per_ml": null},
+      "rationale": "Coupe de boeuf crue générique explicitement identifiée dans le FCÉN; utilisée lorsque le libellé commercial ne permet pas une coupe plus précise.", "aliases": [{"language": "en", "alias": "Beef steak"}], "acknowledged_similar_ids": ["boeuf_bifteck_surlonge", "bifteck_de_contre_filet"]
+    },
+    {
+      "source_version": "2026", "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD", "food_code": "7785", "reviewer": "superc-catalog-curation-v1",
+      "candidate_snapshot": {"food_code": "7785", "food_description_fr": "Shortening, domestique, tout végétal, huile de soya et huile de palme hydrogénée", "food_description_en": "Shortening, household, all-vegetable, soybean oil and hydrogenated palm oil", "cnf_food_group_code": "4", "cnf_food_group_description_fr": "Matières grasses et huiles"},
+      "action": "create_variant", "canonical_ingredient_id": null,
+      "canonical": {"id": "shortening_vegetal", "family_id": "huiles", "name": "Shortening végétal", "unit_kind": "mass", "base_unit": "g", "perishability": null, "salvage_value_cents_per_base_unit": null, "density_g_per_ml": null},
+      "rationale": "Matière grasse de cuisson explicitement identifiée dans le FCÉN; ce n'est ni une collation ni un plat préparé.", "aliases": [{"language": "en", "alias": "Vegetable shortening"}], "acknowledged_similar_ids": ["margarine"]
+    },
+    {
+      "source_version": "2026", "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD", "food_code": "3617", "reviewer": "superc-catalog-curation-v1",
+      "candidate_snapshot": {"food_code": "3617", "food_description_fr": "Veau, foie, cru", "food_description_en": "Veal, liver, raw", "cnf_food_group_code": "17", "cnf_food_group_description_fr": "Produits de veau"},
+      "action": "create_variant", "canonical_ingredient_id": null,
+      "canonical": {"id": "foie_veau", "family_id": "veau", "name": "Foie de veau", "unit_kind": "mass", "base_unit": "g", "perishability": null, "salvage_value_cents_per_base_unit": null, "density_g_per_ml": null},
+      "rationale": "Abat cru simple explicitement identifié dans le FCÉN; requis par des produits Super C admissibles.", "aliases": [{"language": "en", "alias": "Veal liver"}], "acknowledged_similar_ids": []
+    },
+    {
+      "source_version": "2026", "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD", "food_code": "3579", "reviewer": "superc-catalog-curation-v1",
+      "candidate_snapshot": {"food_code": "3579", "food_description_fr": "Gibier, viande, chevreuil (venaison), cru", "food_description_en": "Game meat, deer (venison), raw", "cnf_food_group_code": "17", "cnf_food_group_description_fr": "Produits d'agneau, de veau et de gibier"},
+      "action": "create_variant", "canonical_ingredient_id": null,
+      "canonical": {"id": "viande_cerf", "family_id": "agneau", "name": "Viande de cerf", "unit_kind": "mass", "base_unit": "g", "perishability": null, "salvage_value_cents_per_base_unit": null, "density_g_per_ml": null},
+      "rationale": "Viande de gibier crue explicitement identifiée dans le FCÉN; le libellé commercial cerf est relié à la venaison.", "aliases": [{"language": "en", "alias": "Venison"}], "acknowledged_similar_ids": []
+    },
+    {
+      "source_version": "2026", "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD", "food_code": "3571", "reviewer": "superc-catalog-curation-v1",
+      "candidate_snapshot": {"food_code": "3571", "food_description_fr": "Gibier, viande, bison, cru", "food_description_en": "Game meat, bison, raw", "cnf_food_group_code": "17", "cnf_food_group_description_fr": "Produits d'agneau, de veau et de gibier"},
+      "action": "create_variant", "canonical_ingredient_id": null,
+      "canonical": {"id": "viande_bison", "family_id": "agneau", "name": "Viande de bison", "unit_kind": "mass", "base_unit": "g", "perishability": null, "salvage_value_cents_per_base_unit": null, "density_g_per_ml": null},
+      "rationale": "Viande de gibier crue explicitement identifiée dans le FCÉN; requise par un produit Super C admissible.", "aliases": [{"language": "en", "alias": "Bison meat"}], "acknowledged_similar_ids": []
+    },
+    {
+      "source_version": "2026", "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD", "food_code": "3585", "reviewer": "superc-catalog-curation-v1",
+      "candidate_snapshot": {"food_code": "3585", "food_description_fr": "Gibier, viande, cheval, cru", "food_description_en": "Game meat, horse, raw", "cnf_food_group_code": "17", "cnf_food_group_description_fr": "Produits d'agneau, de veau et de gibier"},
+      "action": "create_variant", "canonical_ingredient_id": null,
+      "canonical": {"id": "viande_cheval", "family_id": "agneau", "name": "Viande de cheval", "unit_kind": "mass", "base_unit": "g", "perishability": null, "salvage_value_cents_per_base_unit": null, "density_g_per_ml": null},
+      "rationale": "Viande de gibier crue explicitement identifiée dans le FCÉN; requise par un produit Super C admissible.", "aliases": [{"language": "en", "alias": "Horse meat"}], "acknowledged_similar_ids": []
+    },
+    {
+      "source_version": "2026", "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD", "food_code": "3432", "reviewer": "superc-catalog-curation-v1",
+      "candidate_snapshot": {"food_code": "3432", "food_description_fr": "Agneau, canadien, gigot, entier, maigre, cru", "food_description_en": "Lamb, Canadian, leg, whole, lean, raw", "cnf_food_group_code": "17", "cnf_food_group_description_fr": "Produits d'agneau, de veau et de gibier"},
+      "action": "create_variant", "canonical_ingredient_id": null,
+      "canonical": {"id": "gigot_agneau", "family_id": "agneau", "name": "Gigot d'agneau", "unit_kind": "mass", "base_unit": "g", "perishability": null, "salvage_value_cents_per_base_unit": null, "density_g_per_ml": null},
+      "rationale": "Coupe d'agneau crue explicitement identifiée dans le FCÉN; requise par un produit Super C admissible.", "aliases": [{"language": "en", "alias": "Leg of lamb"}], "acknowledged_similar_ids": []
+    },
+    {
+      "source_version": "2026", "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD", "food_code": "19", "reviewer": "superc-catalog-curation-v1",
+      "candidate_snapshot": {"food_code": "19", "food_description_fr": "Fromage brick", "food_description_en": "Cheese, brick", "cnf_food_group_code": "1", "cnf_food_group_description_fr": "Produits laitiers et succédanés"},
+      "action": "create_variant", "canonical_ingredient_id": null,
+      "canonical": {"id": "fromage_brick", "family_id": "fromages", "name": "Fromage brick", "unit_kind": "mass", "base_unit": "g", "perishability": null, "salvage_value_cents_per_base_unit": null, "density_g_per_ml": null},
+      "rationale": "Fromage simple explicitement identifié dans le FCÉN; requis par un produit Super C admissible.", "aliases": [{"language": "en", "alias": "Brick cheese"}], "acknowledged_similar_ids": []
+    },
+    {
+      "source_version": "2026", "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD", "food_code": "2348", "reviewer": "superc-catalog-curation-v1",
+      "candidate_snapshot": {"food_code": "2348", "food_description_fr": "Tomate, séchée au soleil", "food_description_en": "Tomato, sun-dried", "cnf_food_group_code": "11", "cnf_food_group_description_fr": "Légumes et produits végétaux"},
+      "action": "create_variant", "canonical_ingredient_id": null,
+      "canonical": {"id": "tomate_sechee", "family_id": "tomates", "name": "Tomates séchées", "unit_kind": "mass", "base_unit": "g", "perishability": null, "salvage_value_cents_per_base_unit": null, "density_g_per_ml": null},
+      "rationale": "État simple de tomate explicitement identifié dans le FCÉN; requis par des produits Super C admissibles.", "aliases": [{"language": "en", "alias": "Sun-dried tomato"}], "acknowledged_similar_ids": ["tomate", "tomate_conserve"]
+    },
+    {
+      "source_version": "2026", "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD", "food_code": "7245", "reviewer": "superc-catalog-curation-v1",
+      "candidate_snapshot": {"food_code": "7245", "food_description_fr": "Édulcorant, poudre d'extrait feuilles de Stevia", "food_description_en": "Sweetener, stevia leaf extract powder", "cnf_food_group_code": "19", "cnf_food_group_description_fr": "Sucres, sirops et confiseries"},
+      "action": "create_variant", "canonical_ingredient_id": null,
+      "canonical": {"id": "edulcorant_stevia", "family_id": "sucres", "name": "Édulcorant de stévia", "unit_kind": "mass", "base_unit": "g", "perishability": null, "salvage_value_cents_per_base_unit": null, "density_g_per_ml": null},
+      "rationale": "Édulcorant de cuisine explicitement identifié dans le FCÉN; distinct des bonbons et collations exclus.", "aliases": [{"language": "en", "alias": "Stevia sweetener"}], "acknowledged_similar_ids": ["sucre_non_precise"]
+    },
+    {
+      "source_version": "2026", "archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD", "food_code": "5975", "reviewer": "superc-catalog-curation-v1",
+      "candidate_snapshot": {"food_code": "5975", "food_description_fr": "Édulcorant, sucralose, Splenda", "food_description_en": "Sweetener, sucralose, Splenda", "cnf_food_group_code": "19", "cnf_food_group_description_fr": "Sucres, sirops et confiseries"},
+      "action": "create_variant", "canonical_ingredient_id": null,
+      "canonical": {"id": "edulcorant_sucralose", "family_id": "sucres", "name": "Édulcorant au sucralose", "unit_kind": "mass", "base_unit": "g", "perishability": null, "salvage_value_cents_per_base_unit": null, "density_g_per_ml": null},
+      "rationale": "Édulcorant de cuisine explicitement identifié dans le FCÉN; distinct des bonbons et collations exclus.", "aliases": [{"language": "en", "alias": "Sucralose sweetener"}], "acknowledged_similar_ids": ["sucre_non_precise"]
+    }
+  ]
+}

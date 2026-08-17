@@ -1,4 +1,4 @@
-"""Adaptateur JSON du RecipeSourcePort — v1 (~40 recettes de seed)."""
+"""Adaptateur JSON du RecipeSourcePort — recettes de seed et importées."""
 
 from __future__ import annotations
 

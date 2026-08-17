@@ -108,3 +108,61 @@ def test_human_override_must_target_a_souschef_slug(tmp_path):
         assert "Slugs canoniques inconnus" in str(error)
     else:
         raise AssertionError("Un ancien identifiant ne doit jamais être accepté.")
+
+
+def test_title_override_is_reused_for_a_new_retailer_product_id(tmp_path):
+    adapter = _adapter(
+        tmp_path,
+        title_overrides={"all butter brioche buns": "beurre"},
+    )
+    decisions = {row.source_product_id: row for row in adapter.decisions}
+
+    assert decisions["BUNS-300"].status == "matched"
+    assert decisions["BUNS-300"].canonical_ingredient_id == "beurre"
+    assert decisions["BUNS-300"].reason == "human_title_approved"
+
+
+def test_deduplication_keeps_promotion_and_enriches_its_quantity_proof(tmp_path):
+    capture = tmp_path / "duplicate-captures"
+    capture.mkdir()
+    base = {
+        "retailer_product_id": "BUTTER-454",
+        "name": "Unsalted Butter",
+        "brand": "No Name",
+        "package_text": "454 g",
+        "displayed_price": "7.49",
+        "product_url": "https://maxi.test/butter",
+        "in_listing": True,
+    }
+    deal = {
+        "retailer_product_id": "BUTTER-454",
+        "name": "Unsalted Butter",
+        "displayed_price": "6.19",
+        "displayed_regular_price": "7.49",
+        "displayed_sale_price": "6.19",
+        "is_promo": True,
+        "in_listing": True,
+    }
+    (capture / "category.json").write_text(
+        json.dumps({"captured_at": "2026-08-13T12:00:00Z", "products": [base]}),
+        encoding="utf-8",
+    )
+    (capture / "deals.json").write_text(
+        json.dumps({"captured_at": "2026-08-13T11:00:00Z", "products": [deal]}),
+        encoding="utf-8",
+    )
+
+    adapter = MaxiCaptureAdapter(
+        [capture],
+        _write_seed(tmp_path),
+        store_external_key="maxi_7552",
+        week="2026-W33",
+        valid_from=date(2026, 8, 13),
+        valid_to=date(2026, 8, 19),
+    )
+
+    product = adapter.source_products()["BUTTER-454"]
+    assert product["is_promo"] is True
+    assert product["displayed_price"] == "6.19"
+    assert product["package_text"] == "454 g"
+    assert product["brand"] == "No Name"

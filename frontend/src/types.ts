@@ -109,3 +109,25 @@ export interface Store {
 export interface RecipeIngredientLine {
   canonical_ingredient_id: string; name: string;
 }
+
+export type Confidence = "exact" | "audited_conversion" | "estimated" | "incomplete";
+
+export interface RecipeQuote {
+  recipe_id: string; recipe_name: string; servings: number;
+  status: "complete" | "incomplete";
+  consumed_cost_cents: string | number | null;
+  consumed_cost_per_serving_cents: string | number | null;
+  best_unit_price_cents: string | number | null;
+  autonomous_checkout_cents: string | number | null;
+  regular_comparable_cents: string | number | null;
+  promotional_savings_cents: string | number | null;
+  // Deux nombres de fiabilité différente, donc deux niveaux : un produit vendu
+  // au poids n'affecte que le décaissement.
+  consumed_confidence: Confidence;
+  checkout_confidence: Confidence;
+  basket_scope: "single_store" | "multi_store";
+  stores: string[];
+  valid_from: string | null; valid_to: string | null;
+  validity_reason: string | null;
+  incomplete_ingredients: string[];
+}

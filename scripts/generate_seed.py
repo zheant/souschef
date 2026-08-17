@@ -173,6 +173,7 @@ for (rid, name, pi, tf, tm, b, m, tags, diet, alg, eq, ings) in R:
         [(i, round(qf * 1.5, 3), qm) for (i, qf, qm) in ings],
     ))
 ALL_RECIPES = R + VARIANTS  # 20 + 20 = 40
+IMPORTED_RECIPES_PATH = ROOT / "seed" / "main" / "imported_recipes.json"
 
 # --------------------------------------------------------------------------
 STORES = [
@@ -188,6 +189,14 @@ STORES = [
     {"external_key": "epicier_du_coin", "banner": "L'Épicier du Coin",
      "address": "12 rue Locale", "lat": 45.5320, "lng": -73.5905,
      "shopping_center_id": None},
+    # Magasins réels sans prix synthétiques : leurs prix viennent uniquement
+    # du pipeline de captures hebdomadaires.
+    {"external_key": "maxi_7552", "banner": "Maxi",
+     "address": "350 rue Bouvier, Québec, QC", "lat": 46.841111,
+     "lng": -71.270482, "shopping_center_id": None},
+    {"external_key": "superc_640", "banner": "Super C",
+     "address": "4545 boul. de l'Auvergne, Québec, QC G2C 1H7",
+     "lat": 46.825750, "lng": -71.352680, "shopping_center_id": None},
 ]
 
 # Positionnement prix par bannière (stable) : Maxi-Prix casse les prix,
@@ -258,7 +267,9 @@ def build_raw_offers(products: list[dict]) -> list[dict]:
     # l'historique capable de distinguer un vrai rabais d'un prix régulier
     # annoncé en gros caractères (docs/spec.md, table `price`).
     assortment: dict[tuple[str, str], int] = {}
-    for store in STORES:
+    for store in (
+        store for store in STORES if store["external_key"] in STORE_PRICE_FACTOR
+    ):
         for prod in products:
             key_rng = random.Random(f"{store['external_key']}|{prod['external_key']}")
             if key_rng.random() < 0.15:
@@ -274,7 +285,9 @@ def build_raw_offers(products: list[dict]) -> list[dict]:
 
     for monday in weeks:
         wk = iso_week(monday)
-        for store in STORES:
+        for store in (
+            store for store in STORES if store["external_key"] in STORE_PRICE_FACTOR
+        ):
             for prod in products:
                 key = (store["external_key"], prod["external_key"])
                 if key not in assortment:
@@ -315,6 +328,16 @@ def recipes_json() -> list[dict]:
                 for (i, qf, qm) in ings
             ],
         })
+    if IMPORTED_RECIPES_PATH.exists():
+        imported = json.loads(IMPORTED_RECIPES_PATH.read_text(encoding="utf-8"))
+        duplicate_ids = {recipe["id"] for recipe in out} & {
+            recipe["id"] for recipe in imported
+        }
+        if duplicate_ids:
+            raise ValueError(
+                f"Identifiants de recettes importées dupliqués: {sorted(duplicate_ids)}"
+            )
+        out.extend(imported)
     return out
 
 
@@ -494,7 +517,8 @@ def main() -> None:
                 source["salvage_value_cents_per_base_unit"]
             )
     dump(main_dir / "canonical_ingredients.json", canonical_ingredients)
-    dump(main_dir / "recipes.json", recipes_json())
+    recipes = recipes_json()
+    dump(main_dir / "recipes.json", recipes)
     dump(main_dir / "stores.json", STORES)
     dump(main_dir / "products.json", products)
     dump(main_dir / "raw_offers.json", offers)
@@ -503,7 +527,7 @@ def main() -> None:
     for name, obj in toy().items():
         dump(toy_dir / name, obj)
 
-    print(f"seed/main : {len(canonical_ingredients)} ingrédients, {len(ALL_RECIPES)} recettes,"
+    print(f"seed/main : {len(canonical_ingredients)} ingrédients, {len(recipes)} recettes,"
           f" {len(STORES)} magasins, {len(products)} produits")
 
 

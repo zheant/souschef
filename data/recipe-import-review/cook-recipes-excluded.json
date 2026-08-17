@@ -1,0 +1,3581 @@
+[
+  {
+    "id": "bon_pour_toi_brioches_a_la_cannelle",
+    "name": "Recette de brioches à la cannelle moelleuses",
+    "original_servings": 12,
+    "prep_time_fixed_h": "0.666667",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 12,
+    "max_batch_servings": 12,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 25,
+      "cuisines": [
+        "Américaine"
+      ],
+      "keywords": [
+        "Recette de brioches à la cannelle maison moelleuses",
+        "brioches à la cannelle faciles",
+        "cinnamon rolls maison",
+        "brioches moelleuses à la cannelle",
+        "recette brioches maison."
+      ],
+      "source": "bon_pour_toi",
+      "source_url": "https://bonpourtoi.ca/recettes/brioches-a-la-cannelle",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "review_flags": [
+        {
+          "code": "INGREDIENT_QUANTITY_REVIEW_REQUIRED",
+          "ingredient_position": 3,
+          "reason": "COUNT_UNIT_WITHOUT_EQUIVALENCE"
+        }
+      ],
+      "merged_duplicate_ingredients": [
+        {
+          "canonical_ingredient_id": "lait_325",
+          "merged_lines": 2,
+          "qty_fixed_per_batch_base_unit": "265"
+        },
+        {
+          "canonical_ingredient_id": "beurre_non_sale",
+          "merged_lines": 3,
+          "qty_fixed_per_batch_base_unit": "312.5"
+        }
+      ],
+      "servings_source": "12",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [
+      "VegetarianDiet"
+    ],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "lait_325",
+        "qty_fixed_per_batch_base_unit": "265",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sucre_blanc",
+        "qty_fixed_per_batch_base_unit": "125",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "levure_seche_active",
+        "qty_fixed_per_batch_base_unit": "8",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "oeuf",
+        "qty_fixed_per_batch_base_unit": "2",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "huile_vegetale",
+        "qty_fixed_per_batch_base_unit": "7.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "farine_tout_usage",
+        "qty_fixed_per_batch_base_unit": "1125",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sel_table",
+        "qty_fixed_per_batch_base_unit": "2.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "beurre_non_sale",
+        "qty_fixed_per_batch_base_unit": "312.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "cassonade",
+        "qty_fixed_per_batch_base_unit": "187.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "cannelle_moulue",
+        "qty_fixed_per_batch_base_unit": "30",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "fromage_creme",
+        "qty_fixed_per_batch_base_unit": "125",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sucre_glace",
+        "qty_fixed_per_batch_base_unit": "250",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "extrait_vanille",
+        "qty_fixed_per_batch_base_unit": "5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "bon_pour_toi_brioches_a_la_cannelle_et_puree_de_dattes",
+    "name": "Brioches à la cannelle et purée de dattes",
+    "original_servings": 9,
+    "prep_time_fixed_h": "0.016667",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 9,
+    "max_batch_servings": 9,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 35,
+      "cuisines": [],
+      "keywords": [
+        "Végétarien",
+        "Recevoir"
+      ],
+      "source": "bon_pour_toi",
+      "source_url": "https://bonpourtoi.ca/recettes/brioches-a-la-cannelle-et-puree-de-dattes",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "review_flags": [
+        {
+          "code": "INGREDIENT_QUANTITY_REVIEW_REQUIRED",
+          "ingredient_position": 5,
+          "reason": "COUNT_UNIT_WITHOUT_EQUIVALENCE"
+        },
+        {
+          "code": "INGREDIENT_CANONICAL_MAPPING_REQUIRED",
+          "ingredient_position": 9,
+          "label": "dattes medjool, dénauyatées et coupées en deux",
+          "reason": "NO_EXACT_CANONICAL_ALIAS"
+        },
+        {
+          "code": "EQUIPMENT_DERIVED_REVIEW_REQUIRED",
+          "count": 1
+        }
+      ],
+      "merged_duplicate_ingredients": [
+        {
+          "canonical_ingredient_id": "huile_canola",
+          "merged_lines": 2,
+          "qty_fixed_per_batch_base_unit": "150"
+        },
+        {
+          "canonical_ingredient_id": "cassonade",
+          "merged_lines": 2,
+          "qty_fixed_per_batch_base_unit": "125"
+        },
+        {
+          "canonical_ingredient_id": "sel_table",
+          "merged_lines": 2,
+          "qty_fixed_per_batch_base_unit": "7.5"
+        }
+      ],
+      "servings_source": "9",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [
+      "robot_culinaire"
+    ],
+    "diet_flags": [
+      "VegetarianDiet"
+    ],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "lait_325",
+        "qty_fixed_per_batch_base_unit": "187.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "huile_canola",
+        "qty_fixed_per_batch_base_unit": "150",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "oeuf",
+        "qty_fixed_per_batch_base_unit": "1",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "cassonade",
+        "qty_fixed_per_batch_base_unit": "125",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "levure_instantanee",
+        "qty_fixed_per_batch_base_unit": null,
+        "qty_marginal_per_serving_base_unit": null,
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "farine_tout_usage",
+        "qty_fixed_per_batch_base_unit": "750",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "levure_chimique",
+        "qty_fixed_per_batch_base_unit": "1.25",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sel_table",
+        "qty_fixed_per_batch_base_unit": "7.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": null,
+        "qty_fixed_per_batch_base_unit": "250",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "cannelle_non_precisee",
+        "qty_fixed_per_batch_base_unit": "10",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sucre_glace",
+        "qty_fixed_per_batch_base_unit": "187.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "babeurre",
+        "qty_fixed_per_batch_base_unit": "45",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "extrait_vanille",
+        "qty_fixed_per_batch_base_unit": "5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "bon_pour_toi_craqueles_au_citron",
+    "name": "Craquelés au citron",
+    "original_servings": 22,
+    "prep_time_fixed_h": "0.5",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 22,
+    "max_batch_servings": 22,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 15,
+      "cuisines": [
+        "Américaine"
+      ],
+      "keywords": [
+        "Craquelés au citron moelleux",
+        "biscuits craquelés au citron",
+        "biscuits au citron avec sucre à glacer",
+        "recette craquelés citron faciles",
+        "biscuits citron moelleux maison",
+        "lemon crinkle cookies."
+      ],
+      "source": "bon_pour_toi",
+      "source_url": "https://bonpourtoi.ca/recettes/craqueles-au-citron",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "review_flags": [
+        {
+          "code": "INGREDIENT_CANONICAL_MAPPING_REQUIRED",
+          "ingredient_position": 10,
+          "label": "extrait d'agrume ou extrait de vanille",
+          "reason": "AMBIGUOUS_ALTERNATIVE"
+        }
+      ],
+      "merged_duplicate_ingredients": [
+        {
+          "canonical_ingredient_id": "sucre_blanc",
+          "merged_lines": 2,
+          "qty_fixed_per_batch_base_unit": "125"
+        }
+      ],
+      "servings_source": "22",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [
+      "VegetarianDiet"
+    ],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "farine_tout_usage",
+        "qty_fixed_per_batch_base_unit": "500",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "bicarbonate_soude",
+        "qty_fixed_per_batch_base_unit": "5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sel_table",
+        "qty_fixed_per_batch_base_unit": "2.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "zeste_citron",
+        "qty_fixed_per_batch_base_unit": "30",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "cassonade",
+        "qty_fixed_per_batch_base_unit": "187.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sucre_blanc",
+        "qty_fixed_per_batch_base_unit": "125",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "beurre_non_sale",
+        "qty_fixed_per_batch_base_unit": "125",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "oeuf",
+        "qty_fixed_per_batch_base_unit": "2",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "jus_citron",
+        "qty_fixed_per_batch_base_unit": "30",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": null,
+        "qty_fixed_per_batch_base_unit": "5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "colorant_alimentaire",
+        "qty_fixed_per_batch_base_unit": "0.625",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sucre_glace",
+        "qty_fixed_per_batch_base_unit": "125",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "bon_pour_toi_gateau_des_anges_au_chocolat",
+    "name": "Gâteau des anges au chocolat",
+    "original_servings": 8,
+    "prep_time_fixed_h": "0.416667",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 8,
+    "max_batch_servings": 8,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 40,
+      "cuisines": [
+        "Américaine"
+      ],
+      "keywords": [
+        "Gâteau des anges au chocolat",
+        "recette de gâteau des anges au chocolat",
+        "gâteau des anges chocolat léger",
+        "gâteau des anges au cacao",
+        "recette de gâteau chocolat aérien."
+      ],
+      "source": "bon_pour_toi",
+      "source_url": "https://bonpourtoi.ca/recettes/gateau-des-anges-au-chocolat",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "review_flags": [
+        {
+          "code": "INGREDIENT_CANONICAL_MAPPING_REQUIRED",
+          "ingredient_position": 8,
+          "label": "crème fouettée au chocolat",
+          "reason": "NO_EXACT_CANONICAL_ALIAS"
+        },
+        {
+          "code": "INGREDIENT_QUANTITY_REVIEW_REQUIRED",
+          "ingredient_position": 9,
+          "reason": "MISSING_QUANTITY"
+        }
+      ],
+      "solver_omissions": [
+        {
+          "ingredient_identity_id": "IDENTITY_3BD3D251C8D7B8F497ED1FAA",
+          "ingredient_line": "Copeaux de chocolat au lait,   Au goût (  Au goût)",
+          "reason": "unquantified_non_solver_item"
+        }
+      ],
+      "servings_source": "8",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [
+      "VegetarianDiet"
+    ],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "farine_gateaux",
+        "qty_fixed_per_batch_base_unit": "187.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "cacao_poudre",
+        "qty_fixed_per_batch_base_unit": "83.333333",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sel_table",
+        "qty_fixed_per_batch_base_unit": "1.25",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "blanc_oeuf",
+        "qty_fixed_per_batch_base_unit": "12",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "creme_tartre",
+        "qty_fixed_per_batch_base_unit": "7.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "extrait_vanille",
+        "qty_fixed_per_batch_base_unit": "7.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sucre_blanc",
+        "qty_fixed_per_batch_base_unit": "375",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": null,
+        "qty_fixed_per_batch_base_unit": "500",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "bon_pour_toi_meringues",
+    "name": "Meringues (recette facile)",
+    "original_servings": 40,
+    "prep_time_fixed_h": "0.416667",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 40,
+    "max_batch_servings": 40,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 90,
+      "cuisines": [
+        "Française"
+      ],
+      "keywords": [
+        "Recette de meringue",
+        "meringue facile",
+        "meringue française",
+        "dessert léger",
+        "pâtisserie maison",
+        "blancs d'œufs",
+        "meringue croquante",
+        "meringue moelleuse",
+        "astuces meringue",
+        "cuisson meringue",
+        "meringue sans faille",
+        "meringue traditionnelle",
+        "meringue rapide",
+        "meringue sucrée",
+        "meringue parfaite."
+      ],
+      "source": "bon_pour_toi",
+      "source_url": "https://bonpourtoi.ca/recettes/meringues",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "review_flags": [
+        {
+          "code": "INGREDIENT_QUANTITY_REVIEW_REQUIRED",
+          "ingredient_position": 5,
+          "reason": "MISSING_QUANTITY"
+        },
+        {
+          "code": "INGREDIENT_QUANTITY_REVIEW_REQUIRED",
+          "ingredient_position": 6,
+          "reason": "MISSING_QUANTITY"
+        }
+      ],
+      "solver_omissions": [
+        {
+          "ingredient_identity_id": "IDENTITY_8E47C78D7DD786995D004720",
+          "ingredient_line": "Colorant alimentaire (au choix),   Au goût (  Au goût)",
+          "reason": "unquantified_non_solver_item"
+        },
+        {
+          "ingredient_identity_id": "IDENTITY_A0AD9D107FB263FF4FCD4C66",
+          "ingredient_line": "Bonbons style billes arc-en-ciel,   Au goût (  Au goût)",
+          "reason": "unquantified_non_solver_item"
+        }
+      ],
+      "servings_source": "40",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [
+      "GlutenFreeDiet",
+      "LowLactoseDiet",
+      "VegetarianDiet"
+    ],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "blanc_oeuf",
+        "qty_fixed_per_batch_base_unit": "3",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sucre_blanc",
+        "qty_fixed_per_batch_base_unit": "187.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "creme_tartre",
+        "qty_fixed_per_batch_base_unit": "1.25",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "extrait_vanille",
+        "qty_fixed_per_batch_base_unit": "5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "bon_pour_toi_recette_de_gateau_des_anges_ultra_moelleux",
+    "name": "Recette de gâteau des anges ultra moelleux",
+    "original_servings": 8,
+    "prep_time_fixed_h": "0.416667",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 8,
+    "max_batch_servings": 8,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 40,
+      "cuisines": [
+        "Américaine"
+      ],
+      "keywords": [
+        "Gâteau des anges ultra moelleux",
+        "recette de gâteau des anges",
+        "gâteau des anges moelleux facile",
+        "gâteau des anges maison",
+        "recette de gâteau des anges léger."
+      ],
+      "source": "bon_pour_toi",
+      "source_url": "https://bonpourtoi.ca/recettes/recette-de-gateau-des-anges-ultra-moelleux",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "servings_source": "8",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [
+      "LowLactoseDiet",
+      "VegetarianDiet"
+    ],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "farine_gateaux",
+        "qty_fixed_per_batch_base_unit": "250",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sucre_glace",
+        "qty_fixed_per_batch_base_unit": "166.666667",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sel_table",
+        "qty_fixed_per_batch_base_unit": "1.25",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "blanc_oeuf",
+        "qty_fixed_per_batch_base_unit": "12",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "creme_tartre",
+        "qty_fixed_per_batch_base_unit": "7.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "extrait_vanille",
+        "qty_fixed_per_batch_base_unit": "7.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sucre_blanc",
+        "qty_fixed_per_batch_base_unit": "250",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "bon_pour_toi_recette_de_riz_au_lait",
+    "name": "Recette de riz au lait",
+    "original_servings": 4,
+    "prep_time_fixed_h": "0.166667",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 4,
+    "max_batch_servings": 4,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 40,
+      "cuisines": [
+        "Française",
+        "Québécoise"
+      ],
+      "keywords": [
+        "Meilleure recette de riz au lait maison",
+        "riz au lait crémeux à la vanille",
+        "recette de riz au lait facile",
+        "riz au lait à la crème 35 %",
+        "dessert riz au lait réconfortant",
+        "riz au lait riz arborio",
+        "recette riz au lait sans oeufs",
+        "riz au lait maison onctueux."
+      ],
+      "source": "bon_pour_toi",
+      "source_url": "https://bonpourtoi.ca/recettes/recette-de-riz-au-lait",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "servings_source": "4",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [
+      "GlutenFreeDiet",
+      "VegetarianDiet"
+    ],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "lait_non_precise",
+        "qty_fixed_per_batch_base_unit": "750",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "riz_arborio",
+        "qty_fixed_per_batch_base_unit": "125",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sel_table",
+        "qty_fixed_per_batch_base_unit": "1.25",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "creme_15",
+        "qty_fixed_per_batch_base_unit": "166.666667",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sucre_blanc",
+        "qty_fixed_per_batch_base_unit": "125",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "extrait_vanille",
+        "qty_fixed_per_batch_base_unit": "7.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "bon_pour_toi_recette_pops_a_la_creme_soda_et_aux_fraises",
+    "name": "Recette rapide de pops à la crème soda et aux fraises",
+    "original_servings": 8,
+    "prep_time_fixed_h": "0.25",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 8,
+    "max_batch_servings": 8,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 0,
+      "cuisines": [
+        "Américaine",
+        "Canadienne"
+      ],
+      "keywords": [
+        "Pops à la crème soda et aux fraises",
+        "recette de pops à la crème soda",
+        "popsicles fraises et crème soda",
+        "recette de popsicle maison facile",
+        "pops glacés aux fraises pour l'été."
+      ],
+      "source": "bon_pour_toi",
+      "source_url": "https://bonpourtoi.ca/recettes/recette-pops-a-la-creme-soda-et-aux-fraises",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "review_flags": [
+        {
+          "code": "EQUIPMENT_DERIVED_REVIEW_REQUIRED",
+          "count": 2
+        }
+      ],
+      "servings_source": "8",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [
+      "robot_culinaire",
+      "melangeur"
+    ],
+    "diet_flags": [
+      "GlutenFreeDiet",
+      "LowLactoseDiet",
+      "VeganDiet",
+      "VegetarianDiet"
+    ],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "fraise",
+        "qty_fixed_per_batch_base_unit": "250",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "creme_soda",
+        "qty_fixed_per_batch_base_unit": "625",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "bon_pour_toi_rice_krispies_de_noel",
+    "name": "Rice Krispies de Noël",
+    "original_servings": 12,
+    "prep_time_fixed_h": "0.5",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 12,
+    "max_batch_servings": 12,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 10,
+      "cuisines": [
+        "Américaine",
+        "Canadienne"
+      ],
+      "keywords": [
+        "Rice krispies noël",
+        "recette de rice krispies de noël",
+        "carrés rice kripies de noël",
+        "Rice Krispies de Noël",
+        "Carrés de riz soufflé",
+        "Dessert de Noël pour enfants",
+        "Rice Krispies décorés",
+        "Recette de rennes au chocolat",
+        "Friandises de Noël faciles",
+        "Guimauves et riz soufflé",
+        "Dessert festif rapide",
+        "Rice Krispies aux fêtes",
+        "Idée sucrée pour Noël."
+      ],
+      "source": "bon_pour_toi",
+      "source_url": "https://bonpourtoi.ca/recettes/rice-krispies-de-noel",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "review_flags": [
+        {
+          "code": "INGREDIENT_CANONICAL_MAPPING_REQUIRED",
+          "ingredient_position": 7,
+          "label": "smarties (12 smarties ) smarties rouges",
+          "reason": "NO_EXACT_CANONICAL_ALIAS"
+        }
+      ],
+      "quantity_estimates": [
+        {
+          "ingredient_identity_id": "IDENTITY_8815A55EA6F4959B6EF540E0",
+          "ingredient_line": "Yeux en bonbons, 24 yeux   (24 yeux  )",
+          "basis": "declared estimate 10 g/piece"
+        },
+        {
+          "ingredient_identity_id": "IDENTITY_6EAF3E482E8F97E22675055E",
+          "ingredient_line": "Mini bretzels, 24 bretzels   (24 bretzels  )",
+          "basis": "declared estimate 3 g/piece"
+        }
+      ],
+      "servings_source": "12",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [
+      "VegetarianDiet"
+    ],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "beurre_non_sale",
+        "qty_fixed_per_batch_base_unit": "83.333333",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "guimauve_mini",
+        "qty_fixed_per_batch_base_unit": "400",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "extrait_vanille",
+        "qty_fixed_per_batch_base_unit": "2.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "cereales_riz_souffle",
+        "qty_fixed_per_batch_base_unit": "300",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "brisure_chocolat",
+        "qty_fixed_per_batch_base_unit": "62.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "bonbon",
+        "qty_fixed_per_batch_base_unit": "240",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": null,
+        "qty_fixed_per_batch_base_unit": "12",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "bretzel_mini",
+        "qty_fixed_per_batch_base_unit": "72",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "bon_pour_toi_sauce_pour_pouding_au_pain",
+    "name": "Sauce pour pouding au pain",
+    "original_servings": 1,
+    "prep_time_fixed_h": "0.083333",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 1,
+    "max_batch_servings": 1,
+    "tags": {
+      "categories": [
+        "Glaçages et coulis"
+      ],
+      "cook_time_minutes": 5,
+      "cuisines": [
+        "Canadienne",
+        "Québécoise"
+      ],
+      "keywords": [
+        "Sauce au sirop d'érable pour pouding au pain",
+        "sauce crémeuse au sirop d'érable maison",
+        "sauce érable et crème pour dessert",
+        "recette de sauce au sirop d'érable facile",
+        "sauce pour pouding au pain",
+        "sauce caramel à l'érable",
+        "sauce nappante à l'érable",
+        "sauce dorée au sirop d'érable",
+        "sauce dessert québécoise",
+        "recette sauce sirop érable crème."
+      ],
+      "source": "bon_pour_toi",
+      "source_url": "https://bonpourtoi.ca/recettes/sauce-pour-pouding-au-pain",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "servings_source": "1",
+      "exclusion_reason": "dessert_category:glacages_et_coulis"
+    },
+    "required_equipment": [],
+    "diet_flags": [
+      "GlutenFreeDiet",
+      "VegetarianDiet"
+    ],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "sirop_erable",
+        "qty_fixed_per_batch_base_unit": "166.666667",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "creme_15",
+        "qty_fixed_per_batch_base_unit": "125",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "fecule_mais",
+        "qty_fixed_per_batch_base_unit": "5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "beurre_non_sale",
+        "qty_fixed_per_batch_base_unit": "15",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "extrait_vanille",
+        "qty_fixed_per_batch_base_unit": "2.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sel_table",
+        "qty_fixed_per_batch_base_unit": "1.25",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "bon_pour_toi_scones_aux_bleuets_les_meilleurs",
+    "name": "Scones aux bleuets (les meilleurs)",
+    "original_servings": 12,
+    "prep_time_fixed_h": "0.5",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 12,
+    "max_batch_servings": 12,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 20,
+      "cuisines": [],
+      "keywords": [
+        "Sans arachides",
+        "Sans noix",
+        "Végétarien",
+        "À congeler",
+        "À offrir en cadeau",
+        "Desserts",
+        "Fruitées",
+        "Recevoir",
+        "Réconfortantes"
+      ],
+      "source": "bon_pour_toi",
+      "source_url": "https://bonpourtoi.ca/recettes/scones-aux-bleuets-les-meilleurs",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "review_flags": [
+        {
+          "code": "INGREDIENT_CANONICAL_MAPPING_REQUIRED",
+          "ingredient_position": 5,
+          "label": "zeste d'orange",
+          "reason": "NO_EXACT_CANONICAL_ALIAS"
+        }
+      ],
+      "servings_source": "12",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [
+      "VegetarianDiet"
+    ],
+    "allergen_flags": [
+      "Sans arachides",
+      "Sans noix"
+    ],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "beurre_non_sale",
+        "qty_fixed_per_batch_base_unit": "166.666667",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "oeuf",
+        "qty_fixed_per_batch_base_unit": "1",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "creme_35",
+        "qty_fixed_per_batch_base_unit": "187.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "extrait_vanille",
+        "qty_fixed_per_batch_base_unit": "7.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": null,
+        "qty_fixed_per_batch_base_unit": "30",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sucre_non_precise",
+        "qty_fixed_per_batch_base_unit": "125",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "farine_tout_usage",
+        "qty_fixed_per_batch_base_unit": "750",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "levure_chimique",
+        "qty_fixed_per_batch_base_unit": "15",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "bicarbonate_soude",
+        "qty_fixed_per_batch_base_unit": "5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sel_table",
+        "qty_fixed_per_batch_base_unit": "2.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "bleuet",
+        "qty_fixed_per_batch_base_unit": "375",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sucre_blanc",
+        "qty_fixed_per_batch_base_unit": "30",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "bon_pour_toi_scones_aux_canneberges_et_glacage_au_citron",
+    "name": "Scones aux canneberges et glaçage au citron",
+    "original_servings": 8,
+    "prep_time_fixed_h": "0.333333",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 8,
+    "max_batch_servings": 8,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 20,
+      "cuisines": [],
+      "keywords": [
+        "Sans arachides",
+        "Sans oeufs",
+        "Végétarien"
+      ],
+      "source": "bon_pour_toi",
+      "source_url": "https://bonpourtoi.ca/recettes/scones-aux-canneberges-et-glacage-au-citron",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "review_flags": [
+        {
+          "code": "INGREDIENT_CANONICAL_MAPPING_REQUIRED",
+          "ingredient_position": 3,
+          "label": "poudre de protéines végétales à la vanille (voir l'encadré)",
+          "reason": "NO_EXACT_CANONICAL_ALIAS"
+        },
+        {
+          "code": "INGREDIENT_QUANTITY_REVIEW_REQUIRED",
+          "ingredient_position": 5,
+          "reason": "MISSING_QUANTITY"
+        }
+      ],
+      "merged_duplicate_ingredients": [
+        {
+          "canonical_ingredient_id": "citron",
+          "merged_lines": 2,
+          "qty_fixed_per_batch_base_unit": "63"
+        },
+        {
+          "canonical_ingredient_id": "skyr_vanille",
+          "merged_lines": 2,
+          "qty_fixed_per_batch_base_unit": "250"
+        }
+      ],
+      "solver_omissions": [
+        {
+          "ingredient_identity_id": "IDENTITY_E1AABDBB958F05F688A87FF1",
+          "ingredient_line": "Sel,   pincée (  Au goût)",
+          "reason": "unquantified_non_solver_item"
+        }
+      ],
+      "servings_source": "8",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [
+      "VegetarianDiet"
+    ],
+    "allergen_flags": [
+      "Sans arachides",
+      "Sans oeufs"
+    ],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "farine_tout_usage",
+        "qty_fixed_per_batch_base_unit": "250",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "farine_ble_entier",
+        "qty_fixed_per_batch_base_unit": "5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": null,
+        "qty_fixed_per_batch_base_unit": "125",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "levure_chimique",
+        "qty_fixed_per_batch_base_unit": "15",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sucre_non_precise",
+        "qty_fixed_per_batch_base_unit": "15",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "beurre_non_sale",
+        "qty_fixed_per_batch_base_unit": "83.333333",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "canneberge",
+        "qty_fixed_per_batch_base_unit": "250",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "creme_soya",
+        "qty_fixed_per_batch_base_unit": "125",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "citron",
+        "qty_fixed_per_batch_base_unit": "63",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "skyr_vanille",
+        "qty_fixed_per_batch_base_unit": "250",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sucre_glace",
+        "qty_fixed_per_batch_base_unit": "250",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "jean_philippe_chausson_la_pomme",
+    "name": "Chausson à la Pomme",
+    "original_servings": 1,
+    "prep_time_fixed_h": "0.166667",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 1,
+    "max_batch_servings": 1,
+    "tags": {
+      "categories": [
+        "easy"
+      ],
+      "cook_time_minutes": 45,
+      "cuisines": [],
+      "keywords": [],
+      "source": "la_cuisine_de_jean_philippe",
+      "source_url": "https://www.lacuisinedejeanphilippe.com/recipe/chausson-la-pomme",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "review_flags": [
+        {
+          "code": "INGREDIENT_QUANTITY_REVIEW_REQUIRED",
+          "ingredient_position": 5,
+          "reason": "UNRECOGNISED_UNIT"
+        }
+      ],
+      "quantity_estimates": [
+        {
+          "ingredient_identity_id": "IDENTITY_2262824283EE4D98AAB000A5",
+          "ingredient_line": "2 feuilles de pâte phyllo de 30 cm x 40 cm",
+          "basis": "declared estimate 20 g/piece"
+        }
+      ],
+      "servings_source": "1",
+      "exclusion_reason": "curated_dessert_url"
+    },
+    "required_equipment": [],
+    "diet_flags": [
+      "Végétalien",
+      "Végétarien"
+    ],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "pomme",
+        "qty_fixed_per_batch_base_unit": "161",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "pate_phyllo",
+        "qty_fixed_per_batch_base_unit": "40",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "huile_vegetale",
+        "qty_fixed_per_batch_base_unit": "30",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sucre_non_precise",
+        "qty_fixed_per_batch_base_unit": "30",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "cannelle_non_precisee",
+        "qty_fixed_per_batch_base_unit": null,
+        "qty_marginal_per_serving_base_unit": null,
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "jean_philippe_crepes_vegan",
+    "name": "Crêpes vegan",
+    "original_servings": 10,
+    "prep_time_fixed_h": "0.166667",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 10,
+    "max_batch_servings": 10,
+    "tags": {
+      "categories": [
+        "easy"
+      ],
+      "cook_time_minutes": 20,
+      "cuisines": [],
+      "keywords": [],
+      "source": "la_cuisine_de_jean_philippe",
+      "source_url": "https://www.lacuisinedejeanphilippe.com/recipe/crepes-vegan",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "review_flags": [
+        {
+          "code": "INGREDIENT_QUANTITY_REVIEW_REQUIRED",
+          "ingredient_position": 5,
+          "reason": "UNRECOGNISED_UNIT"
+        },
+        {
+          "code": "INGREDIENT_CANONICAL_MAPPING_REQUIRED",
+          "ingredient_position": 7,
+          "label": "lait de soya ou votre lait végétal favoris",
+          "reason": "AMBIGUOUS_ALTERNATIVE"
+        }
+      ],
+      "servings_source": "10 crêpes",
+      "exclusion_reason": "curated_dessert_url"
+    },
+    "required_equipment": [],
+    "diet_flags": [
+      "Végétalien",
+      "Végétarien"
+    ],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "farine_tout_usage",
+        "qty_fixed_per_batch_base_unit": "750",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sucre_non_precise",
+        "qty_fixed_per_batch_base_unit": "30",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "levure_chimique",
+        "qty_fixed_per_batch_base_unit": "5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sel_table",
+        "qty_fixed_per_batch_base_unit": "5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "huile_vegetale",
+        "qty_fixed_per_batch_base_unit": "60",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "extrait_vanille",
+        "qty_fixed_per_batch_base_unit": "2.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": null,
+        "qty_fixed_per_batch_base_unit": "750",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "huile_non_precisee",
+        "qty_fixed_per_batch_base_unit": "45",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "jean_philippe_crumble_amandes_et_bleuets_vegan",
+    "name": "Crumble Amandes et Bleuets Vegan",
+    "original_servings": 20,
+    "prep_time_fixed_h": "0.25",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 20,
+    "max_batch_servings": 20,
+    "tags": {
+      "categories": [
+        "easy"
+      ],
+      "cook_time_minutes": 45,
+      "cuisines": [],
+      "keywords": [],
+      "source": "la_cuisine_de_jean_philippe",
+      "source_url": "https://www.lacuisinedejeanphilippe.com/recipe/crumble-amandes-et-bleuets-vegan",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "merged_duplicate_ingredients": [
+        {
+          "canonical_ingredient_id": "sirop_erable",
+          "merged_lines": 2,
+          "qty_fixed_per_batch_base_unit": "107.5"
+        }
+      ],
+      "servings_source": "Un plat allant au four de 20cm x 20cm (8 po x 8 po)",
+      "exclusion_reason": "curated_dessert_url"
+    },
+    "required_equipment": [],
+    "diet_flags": [
+      "Végétalien",
+      "Végétarien"
+    ],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "farine_tout_usage",
+        "qty_fixed_per_batch_base_unit": "312.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "farine_amande",
+        "qty_fixed_per_batch_base_unit": "125",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "levure_chimique",
+        "qty_fixed_per_batch_base_unit": "5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sel_table",
+        "qty_fixed_per_batch_base_unit": "2.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "beurre_non_precise",
+        "qty_fixed_per_batch_base_unit": "125",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sucre_non_precise",
+        "qty_fixed_per_batch_base_unit": "125",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sirop_erable",
+        "qty_fixed_per_batch_base_unit": "107.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "bleuet",
+        "qty_fixed_per_batch_base_unit": "1250",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "ricardo_3195_buche_de_noel_au_chocolat",
+    "name": "Bûche de Noël au chocolat",
+    "original_servings": 8,
+    "prep_time_fixed_h": "0.5",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 8,
+    "max_batch_servings": 8,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 12,
+      "cuisines": [],
+      "keywords": [
+        "recettes de Noël",
+        "desserts de Noël",
+        "bûche de Noël",
+        "bûche de Noël au chocolat",
+        "recettes de bûche de Noël au chocolat",
+        "bûche au chocolat",
+        "recettes de bûche au chocolat"
+      ],
+      "source": "ricardo",
+      "source_url": "https://www.ricardocuisine.com/recettes/3195-buche-de-noel-au-chocolat",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "merged_duplicate_ingredients": [
+        {
+          "canonical_ingredient_id": "creme_35",
+          "merged_lines": 2,
+          "qty_fixed_per_batch_base_unit": "195"
+        },
+        {
+          "canonical_ingredient_id": "sucre_non_precise",
+          "merged_lines": 2,
+          "qty_fixed_per_batch_base_unit": "470"
+        }
+      ],
+      "servings_source": "8 portion(s)",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "creme_35",
+        "qty_fixed_per_batch_base_unit": "195",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "chocolat_noir",
+        "qty_fixed_per_batch_base_unit": "170",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "liqueur_orange",
+        "qty_fixed_per_batch_base_unit": "30",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "farine_tout_usage",
+        "qty_fixed_per_batch_base_unit": "150",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "levure_chimique",
+        "qty_fixed_per_batch_base_unit": "5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "oeuf",
+        "qty_fixed_per_batch_base_unit": "4",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sucre_non_precise",
+        "qty_fixed_per_batch_base_unit": "470",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "extrait_vanille",
+        "qty_fixed_per_batch_base_unit": "10",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "beurre_non_precise",
+        "qty_fixed_per_batch_base_unit": "40",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "cacao_poudre",
+        "qty_fixed_per_batch_base_unit": "25",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "beurre_non_sale",
+        "qty_fixed_per_batch_base_unit": "225",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "ricardo_4116_galettes_a_la_melasse",
+    "name": "Galettes à la mélasse",
+    "original_servings": 14,
+    "prep_time_fixed_h": "0.166667",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 14,
+    "max_batch_servings": 14,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 18,
+      "cuisines": [],
+      "keywords": [
+        "recettes de biscuits",
+        "biscuits",
+        "desserts",
+        "galettes",
+        "recettes de galettes",
+        "mélasse",
+        "dessert à la mélasse",
+        "galettes à la mélasse",
+        "recettes de galettes à la mélasse"
+      ],
+      "source": "ricardo",
+      "source_url": "https://www.ricardocuisine.com/recettes/4116-galettes-a-la-melasse",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "review_flags": [
+        {
+          "code": "INGREDIENT_QUANTITY_REVIEW_REQUIRED",
+          "ingredient_position": 6,
+          "reason": "COUNT_UNIT_WITHOUT_EQUIVALENCE"
+        },
+        {
+          "code": "INGREDIENT_QUANTITY_REVIEW_REQUIRED",
+          "ingredient_position": 7,
+          "reason": "COUNT_UNIT_WITHOUT_EQUIVALENCE"
+        }
+      ],
+      "quantity_estimates": [
+        {
+          "ingredient_identity_id": "IDENTITY_4E642516D3101E80A7DB88E1",
+          "ingredient_line": "Une pincée de clou de girofle moulu",
+          "basis": "declared estimate 0.25 g/pinch"
+        }
+      ],
+      "servings_source": "14 portion(s)",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "farine_tout_usage",
+        "qty_fixed_per_batch_base_unit": "375",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "bicarbonate_soude",
+        "qty_fixed_per_batch_base_unit": "5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "levure_chimique",
+        "qty_fixed_per_batch_base_unit": "5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "cannelle_moulue",
+        "qty_fixed_per_batch_base_unit": "2.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "gingembre_moulu",
+        "qty_fixed_per_batch_base_unit": "2.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "clou_girofle",
+        "qty_fixed_per_batch_base_unit": "0.25",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sel_table",
+        "qty_fixed_per_batch_base_unit": null,
+        "qty_marginal_per_serving_base_unit": null,
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "beurre_non_sale",
+        "qty_fixed_per_batch_base_unit": "115",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "cassonade",
+        "qty_fixed_per_batch_base_unit": "160",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "melasse",
+        "qty_fixed_per_batch_base_unit": "125",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "oeuf",
+        "qty_fixed_per_batch_base_unit": "1",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "lait_non_precise",
+        "qty_fixed_per_batch_base_unit": "30",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "ricardo_4183_biscuits_sables_a_la_vanille",
+    "name": "Biscuits sablés à la vanille",
+    "original_servings": 9,
+    "prep_time_fixed_h": "0.25",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 9,
+    "max_batch_servings": 9,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 15,
+      "cuisines": [],
+      "keywords": [
+        "recettes de biscuits",
+        "biscuits",
+        "biscuits sablés",
+        "recettes de biscuits sablés"
+      ],
+      "source": "ricardo",
+      "source_url": "https://www.ricardocuisine.com/recettes/4183-biscuits-sables-a-la-vanille",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "review_flags": [
+        {
+          "code": "INGREDIENT_QUANTITY_REVIEW_REQUIRED",
+          "ingredient_position": 9,
+          "reason": "MISSING_QUANTITY"
+        }
+      ],
+      "merged_duplicate_ingredients": [
+        {
+          "canonical_ingredient_id": "jaune_oeuf",
+          "merged_lines": 2,
+          "qty_fixed_per_batch_base_unit": "2"
+        },
+        {
+          "canonical_ingredient_id": "sucre_non_precise",
+          "merged_lines": 2,
+          "qty_fixed_per_batch_base_unit": "160"
+        }
+      ],
+      "servings_source": "9 portion(s)",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "farine_tout_usage",
+        "qty_fixed_per_batch_base_unit": "225",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "levure_chimique",
+        "qty_fixed_per_batch_base_unit": "7.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sel_table",
+        "qty_fixed_per_batch_base_unit": "1",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "oeuf",
+        "qty_fixed_per_batch_base_unit": "1",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "jaune_oeuf",
+        "qty_fixed_per_batch_base_unit": "2",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sucre_non_precise",
+        "qty_fixed_per_batch_base_unit": "160",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "extrait_vanille",
+        "qty_fixed_per_batch_base_unit": "10",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "beurre_non_sale",
+        "qty_fixed_per_batch_base_unit": "115",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "lait_non_precise",
+        "qty_fixed_per_batch_base_unit": "15",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "ricardo_4569_biscuits_tendres_a_l_avoine",
+    "name": "Biscuits tendres à l’avoine",
+    "original_servings": 7,
+    "prep_time_fixed_h": "0.25",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 7,
+    "max_batch_servings": 7,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 14,
+      "cuisines": [],
+      "keywords": [
+        "recettes de biscuits",
+        "biscuits",
+        "desserts",
+        "avoine",
+        "biscuits à l'avoine",
+        "recettes de biscuits à l'avoine",
+        "biscuits tendres à l'avoine",
+        "recettes de biscuits tendres à l'avoine"
+      ],
+      "source": "ricardo",
+      "source_url": "https://www.ricardocuisine.com/recettes/4569-biscuits-tendres-a-l-avoine",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "review_flags": [
+        {
+          "code": "INGREDIENT_QUANTITY_REVIEW_REQUIRED",
+          "ingredient_position": 4,
+          "reason": "COUNT_UNIT_WITHOUT_EQUIVALENCE"
+        }
+      ],
+      "servings_source": "7 portion(s)",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "avoine_flacons",
+        "qty_fixed_per_batch_base_unit": "225",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "farine_tout_usage",
+        "qty_fixed_per_batch_base_unit": "100",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "cannelle_moulue",
+        "qty_fixed_per_batch_base_unit": "2.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sel_table",
+        "qty_fixed_per_batch_base_unit": null,
+        "qty_marginal_per_serving_base_unit": null,
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "beurre_non_sale",
+        "qty_fixed_per_batch_base_unit": "170",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "cassonade",
+        "qty_fixed_per_batch_base_unit": "210",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "extrait_vanille",
+        "qty_fixed_per_batch_base_unit": "5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "oeuf",
+        "qty_fixed_per_batch_base_unit": "1",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "ricardo_4874_biscuits_moelleux_aux_brisures_de_chocol_49057a56bc",
+    "name": "Biscuits moelleux aux brisures de chocolat (les meilleurs)",
+    "original_servings": 8,
+    "prep_time_fixed_h": "0.25",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 8,
+    "max_batch_servings": 8,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 24,
+      "cuisines": [],
+      "keywords": [
+        "recettes de biscuits",
+        "desserts",
+        "biscuits",
+        "brisures de chocolat",
+        "recettes de biscuits aux brisures de chocolat",
+        "biscuits aux brisures de chocolat",
+        "biscuits moelleux aux brisures de chocolat",
+        "recettes de biscuits moelleux aux brisures de chocolat"
+      ],
+      "source": "ricardo",
+      "source_url": "https://www.ricardocuisine.com/recettes/4874-biscuits-moelleux-aux-brisures-de-chocolat-les-meilleurs",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "review_flags": [
+        {
+          "code": "INGREDIENT_QUANTITY_REVIEW_REQUIRED",
+          "ingredient_position": 3,
+          "reason": "COUNT_UNIT_WITHOUT_EQUIVALENCE"
+        },
+        {
+          "code": "INGREDIENT_CANONICAL_MAPPING_REQUIRED",
+          "ingredient_position": 9,
+          "label": "chocolat au lait ou noir, haché grossièrement",
+          "reason": "AMBIGUOUS_ALTERNATIVE"
+        }
+      ],
+      "servings_source": "8 portion(s)",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "farine_tout_usage",
+        "qty_fixed_per_batch_base_unit": "225",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "bicarbonate_soude",
+        "qty_fixed_per_batch_base_unit": "2.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sel_table",
+        "qty_fixed_per_batch_base_unit": null,
+        "qty_marginal_per_serving_base_unit": null,
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "beurre_non_sale",
+        "qty_fixed_per_batch_base_unit": "170",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "cassonade",
+        "qty_fixed_per_batch_base_unit": "210",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sucre_non_precise",
+        "qty_fixed_per_batch_base_unit": "30",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "oeuf",
+        "qty_fixed_per_batch_base_unit": "1",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "jaune_oeuf",
+        "qty_fixed_per_batch_base_unit": "1",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": null,
+        "qty_fixed_per_batch_base_unit": "195",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "ricardo_5017_brownies_classiques",
+    "name": "Brownies classiques",
+    "original_servings": 16,
+    "prep_time_fixed_h": "0.25",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 16,
+    "max_batch_servings": 16,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 35,
+      "cuisines": [],
+      "keywords": [
+        "recettes de brownies",
+        "brownies",
+        "recettes de la st-valentin",
+        "dessert de la st-valentin",
+        "brownies classique",
+        "recettes de brownies classique",
+        "brownies facile"
+      ],
+      "source": "ricardo",
+      "source_url": "https://www.ricardocuisine.com/recettes/5017-brownies-classiques",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "servings_source": "16 portion(s)",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "chocolat_noir",
+        "qty_fixed_per_batch_base_unit": "170",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "beurre_non_sale",
+        "qty_fixed_per_batch_base_unit": "170",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "oeuf",
+        "qty_fixed_per_batch_base_unit": "2",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "cassonade",
+        "qty_fixed_per_batch_base_unit": "160",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sel_table",
+        "qty_fixed_per_batch_base_unit": "1",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "farine_tout_usage",
+        "qty_fixed_per_batch_base_unit": "75",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "ricardo_5386_tarte_au_sucre",
+    "name": "Tarte au sucre",
+    "original_servings": 8,
+    "prep_time_fixed_h": "0.333333",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 8,
+    "max_batch_servings": 8,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 40,
+      "cuisines": [],
+      "keywords": [
+        "recettes des fêtes",
+        "desserts des fêtes",
+        "recettes de Noël",
+        "desserts de Noël",
+        "Noël",
+        "desserts",
+        "recettes de tarte",
+        "tarte",
+        "tarte au sucre",
+        "recettes de tarte au sucre",
+        "recette facile de tarte au sucre"
+      ],
+      "source": "ricardo",
+      "source_url": "https://www.ricardocuisine.com/recettes/5386-tarte-au-sucre",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "review_flags": [
+        {
+          "code": "INGREDIENT_QUANTITY_REVIEW_REQUIRED",
+          "ingredient_position": 4,
+          "reason": "COUNT_UNIT_WITHOUT_EQUIVALENCE"
+        },
+        {
+          "code": "INGREDIENT_QUANTITY_REVIEW_REQUIRED",
+          "ingredient_position": 8,
+          "reason": "MISSING_QUANTITY"
+        }
+      ],
+      "quantity_estimates": [
+        {
+          "ingredient_identity_id": "IDENTITY_6107E295895D9E3F62BE8BF9",
+          "ingredient_line": "2 \t\tabaisses de pâte brisée",
+          "basis": "declared estimate 200 g/piece"
+        }
+      ],
+      "servings_source": "8 portion(s)",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "cassonade",
+        "qty_fixed_per_batch_base_unit": "210",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "farine_tout_usage",
+        "qty_fixed_per_batch_base_unit": "40",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "fecule_mais",
+        "qty_fixed_per_batch_base_unit": "30",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sel_table",
+        "qty_fixed_per_batch_base_unit": null,
+        "qty_marginal_per_serving_base_unit": null,
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "creme_35",
+        "qty_fixed_per_batch_base_unit": "375",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sirop_erable",
+        "qty_fixed_per_batch_base_unit": "125",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "pate_brisee",
+        "qty_fixed_per_batch_base_unit": "400",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "lait_non_precise",
+        "qty_fixed_per_batch_base_unit": null,
+        "qty_marginal_per_serving_base_unit": null,
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "ricardo_557_biscuits_aux_arachides",
+    "name": "Biscuits aux arachides",
+    "original_servings": 10,
+    "prep_time_fixed_h": "0.333333",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 10,
+    "max_batch_servings": 10,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 10,
+      "cuisines": [],
+      "keywords": [
+        "dessert",
+        "à congeler",
+        "biscuit",
+        "arachide",
+        "noix",
+        "desserts"
+      ],
+      "source": "ricardo",
+      "source_url": "https://www.ricardocuisine.com/recettes/557-biscuits-aux-arachides",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "review_flags": [
+        {
+          "code": "INGREDIENT_CANONICAL_MAPPING_REQUIRED",
+          "ingredient_position": 4,
+          "label": "beurre d'arachide crémeux ou croquant, tempéré",
+          "reason": "AMBIGUOUS_ALTERNATIVE"
+        }
+      ],
+      "servings_source": "10 portion(s)",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "farine_tout_usage",
+        "qty_fixed_per_batch_base_unit": "430",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "levure_chimique",
+        "qty_fixed_per_batch_base_unit": "5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "beurre_non_sale",
+        "qty_fixed_per_batch_base_unit": "125",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": null,
+        "qty_fixed_per_batch_base_unit": "125",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sucre_non_precise",
+        "qty_fixed_per_batch_base_unit": "125",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "cassonade",
+        "qty_fixed_per_batch_base_unit": "125",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "oeuf",
+        "qty_fixed_per_batch_base_unit": "2",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "arachide",
+        "qty_fixed_per_batch_base_unit": "125",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "ricardo_5652_sucre_a_la_creme_de_soeur_angele",
+    "name": "Sucre à la crème de Soeur Angèle",
+    "original_servings": 64,
+    "prep_time_fixed_h": "0.083333",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 64,
+    "max_batch_servings": 64,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 8,
+      "cuisines": [],
+      "keywords": [
+        "recettes de Noël",
+        "Noël",
+        "sucre à la crème",
+        "desserts",
+        "recettes de desserts",
+        "recettes de sucre à la crème",
+        "recettes de soeur angèle",
+        "soeur angèle",
+        "sucre à la crème de soeur angèle"
+      ],
+      "source": "ricardo",
+      "source_url": "https://www.ricardocuisine.com/recettes/5652-sucre-a-la-creme-de-soeur-angele",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "servings_source": "64 portion(s)",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "sucre_non_precise",
+        "qty_fixed_per_batch_base_unit": "250",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "cassonade",
+        "qty_fixed_per_batch_base_unit": "250",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "creme_35",
+        "qty_fixed_per_batch_base_unit": "250",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "extrait_vanille",
+        "qty_fixed_per_batch_base_unit": "5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "beurre_non_sale",
+        "qty_fixed_per_batch_base_unit": "15",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "ricardo_5670_galettes_a_l_avoine_les_meilleures",
+    "name": "Galettes à l'avoine (les meilleures)",
+    "original_servings": 12,
+    "prep_time_fixed_h": "0.333333",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 12,
+    "max_batch_servings": 12,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 24,
+      "cuisines": [],
+      "keywords": [
+        "recettes de galettes à l'avoine",
+        "avoine",
+        "galettes à l'avoine",
+        "desserts",
+        "recettes de semaine",
+        "desserts de semaine",
+        "recettes pour la boîte à lunch",
+        "collation",
+        "snack",
+        "biscuits",
+        "biscuits à l'avoine"
+      ],
+      "source": "ricardo",
+      "source_url": "https://www.ricardocuisine.com/recettes/5670-galettes-a-l-avoine-les-meilleures",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "servings_source": "12 portion(s)",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "farine_tout_usage",
+        "qty_fixed_per_batch_base_unit": "225",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "avoine_flacons",
+        "qty_fixed_per_batch_base_unit": "150",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "bicarbonate_soude",
+        "qty_fixed_per_batch_base_unit": "2.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sel_table",
+        "qty_fixed_per_batch_base_unit": "1",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "beurre_non_sale",
+        "qty_fixed_per_batch_base_unit": "115",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "cassonade",
+        "qty_fixed_per_batch_base_unit": "265",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "huile_canola",
+        "qty_fixed_per_batch_base_unit": "60",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "extrait_vanille",
+        "qty_fixed_per_batch_base_unit": "5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "oeuf",
+        "qty_fixed_per_batch_base_unit": "1",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "ricardo_5864_crepes_fines_a_dejeuner",
+    "name": "Crêpes fines à déjeuner (les meilleures)",
+    "original_servings": 4,
+    "prep_time_fixed_h": "0.166667",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 4,
+    "max_batch_servings": 4,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 25,
+      "cuisines": [],
+      "keywords": [
+        "recettes de crêpes",
+        "crêpes",
+        "crêpes fines",
+        "recettes de crêpes fines",
+        "déjeuner",
+        "brunch",
+        "recettes pour enfants"
+      ],
+      "source": "ricardo",
+      "source_url": "https://www.ricardocuisine.com/recettes/5864-crepes-fines-a-dejeuner",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "review_flags": [
+        {
+          "code": "INGREDIENT_QUANTITY_REVIEW_REQUIRED",
+          "ingredient_position": 3,
+          "reason": "COUNT_UNIT_WITHOUT_EQUIVALENCE"
+        },
+        {
+          "code": "INGREDIENT_QUANTITY_REVIEW_REQUIRED",
+          "ingredient_position": 8,
+          "reason": "MISSING_QUANTITY"
+        }
+      ],
+      "servings_source": "4 portion(s)",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "farine_tout_usage",
+        "qty_fixed_per_batch_base_unit": "150",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sucre_non_precise",
+        "qty_fixed_per_batch_base_unit": "30",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sel_table",
+        "qty_fixed_per_batch_base_unit": null,
+        "qty_marginal_per_serving_base_unit": null,
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "oeuf",
+        "qty_fixed_per_batch_base_unit": "2",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "lait_non_precise",
+        "qty_fixed_per_batch_base_unit": "375",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "extrait_vanille",
+        "qty_fixed_per_batch_base_unit": "2.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "beurre_non_sale",
+        "qty_fixed_per_batch_base_unit": "15",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "beurre_non_precise",
+        "qty_fixed_per_batch_base_unit": null,
+        "qty_marginal_per_serving_base_unit": null,
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "ricardo_6085_pain_aux_bananes_ultra_moelleux_le_meilleur",
+    "name": "Pain aux bananes ultra moelleux (le meilleur)",
+    "original_servings": 10,
+    "prep_time_fixed_h": "0.333333",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 10,
+    "max_batch_servings": 10,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 60,
+      "cuisines": [],
+      "keywords": [
+        "pain aux bananes",
+        "recettes de pain aux bananes",
+        "pain dessert",
+        "recettes de pain dessert",
+        "bananes",
+        "comfort food",
+        "banane"
+      ],
+      "source": "ricardo",
+      "source_url": "https://www.ricardocuisine.com/recettes/6085-pain-aux-bananes-ultra-moelleux-le-meilleur",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "servings_source": "10 portion(s)",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "farine_tout_usage",
+        "qty_fixed_per_batch_base_unit": "225",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "levure_chimique",
+        "qty_fixed_per_batch_base_unit": "5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "bicarbonate_soude",
+        "qty_fixed_per_batch_base_unit": "5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "banane",
+        "qty_fixed_per_batch_base_unit": "310",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "lait_non_precise",
+        "qty_fixed_per_batch_base_unit": "125",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "jus_lime",
+        "qty_fixed_per_batch_base_unit": "15",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "beurre_non_sale",
+        "qty_fixed_per_batch_base_unit": "115",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sucre_non_precise",
+        "qty_fixed_per_batch_base_unit": "210",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "oeuf",
+        "qty_fixed_per_batch_base_unit": "1",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "extrait_vanille",
+        "qty_fixed_per_batch_base_unit": "5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "ricardo_6961_biscuits_pour_chiens",
+    "name": "Biscuits pour chiens",
+    "original_servings": 12,
+    "prep_time_fixed_h": "0.333333",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 12,
+    "max_batch_servings": 12,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 20,
+      "cuisines": [],
+      "keywords": [
+        "gâterie pour chien",
+        "biscuit pour animal",
+        "flocons davoine",
+        "beurre darachide"
+      ],
+      "source": "ricardo",
+      "source_url": "https://www.ricardocuisine.com/recettes/6961-biscuits-pour-chiens",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "review_flags": [
+        {
+          "code": "EQUIPMENT_DERIVED_REVIEW_REQUIRED",
+          "count": 1
+        }
+      ],
+      "servings_source": "12 portion(s)",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [
+      "robot_culinaire"
+    ],
+    "diet_flags": [],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "farine_ble_entier",
+        "qty_fixed_per_batch_base_unit": "70",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "mais",
+        "qty_fixed_per_batch_base_unit": "45",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "avoine_flacons",
+        "qty_fixed_per_batch_base_unit": "25",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "beurre_arachide",
+        "qty_fixed_per_batch_base_unit": "125",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "oeuf",
+        "qty_fixed_per_batch_base_unit": "1",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "eau",
+        "qty_fixed_per_batch_base_unit": "60",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "ricardo_7779_panettone_le_meilleur",
+    "name": "Panettone (le meilleur)",
+    "original_servings": 10,
+    "prep_time_fixed_h": "0.5",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 10,
+    "max_batch_servings": 10,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 40,
+      "cuisines": [],
+      "keywords": [
+        "Noël",
+        "dessert de Noël",
+        "pain italien",
+        "pain italien de Noël",
+        "fruits séchés",
+        "dessert des fêtes"
+      ],
+      "source": "ricardo",
+      "source_url": "https://www.ricardocuisine.com/recettes/7779-panettone-le-meilleur",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "servings_source": "10 portion(s)",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "eau",
+        "qty_fixed_per_batch_base_unit": "180",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "jaune_oeuf",
+        "qty_fixed_per_batch_base_unit": "3",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "oeuf",
+        "qty_fixed_per_batch_base_unit": "2",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "orange",
+        "qty_fixed_per_batch_base_unit": "131",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "citron",
+        "qty_fixed_per_batch_base_unit": "58",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "extrait_vanille",
+        "qty_fixed_per_batch_base_unit": "10",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "farine_tout_usage",
+        "qty_fixed_per_batch_base_unit": "490",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sucre_non_precise",
+        "qty_fixed_per_batch_base_unit": "105",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "levure_instantanee",
+        "qty_fixed_per_batch_base_unit": "15",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sel_table",
+        "qty_fixed_per_batch_base_unit": "5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "beurre_non_sale",
+        "qty_fixed_per_batch_base_unit": "115",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "canneberge",
+        "qty_fixed_per_batch_base_unit": "225",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "rhum_brun",
+        "qty_fixed_per_batch_base_unit": "60",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "ricardo_7865_biscuits_tendres_au_citron",
+    "name": "Biscuits tendres au citron",
+    "original_servings": 18,
+    "prep_time_fixed_h": "0.333333",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 18,
+    "max_batch_servings": 18,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 10,
+      "cuisines": [],
+      "keywords": [
+        "biscuit",
+        "à congeler",
+        "dessert",
+        "citrons",
+        "agrume"
+      ],
+      "source": "ricardo",
+      "source_url": "https://www.ricardocuisine.com/recettes/7865-biscuits-tendres-au-citron",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "servings_source": "18 portion(s)",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "farine_tout_usage",
+        "qty_fixed_per_batch_base_unit": "225",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "levure_chimique",
+        "qty_fixed_per_batch_base_unit": "2.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "beurre_non_sale",
+        "qty_fixed_per_batch_base_unit": "115",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sucre_non_precise",
+        "qty_fixed_per_batch_base_unit": "210",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "citron",
+        "qty_fixed_per_batch_base_unit": "116",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "oeuf",
+        "qty_fixed_per_batch_base_unit": "1",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "jus_citron",
+        "qty_fixed_per_batch_base_unit": "30",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "ricardo_8894_pouding_chomeur_a_l_erable",
+    "name": "Pouding chômeur à l’érable",
+    "original_servings": 8,
+    "prep_time_fixed_h": "0.25",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 8,
+    "max_batch_servings": 8,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 35,
+      "cuisines": [],
+      "keywords": [
+        "pouding chômeur",
+        "recette pouding chômeur",
+        "desserts quebecois",
+        "comfort food",
+        "desserts réconfortants",
+        "desserts à l'érable",
+        "sirop d'érable",
+        "pouding chômeur à l'érable"
+      ],
+      "source": "ricardo",
+      "source_url": "https://www.ricardocuisine.com/recettes/8894-pouding-chomeur-a-l-erable",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "servings_source": "8 portion(s)",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "creme_35",
+        "qty_fixed_per_batch_base_unit": "310",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sirop_erable",
+        "qty_fixed_per_batch_base_unit": "250",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "cassonade",
+        "qty_fixed_per_batch_base_unit": "55",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "farine_tout_usage",
+        "qty_fixed_per_batch_base_unit": "115",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "levure_chimique",
+        "qty_fixed_per_batch_base_unit": "5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sel_table",
+        "qty_fixed_per_batch_base_unit": "0.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sucre_non_precise",
+        "qty_fixed_per_batch_base_unit": "85",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "huile_canola",
+        "qty_fixed_per_batch_base_unit": "60",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "extrait_vanille",
+        "qty_fixed_per_batch_base_unit": "2.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "oeuf",
+        "qty_fixed_per_batch_base_unit": "1",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "lait_non_precise",
+        "qty_fixed_per_batch_base_unit": "90",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "ricardo_9127_galettes_a_l_avoine_moins_sucrees",
+    "name": "Galettes à l’avoine moins sucrées",
+    "original_servings": 12,
+    "prep_time_fixed_h": "0.333333",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 12,
+    "max_batch_servings": 12,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 10,
+      "cuisines": [],
+      "keywords": [
+        "galettes",
+        "recette galettes",
+        "biscuits",
+        "biscuits à l'avoine",
+        "galettes à l'avoine",
+        "galettes moins sucrées",
+        "dessert",
+        "collation"
+      ],
+      "source": "ricardo",
+      "source_url": "https://www.ricardocuisine.com/recettes/9127-galettes-a-l-avoine-moins-sucrees",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "servings_source": "12 portion(s)",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "avoine_flacons",
+        "qty_fixed_per_batch_base_unit": "250",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "farine_tout_usage",
+        "qty_fixed_per_batch_base_unit": "75",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "raisin_sec",
+        "qty_fixed_per_batch_base_unit": "70",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "cannelle_moulue",
+        "qty_fixed_per_batch_base_unit": "7.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "gingembre_moulu",
+        "qty_fixed_per_batch_base_unit": "5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "bicarbonate_soude",
+        "qty_fixed_per_batch_base_unit": "2.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sel_table",
+        "qty_fixed_per_batch_base_unit": "1",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "beurre_non_sale",
+        "qty_fixed_per_batch_base_unit": "115",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "cassonade",
+        "qty_fixed_per_batch_base_unit": "105",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "huile_canola",
+        "qty_fixed_per_batch_base_unit": "60",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "extrait_vanille",
+        "qty_fixed_per_batch_base_unit": "5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "oeuf",
+        "qty_fixed_per_batch_base_unit": "1",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "ricardo_9443_biscuits_double_chocolat",
+    "name": "Biscuits double chocolat",
+    "original_servings": 6,
+    "prep_time_fixed_h": "0.5",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 6,
+    "max_batch_servings": 6,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 8,
+      "cuisines": [],
+      "keywords": [
+        "recette ricardo",
+        "recette de biscuits au chocolat",
+        "biscuit double chocolat",
+        "biscuits maison"
+      ],
+      "source": "ricardo",
+      "source_url": "https://www.ricardocuisine.com/recettes/9443-biscuits-double-chocolat",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "review_flags": [
+        {
+          "code": "INGREDIENT_QUANTITY_REVIEW_REQUIRED",
+          "ingredient_position": 11,
+          "reason": "MISSING_QUANTITY"
+        }
+      ],
+      "solver_omissions": [
+        {
+          "ingredient_identity_id": "IDENTITY_692D1A2B2401B69D61814CEA",
+          "ingredient_line": "Fleur de sel (facultatif)",
+          "reason": "unquantified_non_solver_item"
+        }
+      ],
+      "servings_source": "6 portion(s)",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "farine_tout_usage",
+        "qty_fixed_per_batch_base_unit": "225",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "cacao_poudre",
+        "qty_fixed_per_batch_base_unit": "50",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "bicarbonate_soude",
+        "qty_fixed_per_batch_base_unit": "2.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sel_table",
+        "qty_fixed_per_batch_base_unit": "1",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "beurre_non_sale",
+        "qty_fixed_per_batch_base_unit": "170",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "cassonade",
+        "qty_fixed_per_batch_base_unit": "160",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sucre_non_precise",
+        "qty_fixed_per_batch_base_unit": "105",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "huile_vegetale",
+        "qty_fixed_per_batch_base_unit": "30",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "oeuf",
+        "qty_fixed_per_batch_base_unit": "2",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "chocolat_noir",
+        "qty_fixed_per_batch_base_unit": "250",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "ricardo_9572_biscuits_de_pain_d_epice_les_meilleurs",
+    "name": "Biscuits de pain d’épice (les meilleurs)",
+    "original_servings": 42,
+    "prep_time_fixed_h": "0.5",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 42,
+    "max_batch_servings": 42,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 10,
+      "cuisines": [],
+      "keywords": [
+        "biscuits",
+        "biscuits pain d'épices",
+        "les meilleures",
+        "noël",
+        "cadeaux gourmands"
+      ],
+      "source": "ricardo",
+      "source_url": "https://www.ricardocuisine.com/recettes/9572-biscuits-de-pain-d-epice-les-meilleurs",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "servings_source": "42 portion(s)",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "farine_tout_usage",
+        "qty_fixed_per_batch_base_unit": "450",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "gingembre_moulu",
+        "qty_fixed_per_batch_base_unit": "20",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "cannelle_moulue",
+        "qty_fixed_per_batch_base_unit": "20",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "clou_girofle",
+        "qty_fixed_per_batch_base_unit": "5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "muscade_moulue",
+        "qty_fixed_per_batch_base_unit": "2.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "levure_chimique",
+        "qty_fixed_per_batch_base_unit": "5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "bicarbonate_soude",
+        "qty_fixed_per_batch_base_unit": "5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sel_table",
+        "qty_fixed_per_batch_base_unit": "1",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "beurre_non_sale",
+        "qty_fixed_per_batch_base_unit": "170",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "cassonade",
+        "qty_fixed_per_batch_base_unit": "160",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "melasse",
+        "qty_fixed_per_batch_base_unit": "125",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "oeuf",
+        "qty_fixed_per_batch_base_unit": "1",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "ricardo_9574_galettes_top_de_muffin_au_yogourt_aux_fr_6469a4762d",
+    "name": "Galettes « top de muffin » au yogourt, aux framboises et au chocolat blanc",
+    "original_servings": 16,
+    "prep_time_fixed_h": "0.25",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 16,
+    "max_batch_servings": 16,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 20,
+      "cuisines": [],
+      "keywords": [],
+      "source": "ricardo",
+      "source_url": "https://www.ricardocuisine.com/recettes/9574-galettes-top-de-muffin-au-yogourt-aux-framboises-et-au-chocolat-blanc",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "servings_source": "16 portion(s)",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "farine_tout_usage",
+        "qty_fixed_per_batch_base_unit": "150",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "bicarbonate_soude",
+        "qty_fixed_per_batch_base_unit": "2.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sel_table",
+        "qty_fixed_per_batch_base_unit": "1",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "cassonade",
+        "qty_fixed_per_batch_base_unit": "70",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "beurre_non_precise",
+        "qty_fixed_per_batch_base_unit": "30",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "oeuf",
+        "qty_fixed_per_batch_base_unit": "2",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "yogourt_nature",
+        "qty_fixed_per_batch_base_unit": "60",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "chocolat_blanc",
+        "qty_fixed_per_batch_base_unit": "85",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "framboise",
+        "qty_fixed_per_batch_base_unit": "70",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "pistaches",
+        "qty_fixed_per_batch_base_unit": "65",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  },
+  {
+    "id": "ricardo_9639_biscuits_speculoos",
+    "name": "Biscuits spéculoos",
+    "original_servings": 24,
+    "prep_time_fixed_h": "0.75",
+    "prep_time_marginal_h": "0",
+    "min_batch_servings": 24,
+    "max_batch_servings": 24,
+    "tags": {
+      "categories": [
+        "Desserts"
+      ],
+      "cook_time_minutes": 12,
+      "cuisines": [],
+      "keywords": [
+        "dessert européen",
+        "biscuit speculoos",
+        "biscuit croquant",
+        "recette biscuit noel",
+        "recette pour impressionner",
+        "temps des fêtes"
+      ],
+      "source": "ricardo",
+      "source_url": "https://www.ricardocuisine.com/recettes/9639-biscuits-speculoos",
+      "import_origin": "cook_french_recipe_corpus",
+      "import_status": "excluded",
+      "servings_source": "24 portion(s)",
+      "exclusion_reason": "dessert_category:desserts"
+    },
+    "required_equipment": [],
+    "diet_flags": [],
+    "allergen_flags": [],
+    "ingredients": [
+      {
+        "canonical_ingredient_id": "farine_tout_usage",
+        "qty_fixed_per_batch_base_unit": "225",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "bicarbonate_soude",
+        "qty_fixed_per_batch_base_unit": "2.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "cannelle_moulue",
+        "qty_fixed_per_batch_base_unit": "7.5",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "gingembre_moulu",
+        "qty_fixed_per_batch_base_unit": "1",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "muscade_moulue",
+        "qty_fixed_per_batch_base_unit": "1",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "sel_table",
+        "qty_fixed_per_batch_base_unit": "1",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "beurre_non_sale",
+        "qty_fixed_per_batch_base_unit": "115",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "cassonade",
+        "qty_fixed_per_batch_base_unit": "160",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      },
+      {
+        "canonical_ingredient_id": "oeuf",
+        "qty_fixed_per_batch_base_unit": "1",
+        "qty_marginal_per_serving_base_unit": "0",
+        "substitutable": false
+      }
+    ]
+  }
+]

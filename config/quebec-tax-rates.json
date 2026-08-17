@@ -1,0 +1,10 @@
+{
+  "comment": "Taux appliqué au prix affiché, par fragment de rayon du détaillant. L'épicerie de base est détaxée au Québec (TPS 5 % + TVQ 9,975 % = 14,975 % ailleurs). Ne sont inscrits ici que les rayons taxables sans ambiguïté : boissons alcoolisées, confiseries et grignotines. Les cas discutés au cas par cas dans la loi — jus selon le format, produits de boulangerie selon le nombre d'unités, portions individuelles — restent au taux par défaut tant qu'aucune règle vérifiée ne les couvre. Un taux absent est un taux nul assumé, pas une taxe oubliée.",
+  "default_rate": "0",
+  "rules": [
+    { "category_fragment": "/allees/bieres-et-vins", "rate": "0.14975" },
+    { "category_fragment": "/collations", "rate": "0.14975" },
+    { "category_fragment": "bonbons", "rate": "0.14975" },
+    { "category_fragment": "boissons-gazeuses", "rate": "0.14975" }
+  ]
+}

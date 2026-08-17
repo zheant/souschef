@@ -10429,5 +10429,554 @@
     "source": "cnf",
     "source_version": "2026",
     "confirmed_by": "cnf-catalog-quality-v1"
+  },
+  {
+    "canonical_ingredient_id": "fromage_brie",
+    "language": "en",
+    "alias": "Brie cheese",
+    "normalized_alias": "brie cheese",
+    "source": "cnf",
+    "source_version": "2026",
+    "confirmed_by": "superc-catalog-curation-v1"
+  },
+  {
+    "canonical_ingredient_id": "fromage_camembert",
+    "language": "en",
+    "alias": "Camembert cheese",
+    "normalized_alias": "camembert cheese",
+    "source": "cnf",
+    "source_version": "2026",
+    "confirmed_by": "superc-catalog-curation-v1"
+  },
+  {
+    "canonical_ingredient_id": "fromage_gouda",
+    "language": "en",
+    "alias": "Gouda cheese",
+    "normalized_alias": "gouda cheese",
+    "source": "cnf",
+    "source_version": "2026",
+    "confirmed_by": "superc-catalog-curation-v1"
+  },
+  {
+    "canonical_ingredient_id": "creme_cafe",
+    "language": "en",
+    "alias": "Coffee cream",
+    "normalized_alias": "coffee cream",
+    "source": "cnf",
+    "source_version": "2026",
+    "confirmed_by": "superc-catalog-curation-v1"
+  },
+  {
+    "canonical_ingredient_id": "pates_seches",
+    "language": "en",
+    "alias": "Dry pasta",
+    "normalized_alias": "dry pasta",
+    "source": "cnf",
+    "source_version": "2026",
+    "confirmed_by": "superc-catalog-curation-v1"
+  },
+  {
+    "canonical_ingredient_id": "laitue_boston",
+    "language": "en",
+    "alias": "Boston lettuce",
+    "normalized_alias": "boston lettuce",
+    "source": "cnf",
+    "source_version": "2026",
+    "confirmed_by": "superc-catalog-curation-v1"
+  },
+  {
+    "canonical_ingredient_id": "laitue_frisee",
+    "language": "en",
+    "alias": "Looseleaf lettuce",
+    "normalized_alias": "looseleaf lettuce",
+    "source": "cnf",
+    "source_version": "2026",
+    "confirmed_by": "superc-catalog-curation-v1"
+  },
+  {
+    "canonical_ingredient_id": "laitue_feuilles_rouges",
+    "language": "en",
+    "alias": "Red leaf lettuce",
+    "normalized_alias": "red leaf lettuce",
+    "source": "cnf",
+    "source_version": "2026",
+    "confirmed_by": "superc-catalog-curation-v1"
+  },
+  {
+    "canonical_ingredient_id": "cerise_douce",
+    "language": "en",
+    "alias": "Sweet cherry",
+    "normalized_alias": "sweet cherry",
+    "source": "cnf",
+    "source_version": "2026",
+    "confirmed_by": "superc-catalog-curation-v1"
+  },
+  {
+    "canonical_ingredient_id": "saumon_rose_conserve",
+    "language": "en",
+    "alias": "Canned pink salmon",
+    "normalized_alias": "canned pink salmon",
+    "source": "cnf",
+    "source_version": "2026",
+    "confirmed_by": "superc-catalog-curation-v1"
+  },
+  {
+    "canonical_ingredient_id": "bifteck_boeuf",
+    "language": "en",
+    "alias": "Beef steak",
+    "normalized_alias": "beef steak",
+    "source": "cnf",
+    "source_version": "2026",
+    "confirmed_by": "superc-catalog-curation-v1"
+  },
+  {
+    "canonical_ingredient_id": "shortening_vegetal",
+    "language": "en",
+    "alias": "Vegetable shortening",
+    "normalized_alias": "vegetable shortening",
+    "source": "cnf",
+    "source_version": "2026",
+    "confirmed_by": "superc-catalog-curation-v1"
+  },
+  {
+    "canonical_ingredient_id": "foie_veau",
+    "language": "en",
+    "alias": "Veal liver",
+    "normalized_alias": "veal liver",
+    "source": "cnf",
+    "source_version": "2026",
+    "confirmed_by": "superc-catalog-curation-v1"
+  },
+  {
+    "canonical_ingredient_id": "viande_cerf",
+    "language": "en",
+    "alias": "Venison",
+    "normalized_alias": "venison",
+    "source": "cnf",
+    "source_version": "2026",
+    "confirmed_by": "superc-catalog-curation-v1"
+  },
+  {
+    "canonical_ingredient_id": "viande_bison",
+    "language": "en",
+    "alias": "Bison meat",
+    "normalized_alias": "bison meat",
+    "source": "cnf",
+    "source_version": "2026",
+    "confirmed_by": "superc-catalog-curation-v1"
+  },
+  {
+    "canonical_ingredient_id": "viande_cheval",
+    "language": "en",
+    "alias": "Horse meat",
+    "normalized_alias": "horse meat",
+    "source": "cnf",
+    "source_version": "2026",
+    "confirmed_by": "superc-catalog-curation-v1"
+  },
+  {
+    "canonical_ingredient_id": "gigot_agneau",
+    "language": "en",
+    "alias": "Leg of lamb",
+    "normalized_alias": "leg of lamb",
+    "source": "cnf",
+    "source_version": "2026",
+    "confirmed_by": "superc-catalog-curation-v1"
+  },
+  {
+    "canonical_ingredient_id": "fromage_brick",
+    "language": "en",
+    "alias": "Brick cheese",
+    "normalized_alias": "brick cheese",
+    "source": "cnf",
+    "source_version": "2026",
+    "confirmed_by": "superc-catalog-curation-v1"
+  },
+  {
+    "canonical_ingredient_id": "tomate_sechee",
+    "language": "en",
+    "alias": "Sun-dried tomato",
+    "normalized_alias": "sun dried tomato",
+    "source": "cnf",
+    "source_version": "2026",
+    "confirmed_by": "superc-catalog-curation-v1"
+  },
+  {
+    "canonical_ingredient_id": "edulcorant_stevia",
+    "language": "en",
+    "alias": "Stevia sweetener",
+    "normalized_alias": "stevia sweetener",
+    "source": "cnf",
+    "source_version": "2026",
+    "confirmed_by": "superc-catalog-curation-v1"
+  },
+  {
+    "canonical_ingredient_id": "edulcorant_sucralose",
+    "language": "en",
+    "alias": "Sucralose sweetener",
+    "normalized_alias": "sucralose sweetener",
+    "source": "cnf",
+    "source_version": "2026",
+    "confirmed_by": "superc-catalog-curation-v1"
+  },
+  {
+    "canonical_ingredient_id": "crevette_cuite",
+    "language": "en",
+    "alias": "Cooked shrimp",
+    "normalized_alias": "cooked shrimp",
+    "source": "cnf",
+    "source_version": "2026",
+    "confirmed_by": "maxi-catalog-curation-v1"
+  },
+  {
+    "canonical_ingredient_id": "kefir_nature",
+    "language": "en",
+    "alias": "Plain kefir",
+    "normalized_alias": "plain kefir",
+    "source": "cnf",
+    "source_version": "2026",
+    "confirmed_by": "maxi-catalog-curation-v1"
+  },
+  {
+    "canonical_ingredient_id": "lait_concentre_sucre",
+    "language": "en",
+    "alias": "Sweetened condensed milk",
+    "normalized_alias": "sweetened condensed milk",
+    "source": "cnf",
+    "source_version": "2026",
+    "confirmed_by": "maxi-catalog-curation-v1"
+  },
+  {
+    "canonical_ingredient_id": "choucroute_conserve",
+    "language": "en",
+    "alias": "Canned sauerkraut",
+    "normalized_alias": "canned sauerkraut",
+    "source": "cnf",
+    "source_version": "2026",
+    "confirmed_by": "maxi-catalog-curation-v1"
+  },
+  {
+    "canonical_ingredient_id": "boisson_avoine_non_sucree",
+    "language": "en",
+    "alias": "Unsweetened oat beverage",
+    "normalized_alias": "unsweetened oat beverage",
+    "source": "cnf",
+    "source_version": "2026",
+    "confirmed_by": "maxi-catalog-curation-v1"
+  },
+  {
+    "canonical_ingredient_id": "boisson_amande_non_sucree",
+    "language": "en",
+    "alias": "Unsweetened almond beverage",
+    "normalized_alias": "unsweetened almond beverage",
+    "source": "cnf",
+    "source_version": "2026",
+    "confirmed_by": "maxi-catalog-curation-v1"
+  },
+  {
+    "canonical_ingredient_id": "sirop_mais",
+    "language": "en",
+    "alias": "Corn syrup",
+    "normalized_alias": "corn syrup",
+    "source": "cnf",
+    "source_version": "2026",
+    "confirmed_by": "maxi-catalog-curation-v1"
+  },
+  {
+    "canonical_ingredient_id": "cognac",
+    "language": "fr",
+    "alias": "cognac",
+    "normalized_alias": "cognac",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "cognac",
+    "language": "fr",
+    "alias": "brandy",
+    "normalized_alias": "brandy",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "cognac",
+    "language": "en",
+    "alias": "Cognac or brandy",
+    "normalized_alias": "cognac or brandy",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "confiture_abricot",
+    "language": "fr",
+    "alias": "confiture d'abricots",
+    "normalized_alias": "confiture d abricots",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "confiture_abricot",
+    "language": "fr",
+    "alias": "gelée de pommes",
+    "normalized_alias": "gelee de pommes",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "confiture_abricot",
+    "language": "en",
+    "alias": "Apricot jam",
+    "normalized_alias": "apricot jam",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "feuillage_fenouil",
+    "language": "fr",
+    "alias": "feuillage de fenouil",
+    "normalized_alias": "feuillage de fenouil",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "feuillage_fenouil",
+    "language": "fr",
+    "alias": "frondes de fenouil",
+    "normalized_alias": "frondes de fenouil",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "feuillage_fenouil",
+    "language": "en",
+    "alias": "Fennel fronds",
+    "normalized_alias": "fennel fronds",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "fromage_vegetalien",
+    "language": "fr",
+    "alias": "fromage vegan",
+    "normalized_alias": "fromage vegan",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "fromage_vegetalien",
+    "language": "fr",
+    "alias": "fromage végétal",
+    "normalized_alias": "fromage vegetal",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "fromage_vegetalien",
+    "language": "en",
+    "alias": "Vegan cheese",
+    "normalized_alias": "vegan cheese",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "cardamome_graine",
+    "language": "fr",
+    "alias": "graines de cardamome",
+    "normalized_alias": "graines de cardamome",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "cardamome_graine",
+    "language": "en",
+    "alias": "Cardamom seeds",
+    "normalized_alias": "cardamom seeds",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "jambon_fume_epaule",
+    "language": "fr",
+    "alias": "jambon fumé dans l'épaule",
+    "normalized_alias": "jambon fume dans l epaule",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "jambon_fume_epaule",
+    "language": "fr",
+    "alias": "jambon picnic",
+    "normalized_alias": "jambon picnic",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "jambon_fume_epaule",
+    "language": "en",
+    "alias": "Smoked picnic shoulder ham",
+    "normalized_alias": "smoked picnic shoulder ham",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "jarret_porc",
+    "language": "fr",
+    "alias": "jarrets de porc",
+    "normalized_alias": "jarrets de porc",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "jarret_porc",
+    "language": "fr",
+    "alias": "pattes de cochon",
+    "normalized_alias": "pattes de cochon",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "jarret_porc",
+    "language": "en",
+    "alias": "Pork hock",
+    "normalized_alias": "pork hock",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "jus_cornichon",
+    "language": "fr",
+    "alias": "jus de cornichon",
+    "normalized_alias": "jus de cornichon",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "jus_cornichon",
+    "language": "fr",
+    "alias": "saumure de cornichon",
+    "normalized_alias": "saumure de cornichon",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "jus_cornichon",
+    "language": "en",
+    "alias": "Pickle juice",
+    "normalized_alias": "pickle juice",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "aubergine_grillee",
+    "language": "fr",
+    "alias": "aubergines grillées",
+    "normalized_alias": "aubergines grillees",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "aubergine_grillee",
+    "language": "en",
+    "alias": "Grilled eggplant",
+    "normalized_alias": "grilled eggplant",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "poudre_boisson_aromatisee",
+    "language": "fr",
+    "alias": "poudre pour boissons aromatisées",
+    "normalized_alias": "poudre pour boissons aromatisees",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "poudre_boisson_aromatisee",
+    "language": "en",
+    "alias": "Flavoured drink powder",
+    "normalized_alias": "flavoured drink powder",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "boulette_porc_preparee",
+    "language": "fr",
+    "alias": "boulettes de porc cuites",
+    "normalized_alias": "boulettes de porc cuites",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "boulette_porc_preparee",
+    "language": "fr",
+    "alias": "boulettes de porc préparées",
+    "normalized_alias": "boulettes de porc preparees",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "boulette_porc_preparee",
+    "language": "en",
+    "alias": "Prepared pork meatballs",
+    "normalized_alias": "prepared pork meatballs",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "sirop_aromatise",
+    "language": "fr",
+    "alias": "sirop aromatisé",
+    "normalized_alias": "sirop aromatise",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "sirop_aromatise",
+    "language": "fr",
+    "alias": "sirop à la framboise bleue",
+    "normalized_alias": "sirop a la framboise bleue",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
+  },
+  {
+    "canonical_ingredient_id": "sirop_aromatise",
+    "language": "en",
+    "alias": "Flavoured syrup",
+    "normalized_alias": "flavoured syrup",
+    "source": "cook_french_recipe_corpus",
+    "source_version": "2026-08-13",
+    "confirmed_by": "codex_manual_review"
   }
 ]

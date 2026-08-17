@@ -17,7 +17,11 @@ BACKEND = ROOT / "backend"
 if str(BACKEND) not in sys.path:
     sys.path.insert(0, str(BACKEND))
 
-from app.adapters.maxi_capture import MaxiCaptureAdapter, load_match_overrides
+from app.adapters.maxi_capture import (
+    MaxiCaptureAdapter,
+    load_match_overrides,
+    load_title_overrides,
+)
 
 
 def main() -> int:
@@ -29,6 +33,7 @@ def main() -> int:
     parser.add_argument("--valid-from", type=date.fromisoformat, required=True)
     parser.add_argument("--valid-to", type=date.fromisoformat, required=True)
     parser.add_argument("--overrides")
+    parser.add_argument("--title-overrides")
     parser.add_argument("--report", type=Path)
     parser.add_argument("--apply", action="store_true")
     args = parser.parse_args()
@@ -41,6 +46,7 @@ def main() -> int:
         valid_from=args.valid_from,
         valid_to=args.valid_to,
         overrides=load_match_overrides(args.overrides),
+        title_overrides=load_title_overrides(args.title_overrides),
     )
     payload = {
         "summary": adapter.report(),

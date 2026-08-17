@@ -12,7 +12,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from ..services import catalog, household, offer_resolution, planning
+from ..services import catalog, household, offer_resolution, planning, recipe_quotes
 from ..solver import MenuSolver, SolverConfig
 from . import schemas
 from .deps import get_profile_id, get_session, get_solver
@@ -257,6 +257,37 @@ def get_recipes(
         "total": page.total, "limit": page.limit, "offset": page.offset,
         "items": [asdict(item) for item in page.items],
     }
+
+
+@router.get("/recipe-quotes")
+def get_recipe_quotes(
+    on_date: date = Query(default_factory=date.today),
+    recipe_id: str | None = Query(default=None),
+    servings: int | None = Query(default=None, ge=1),
+    store: list[str] | None = Query(default=None),
+    session: Session = Depends(get_session),
+):
+    """Prix consommé et décaissement, avec preuve et niveau de confiance."""
+    try:
+        quotes = recipe_quotes.quote_recipes(
+            session,
+            on_date,
+            recipe_id=recipe_id,
+            servings=servings,
+            store_external_keys=tuple(store or ()),
+        )
+    except LookupError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except recipe_quotes.RecipeNotScalableError as exc:
+        # L'appelant demande un rendement que la recette ne sait pas produire :
+        # le lui dire plutôt que de renvoyer le même panier sous un prix par
+        # portion faux.
+        raise HTTPException(422, str(exc)) from exc
+    except recipe_quotes.ProcurementRulesUnavailable as exc:
+        # Un défaut de déploiement, pas une faute de l'appelant : le dire
+        # explicitement plutôt que de laisser filer une trace de pile.
+        raise HTTPException(503, str(exc)) from exc
+    return [quote.as_dict() for quote in quotes]
 
 
 @router.get(

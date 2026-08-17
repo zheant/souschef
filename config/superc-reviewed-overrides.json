@@ -1,0 +1,1071 @@
+[
+  {
+    "source_product_id": "011115157022",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_huile_olive"
+  },
+  {
+    "source_product_id": "011115157039",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_huile_olive"
+  },
+  {
+    "source_product_id": "011210697003",
+    "status": "approved",
+    "canonical_ingredient_id": "sriracha",
+    "reason": "exact_product_identity"
+  },
+  {
+    "source_product_id": "024200056636",
+    "status": "rejected",
+    "reason": "faux_appariement_grave_detergent_a_lessive_n_est_pas_de_l_eau_potable"
+  },
+  {
+    "source_product_id": "033383250663",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_raisin_sec"
+  },
+  {
+    "source_product_id": "033383655925",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_raisin_sec"
+  },
+  {
+    "source_product_id": "037600583299",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_bacon"
+  },
+  {
+    "source_product_id": "041331077415",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_mais"
+  },
+  {
+    "source_product_id": "044774115782",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_mais"
+  },
+  {
+    "source_product_id": "055451002684",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_noix_grenoble"
+  },
+  {
+    "source_product_id": "055577106617",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_mais"
+  },
+  {
+    "source_product_id": "055577106662",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_mais"
+  },
+  {
+    "source_product_id": "055598560009",
+    "status": "rejected",
+    "reason": "produit_compose_biscuit_pas_de_la_melasse"
+  },
+  {
+    "source_product_id": "055598561204",
+    "status": "rejected",
+    "reason": "produit_compose_biscuit_pas_de_la_melasse"
+  },
+  {
+    "source_product_id": "055686210168",
+    "status": "approved",
+    "canonical_ingredient_id": "mais_grain_surgele",
+    "reason": "exact_frozen_corn_identity"
+  },
+  {
+    "source_product_id": "055800105493",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "055800318596",
+    "status": "rejected",
+    "reason": "nourriture_pour_animaux_jamais_un_ingredient_de_cuisine"
+  },
+  {
+    "source_product_id": "055800451880",
+    "status": "rejected",
+    "reason": "nourriture_pour_animaux_jamais_un_ingredient_de_cuisine"
+  },
+  {
+    "source_product_id": "055872010428",
+    "status": "approved",
+    "canonical_ingredient_id": "babeurre",
+    "reason": "faux_rejet_corrige_babeurre_de_culture_est_du_babeurre"
+  },
+  {
+    "source_product_id": "057000009137",
+    "status": "approved",
+    "canonical_ingredient_id": "sauce_worcestershire",
+    "reason": "exact_product_identity"
+  },
+  {
+    "source_product_id": "057496014592",
+    "status": "approved",
+    "canonical_ingredient_id": "vin_rouge_sec",
+    "reason": "cepage_sangiovese_merlot_sec_par_definition_aucune_mention_de_douceur_publiee"
+  },
+  {
+    "source_product_id": "057496014622",
+    "status": "approved",
+    "canonical_ingredient_id": "vin_blanc_sec",
+    "reason": "cepage_sauvignon_blanc_sec_par_definition_aucune_mention_de_douceur_publiee"
+  },
+  {
+    "source_product_id": "057864001407",
+    "status": "approved",
+    "canonical_ingredient_id": "tofu_ferme",
+    "reason": "exact_product_identity"
+  },
+  {
+    "source_product_id": "058449771616",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_raisin_sec"
+  },
+  {
+    "source_product_id": "058496430092",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "058496433116",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "058496784362",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "058807658108",
+    "status": "approved",
+    "canonical_ingredient_id": "tomate_conserve",
+    "reason": "correction_tomates_en_des_assaisonnees_ne_sont_pas_un_melange_d_epices"
+  },
+  {
+    "source_product_id": "058807665687",
+    "status": "approved",
+    "canonical_ingredient_id": "tomate_conserve",
+    "reason": "correction_tomates_en_des_assaisonnees_ne_sont_pas_un_melange_d_epices"
+  },
+  {
+    "source_product_id": "058807673811",
+    "status": "approved",
+    "canonical_ingredient_id": "tomate_conserve",
+    "reason": "correction_tomates_etuvees_assaisonnees_ne_sont_pas_un_melange_d_epices"
+  },
+  {
+    "source_product_id": "059072050567",
+    "status": "approved",
+    "canonical_ingredient_id": "tomate_conserve",
+    "reason": "correction_tomates_en_des_assaisonnees_ne_sont_pas_un_melange_d_epices"
+  },
+  {
+    "source_product_id": "059072052127",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_bacon"
+  },
+  {
+    "source_product_id": "059072052288",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_mais"
+  },
+  {
+    "source_product_id": "059072053384",
+    "status": "approved",
+    "canonical_ingredient_id": "sauce_worcestershire",
+    "reason": "exact_product_identity"
+  },
+  {
+    "source_product_id": "059072053476",
+    "status": "approved",
+    "canonical_ingredient_id": "assaisonnement_chili",
+    "reason": "exact_product_identity"
+  },
+  {
+    "source_product_id": "059072053766",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "059072055838",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_noix_grenoble"
+  },
+  {
+    "source_product_id": "059263020027",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_noix_grenoble"
+  },
+  {
+    "source_product_id": "059284000077",
+    "status": "approved",
+    "canonical_ingredient_id": "sauce_barbecue",
+    "reason": "sauce_bbq_a_la_moutarde_est_une_sauce_barbecue_pas_de_la_moutarde"
+  },
+  {
+    "source_product_id": "059284123479",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "059724101401",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_raisin_sec"
+  },
+  {
+    "source_product_id": "059724101487",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_mais"
+  },
+  {
+    "source_product_id": "059724101661",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_raisin_sec"
+  },
+  {
+    "source_product_id": "059724101722",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_mais"
+  },
+  {
+    "source_product_id": "059724101906",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_mais"
+  },
+  {
+    "source_product_id": "059724103757",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_cacao_poudre"
+  },
+  {
+    "source_product_id": "059749873130",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_mais"
+  },
+  {
+    "source_product_id": "059749873611",
+    "status": "approved",
+    "canonical_ingredient_id": "sirop_erable",
+    "reason": "identite_produit_exacte_sirop_erable_pur"
+  },
+  {
+    "source_product_id": "059749881470",
+    "status": "rejected",
+    "reason": "melange_crevettes_et_petoncles_pas_des_petoncles_seuls"
+  },
+  {
+    "source_product_id": "059749885997",
+    "status": "approved",
+    "canonical_ingredient_id": "creme_champignon_condensee",
+    "reason": "faux_rejet_soupe_creme_de_champignons_condensee_est_l_ingredient_demande"
+  },
+  {
+    "source_product_id": "059749887328",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_mais"
+  },
+  {
+    "source_product_id": "059749887335",
+    "status": "approved",
+    "canonical_ingredient_id": "mais_conserve",
+    "reason": "identite_corrigee_vers_mais_conserve"
+  },
+  {
+    "source_product_id": "059749887557",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_mais"
+  },
+  {
+    "source_product_id": "059749887564",
+    "status": "approved",
+    "canonical_ingredient_id": "mais_conserve",
+    "reason": "identite_corrigee_vers_mais_conserve"
+  },
+  {
+    "source_product_id": "059749887595",
+    "status": "approved",
+    "canonical_ingredient_id": "mais_conserve",
+    "reason": "identite_corrigee_vers_mais_conserve"
+  },
+  {
+    "source_product_id": "059749887601",
+    "status": "approved",
+    "canonical_ingredient_id": "mais_conserve",
+    "reason": "identite_corrigee_vers_mais_conserve"
+  },
+  {
+    "source_product_id": "059749894401",
+    "status": "approved",
+    "canonical_ingredient_id": "sirop_erable",
+    "reason": "identite_produit_exacte_sirop_erable_pur"
+  },
+  {
+    "source_product_id": "059749896290",
+    "status": "approved",
+    "canonical_ingredient_id": "pate_phyllo",
+    "reason": "identite_produit_exacte_pate_phyllo_surgelee"
+  },
+  {
+    "source_product_id": "059749899536",
+    "status": "approved",
+    "canonical_ingredient_id": "epinard_frais",
+    "reason": "exact_product_identity"
+  },
+  {
+    "source_product_id": "059749903493",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_noix_grenoble"
+  },
+  {
+    "source_product_id": "059749904674",
+    "status": "rejected",
+    "reason": "produit_compose_crepes_surgelees_pas_du_babeurre"
+  },
+  {
+    "source_product_id": "059749905107",
+    "status": "rejected",
+    "reason": "produit_compose_bagels_pas_des_raisins_secs"
+  },
+  {
+    "source_product_id": "059749907910",
+    "status": "rejected",
+    "reason": "gelee_de_pommes_n_est_pas_de_la_confiture_d_abricots"
+  },
+  {
+    "source_product_id": "059749911191",
+    "status": "approved",
+    "canonical_ingredient_id": "mayonnaise",
+    "reason": "produit_est_une_mayonnaise_pas_de_l_huile_d_olive"
+  },
+  {
+    "source_product_id": "059749918862",
+    "status": "approved",
+    "canonical_ingredient_id": "melasse",
+    "reason": "identite_produit_exacte_melasse"
+  },
+  {
+    "source_product_id": "059749921022",
+    "status": "approved",
+    "canonical_ingredient_id": "boulette_boeuf_preparee",
+    "reason": "faux_rejet_boulettes_de_boeuf_angus_sont_des_boulettes_de_boeuf"
+  },
+  {
+    "source_product_id": "059749930048",
+    "status": "approved",
+    "canonical_ingredient_id": "sirop_erable",
+    "reason": "identite_produit_exacte_sirop_erable_pur"
+  },
+  {
+    "source_product_id": "059749935050",
+    "status": "approved",
+    "canonical_ingredient_id": "moutarde_ancienne",
+    "reason": "identite_produit_exacte_moutarde_ancienne"
+  },
+  {
+    "source_product_id": "059749949095",
+    "status": "approved",
+    "canonical_ingredient_id": "arachide",
+    "reason": "faux_rejet_arachides_roties_a_sec_sans_enrobage_sont_des_arachides"
+  },
+  {
+    "source_product_id": "059749957656",
+    "status": "approved",
+    "canonical_ingredient_id": "mayonnaise",
+    "reason": "produit_est_une_mayonnaise_pas_de_l_huile_d_olive"
+  },
+  {
+    "source_product_id": "059749957694",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_noix_grenoble"
+  },
+  {
+    "source_product_id": "059749963558",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_cacao_poudre"
+  },
+  {
+    "source_product_id": "059749964548",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_noix_grenoble"
+  },
+  {
+    "source_product_id": "059749968416",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_mais"
+  },
+  {
+    "source_product_id": "059749969482",
+    "status": "approved",
+    "canonical_ingredient_id": "gnocchi_frais",
+    "reason": "faux_rejet_gnocchi_de_pommes_de_terre_est_l_ingredient_demande"
+  },
+  {
+    "source_product_id": "059749973328",
+    "status": "approved",
+    "canonical_ingredient_id": "mais_grain_surgele",
+    "reason": "exact_frozen_corn_identity"
+  },
+  {
+    "source_product_id": "059749973724",
+    "status": "approved",
+    "canonical_ingredient_id": "sirop_erable",
+    "reason": "identite_produit_exacte_sirop_erable_pur"
+  },
+  {
+    "source_product_id": "059749979269",
+    "status": "approved",
+    "canonical_ingredient_id": "jambon_fume_epaule",
+    "reason": "jambon_a_l_ancienne_est_une_epaule_fumee"
+  },
+  {
+    "source_product_id": "059749982672",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_raisin_sec"
+  },
+  {
+    "source_product_id": "059749984041",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "059749984584",
+    "status": "approved",
+    "canonical_ingredient_id": "jus_lime",
+    "reason": "jus_de_lime_reconstitue_utilise_volume_pour_volume"
+  },
+  {
+    "source_product_id": "059749989763",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_raisin_sec"
+  },
+  {
+    "source_product_id": "059749993111",
+    "status": "rejected",
+    "reason": "graines_de_coriandre_ne_remplacent_pas_la_coriandre_fraiche"
+  },
+  {
+    "source_product_id": "059749994194",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "059749994354",
+    "status": "approved",
+    "canonical_ingredient_id": "mais_grain_surgele",
+    "reason": "exact_frozen_corn_identity"
+  },
+  {
+    "source_product_id": "059749995061",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "059749996150",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "059749997478",
+    "status": "approved",
+    "canonical_ingredient_id": "mais_conserve",
+    "reason": "identite_corrigee_vers_mais_conserve"
+  },
+  {
+    "source_product_id": "059749997515",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_mais"
+  },
+  {
+    "source_product_id": "059749999069",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "059749999083",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "059749999809",
+    "status": "approved",
+    "canonical_ingredient_id": "saucisse_italienne",
+    "reason": "exact_product_identity"
+  },
+  {
+    "source_product_id": "059749999816",
+    "status": "approved",
+    "canonical_ingredient_id": "saucisse_italienne",
+    "reason": "exact_product_identity"
+  },
+  {
+    "source_product_id": "059764031669",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_huile_olive"
+  },
+  {
+    "source_product_id": "060737739314",
+    "status": "rejected",
+    "reason": "produit_compose_brownie_pas_des_bonbons"
+  },
+  {
+    "source_product_id": "061077305153",
+    "status": "approved",
+    "canonical_ingredient_id": "tortilla",
+    "reason": "exact_product_identity"
+  },
+  {
+    "source_product_id": "061077315329",
+    "status": "rejected",
+    "reason": "produit_compose_pain_pas_du_quinoa"
+  },
+  {
+    "source_product_id": "061077778582",
+    "status": "approved",
+    "canonical_ingredient_id": "tortilla",
+    "reason": "exact_product_identity"
+  },
+  {
+    "source_product_id": "061362436524",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_mais"
+  },
+  {
+    "source_product_id": "061400000588",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "062020000743",
+    "status": "rejected",
+    "reason": "produit_compose_tartinade_aux_noisettes_pas_du_cacao_en_poudre"
+  },
+  {
+    "source_product_id": "062020000842",
+    "status": "rejected",
+    "reason": "produit_compose_tartinade_aux_noisettes_pas_du_cacao_en_poudre"
+  },
+  {
+    "source_product_id": "062067121241",
+    "status": "approved",
+    "canonical_ingredient_id": "biere_blonde",
+    "reason": "exact_product_identity"
+  },
+  {
+    "source_product_id": "062356540234",
+    "status": "approved",
+    "canonical_ingredient_id": "jus_citron",
+    "reason": "exact_product_identity"
+  },
+  {
+    "source_product_id": "062356544058",
+    "status": "rejected",
+    "reason": "semoule_de_mais_n_est_pas_du_mais_en_grain"
+  },
+  {
+    "source_product_id": "062356544119",
+    "status": "rejected",
+    "reason": "semoule_de_mais_n_est_pas_du_mais_en_grain"
+  },
+  {
+    "source_product_id": "063100006204",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_bacon"
+  },
+  {
+    "source_product_id": "064100143111",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_mais"
+  },
+  {
+    "source_product_id": "064100144521",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_mais"
+  },
+  {
+    "source_product_id": "064100148109",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_raisin_sec"
+  },
+  {
+    "source_product_id": "064100158481",
+    "status": "rejected",
+    "reason": "produit_compose_crepes_surgelees_pas_du_babeurre"
+  },
+  {
+    "source_product_id": "064100448865",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_mais"
+  },
+  {
+    "source_product_id": "064144045259",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_huile_olive"
+  },
+  {
+    "source_product_id": "065137961532",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "065305421110",
+    "status": "approved",
+    "canonical_ingredient_id": "saucisse_cocktail",
+    "reason": "exact_product_identity"
+  },
+  {
+    "source_product_id": "065633158177",
+    "status": "rejected",
+    "reason": "produit_compose_cereales_pas_des_noix_de_grenoble"
+  },
+  {
+    "source_product_id": "066086090847",
+    "status": "approved",
+    "canonical_ingredient_id": "filet_anchois",
+    "reason": "exact_product_identity"
+  },
+  {
+    "source_product_id": "066200002510",
+    "status": "approved",
+    "canonical_ingredient_id": "epices_italiennes",
+    "reason": "faux_rejet_assaisonnement_italiano_est_un_melange_d_epices_italiennes"
+  },
+  {
+    "source_product_id": "066200032500",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_bacon"
+  },
+  {
+    "source_product_id": "067123148507",
+    "status": "approved",
+    "canonical_ingredient_id": "relish",
+    "reason": "exact_product_identity"
+  },
+  {
+    "source_product_id": "067714000016",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "068100001242",
+    "status": "approved",
+    "canonical_ingredient_id": "aromatisant_eau",
+    "reason": "faux_rejet_aromatisant_d_eau_liquide_est_l_ingredient_demande"
+  },
+  {
+    "source_product_id": "068100018561",
+    "status": "approved",
+    "canonical_ingredient_id": "fromage_velveeta",
+    "reason": "produit_de_fromage_fondu_en_bloc_equivalent_au_type_velveeta"
+  },
+  {
+    "source_product_id": "068100078589",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "068100892208",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_huile_olive"
+  },
+  {
+    "source_product_id": "068100902792",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_cacao_poudre"
+  },
+  {
+    "source_product_id": "068100903126",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_cacao_poudre"
+  },
+  {
+    "source_product_id": "068100905281",
+    "status": "approved",
+    "canonical_ingredient_id": "sauce_tabasco",
+    "reason": "sauce_piquante_au_piment_tenant_lieu_de_la_marque_nommee_par_la_recette"
+  },
+  {
+    "source_product_id": "068200477145",
+    "status": "approved",
+    "canonical_ingredient_id": "fromage_tex_mex",
+    "reason": "faux_rejet_melange_rape_tex_mex_est_l_ingredient_demande"
+  },
+  {
+    "source_product_id": "068200701127",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_huile_olive"
+  },
+  {
+    "source_product_id": "068400142157",
+    "status": "approved",
+    "canonical_ingredient_id": "mayonnaise",
+    "reason": "identite_corrigee_vers_mayonnaise"
+  },
+  {
+    "source_product_id": "068505100588",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_huile_olive"
+  },
+  {
+    "source_product_id": "068505100656",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_huile_olive"
+  },
+  {
+    "source_product_id": "068932401234",
+    "status": "approved",
+    "canonical_ingredient_id": "melasse",
+    "reason": "identite_produit_exacte_melasse"
+  },
+  {
+    "source_product_id": "069299126426",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "069299126907",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "069459021141",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "069459021271",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "069459021288",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "071430000984",
+    "status": "rejected",
+    "reason": "produit_compose_melange_a_salade_pas_du_poivre"
+  },
+  {
+    "source_product_id": "071430001844",
+    "status": "rejected",
+    "reason": "produit_compose_melange_a_salade_pas_de_l_aneth"
+  },
+  {
+    "source_product_id": "076397889115",
+    "status": "approved",
+    "canonical_ingredient_id": "chipotle_adobo",
+    "reason": "identite_produit_exacte_chipotle_en_sauce_adobo"
+  },
+  {
+    "source_product_id": "098308002925",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "190569100508",
+    "status": "approved",
+    "canonical_ingredient_id": "mais_conserve",
+    "reason": "identite_corrigee_vers_mais_conserve"
+  },
+  {
+    "source_product_id": "190569100959",
+    "status": "approved",
+    "canonical_ingredient_id": "mais_conserve",
+    "reason": "identite_corrigee_vers_mais_conserve"
+  },
+  {
+    "source_product_id": "190569102601",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_mais"
+  },
+  {
+    "source_product_id": "190569109259",
+    "status": "approved",
+    "canonical_ingredient_id": "mais_conserve",
+    "reason": "identite_corrigee_vers_mais_conserve"
+  },
+  {
+    "source_product_id": "192699000987",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "203110",
+    "status": "rejected",
+    "reason": "longe_de_porc_n_est_pas_un_bifteck_de_surlonge_de_boeuf"
+  },
+  {
+    "source_product_id": "214346",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_boeuf_bifteck_surlonge"
+  },
+  {
+    "source_product_id": "225807",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "232455",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_boeuf_bifteck_surlonge"
+  },
+  {
+    "source_product_id": "236758",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "239555",
+    "status": "rejected",
+    "reason": "produit_compose_croissants_pas_du_beurre"
+  },
+  {
+    "source_product_id": "245260",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poivre_non_precise"
+  },
+  {
+    "source_product_id": "246527",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "246545",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "246546",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "246549",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "247808",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_huile_olive"
+  },
+  {
+    "source_product_id": "248931",
+    "status": "approved",
+    "canonical_ingredient_id": "porc_cotelette",
+    "reason": "cote_de_porc_assaisonnee_au_bacon_est_une_cotelette_pas_du_bacon"
+  },
+  {
+    "source_product_id": "249077",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "4022",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_raisin_sec"
+  },
+  {
+    "source_product_id": "4023",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_raisin_sec"
+  },
+  {
+    "source_product_id": "4261",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_noix_grenoble"
+  },
+  {
+    "source_product_id": "4575",
+    "status": "rejected",
+    "reason": "un_coeur_de_celeri_n_est_pas_un_pied_de_celeri_entier"
+  },
+  {
+    "source_product_id": "6009678410412",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_raisin_sec"
+  },
+  {
+    "source_product_id": "620383012218",
+    "status": "approved",
+    "canonical_ingredient_id": "poivre_noir_grains",
+    "reason": "poivre_noir_en_grains_entiers_distinct_du_poivre_moulu"
+  },
+  {
+    "source_product_id": "624153700015",
+    "status": "rejected",
+    "reason": "produit_compose_tortellini_farcis_pas_de_la_ricotta"
+  },
+  {
+    "source_product_id": "627893000063",
+    "status": "approved",
+    "canonical_ingredient_id": "relish",
+    "reason": "exact_product_identity"
+  },
+  {
+    "source_product_id": "627907093982",
+    "status": "approved",
+    "canonical_ingredient_id": "saucisse_italienne",
+    "reason": "exact_product_identity"
+  },
+  {
+    "source_product_id": "628176089164",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "628519300819",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_bacon"
+  },
+  {
+    "source_product_id": "629002072398",
+    "status": "approved",
+    "canonical_ingredient_id": "pancetta",
+    "reason": "faux_rejet_pancetta_cuite_en_des_est_de_la_pancetta"
+  },
+  {
+    "source_product_id": "629228001028",
+    "status": "approved",
+    "canonical_ingredient_id": "aneth_seche",
+    "reason": "aromate_d_aneth_est_de_l_aneth_seche_pas_de_l_aneth_frais"
+  },
+  {
+    "source_product_id": "629255201040",
+    "status": "approved",
+    "canonical_ingredient_id": "biere_blonde",
+    "reason": "exact_product_identity"
+  },
+  {
+    "source_product_id": "672774000083",
+    "status": "approved",
+    "canonical_ingredient_id": "sauce_poisson",
+    "reason": "identite_produit_exacte_sauce_de_poisson"
+  },
+  {
+    "source_product_id": "672774105818",
+    "status": "approved",
+    "canonical_ingredient_id": "feuille_riz",
+    "reason": "correction_feuille_de_riz_n_est_pas_du_riz_en_grain"
+  },
+  {
+    "source_product_id": "684746557198",
+    "status": "rejected",
+    "reason": "cocktail_sangria_pas_du_cidre_de_pomme"
+  },
+  {
+    "source_product_id": "737282363157",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_noix_grenoble"
+  },
+  {
+    "source_product_id": "771322002354",
+    "status": "approved",
+    "canonical_ingredient_id": "saucisse_italienne",
+    "reason": "exact_product_identity"
+  },
+  {
+    "source_product_id": "771322002385",
+    "status": "approved",
+    "canonical_ingredient_id": "saucisse_italienne",
+    "reason": "exact_product_identity"
+  },
+  {
+    "source_product_id": "787359100246",
+    "status": "rejected",
+    "reason": "produit_compose_croutons_pas_du_parmesan"
+  },
+  {
+    "source_product_id": "8004030022010",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_mais"
+  },
+  {
+    "source_product_id": "805573010049",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_huile_olive"
+  },
+  {
+    "source_product_id": "813552011130",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_raisin_sec"
+  },
+  {
+    "source_product_id": "850715000150",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "871802008132",
+    "status": "rejected",
+    "reason": "nourriture_pour_animaux_jamais_un_ingredient_de_cuisine"
+  },
+  {
+    "source_product_id": "871802009566",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "876976000067",
+    "status": "approved",
+    "canonical_ingredient_id": "biere_blonde",
+    "reason": "exact_product_identity"
+  },
+  {
+    "source_product_id": "877448006730",
+    "status": "approved",
+    "canonical_ingredient_id": "ravioli_fromage",
+    "reason": "faux_rejet_raviolis_aux_quatre_fromages_sont_des_raviolis_au_fromage"
+  },
+  {
+    "source_product_id": "881621002600",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "881621003713",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_poulet_non_precise"
+  },
+  {
+    "source_product_id": "8850620888012",
+    "status": "approved",
+    "canonical_ingredient_id": "sauce_poisson",
+    "reason": "identite_produit_exacte_sauce_de_poisson"
+  },
+  {
+    "source_product_id": "888048000042",
+    "status": "approved",
+    "canonical_ingredient_id": "epinard_frais",
+    "reason": "exact_product_identity"
+  },
+  {
+    "source_product_id": "888048100018",
+    "status": "approved",
+    "canonical_ingredient_id": "epinard_frais",
+    "reason": "exact_product_identity"
+  },
+  {
+    "source_product_id": "888048100032",
+    "status": "approved",
+    "canonical_ingredient_id": "roquette",
+    "reason": "exact_product_identity"
+  },
+  {
+    "source_product_id": "94022",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_raisin_sec"
+  },
+  {
+    "source_product_id": "94023",
+    "status": "rejected",
+    "reason": "produit_compose_ou_hors_identite_ne_correspond_pas_a_raisin_sec"
+  }
+]

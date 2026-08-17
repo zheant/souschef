@@ -13,7 +13,15 @@ from .catalog import (
     UnitKind,
 )
 from .household import HouseholdMember, HouseholdProfile, Staple
-from .market import MappingStatus, Price, Product, ProductMapping, Store
+from .market import (
+    MappingStatus,
+    Price,
+    PricingConfidence,
+    Product,
+    ProductMapping,
+    SaleMode,
+    Store,
+)
 from .plan import Plan, PlanStatus
 from .staging import CnfFoodCandidate, IngredientCandidateStatus, RawOffer
 
@@ -36,6 +44,8 @@ __all__ = [
     "Price",
     "ProductMapping",
     "MappingStatus",
+    "SaleMode",
+    "PricingConfidence",
     "HouseholdProfile",
     "HouseholdMember",
     "Staple",

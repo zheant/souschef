@@ -108,13 +108,17 @@ def test_similar_names_are_acknowledged_and_reviewed_animal_rows_are_bounded():
 
 
 def test_integrated_crosswalks_and_events_are_complete_and_reproducible():
-    batch = _load("cnf_catalog_curation.json")
+    decisions = [
+        *_load("cnf_catalog_curation.json")["decisions"],
+        *_load("superc_catalog_curation.json")["decisions"],
+        *_load("maxi_catalog_curation.json")["decisions"],
+    ]
     ingredients = _load("canonical_ingredients.json")
     refs = _load("canonical_ingredient_external_refs.json")
     events = _load("ingredient_curation_events.json")
     ids = {row["id"] for row in ingredients}
 
-    assert len(refs) == len(events) == len(batch["decisions"])
+    assert len(refs) == len(events) == len(decisions)
     assert len({(r["source"], r["external_id"], r["source_version"]) for r in refs}) == len(refs)
     assert len({event["decision_fingerprint"] for event in events}) == len(events)
     assert all(ref["canonical_ingredient_id"] in ids for ref in refs)

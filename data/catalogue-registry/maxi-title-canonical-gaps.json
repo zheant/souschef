@@ -1,0 +1,44 @@
+[
+  {
+    "source_product_id": "maxi-title:1f0c6133d7c9ccf90414",
+    "upc": null,
+    "product_name": "Papier de riz",
+    "brand": null,
+    "category_url": "/maxi/alimentation/",
+    "product_url": null,
+    "action": "canonical_gap",
+    "canonical_ingredient_id": null,
+    "reason": "no_supported_canonical_identity",
+    "confidence": "low",
+    "evidence": [],
+    "cnf_candidates": []
+  },
+  {
+    "source_product_id": "maxi-title:4c13386250337c6690cf",
+    "upc": null,
+    "product_name": "Mascarpone",
+    "brand": null,
+    "category_url": "/maxi/alimentation/",
+    "product_url": null,
+    "action": "canonical_gap",
+    "canonical_ingredient_id": null,
+    "reason": "no_supported_canonical_identity",
+    "confidence": "low",
+    "evidence": [],
+    "cnf_candidates": []
+  },
+  {
+    "source_product_id": "maxi-title:ef83638143edee5fc35e",
+    "upc": null,
+    "product_name": "Crevettes blanches du Pacifique",
+    "brand": null,
+    "category_url": "/maxi/alimentation/",
+    "product_url": null,
+    "action": "canonical_gap",
+    "canonical_ingredient_id": null,
+    "reason": "no_supported_canonical_identity",
+    "confidence": "low",
+    "evidence": [],
+    "cnf_candidates": []
+  }
+]

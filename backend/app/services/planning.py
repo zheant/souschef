@@ -518,8 +518,16 @@ def _grocery_list(session: Session, plan: Plan) -> list[dict]:
         if is_promo and regular is not None:
             delta = Decimal(regular) - Decimal(line["unit_price_cents_cad"])
             if delta > 0:
+                # `units` est un flottant pour un produit vendu au poids sans
+                # incrément (PurchaseLine.units : int | float) — le multiplier
+                # tel quel par un Decimal lève un TypeError, donc un 500 sur
+                # POST /api/plan dès qu'un tel produit est en promo. Passer par
+                # str() plutôt que Decimal(float) : c'est la valeur décimale
+                # affichée qu'on veut, pas son approximation binaire, et
+                # l'invariant du projet interdit le flottant sur un montant.
+                units = Decimal(str(line["units"]))
                 savings = (
-                    delta * line["units"] * (1 + prod.tax_rate)
+                    delta * units * (1 + prod.tax_rate)
                 ).quantize(Decimal("0.01"))
 
         store["lines"].append({

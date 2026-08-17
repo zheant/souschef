@@ -1326,3 +1326,304 @@ comportement attendu au rejeu, une garantie d'idempotence, un mécanisme
 chemin était cassé — et si non, l'exercer une fois à la main avant de le
 tenir pour acquis, comme cette session l'a fait pour l'installation éditable
 et pour `product_mapping`.
+
+## Revue de l'artefact de devis, puis correction — 2026-08-13
+
+L'utilisateur a demandé une revue de qualité de l'artefact publié
+« Devis Souschef W33 », puis la correction de tout ce qui en sortait. Les
+deux temps sont documentés dans
+[`docs/revue-qualite-devis-2026-W33.md`](docs/revue-qualite-devis-2026-W33.md)
+(diagnostic laissé intact + tableau des correctifs) et résumés dans
+`docs/recipe-pricing-roadmap.md`.
+
+**Ce que la revue a établi, chiffres à l'appui** : l'arithmétique de la page
+était juste sur ses 1 513 lignes (coût = besoin × prix unitaire, somme =
+coût consommé, /portion exact) et le bloc des 40 recettes curées était sain.
+Les défauts étaient tous en amont ou dans la lecture : ail facturé à la tête
+(73 lignes), décaissement calculé sur le plus gros format du magasin (un sac
+de 50 lb pour 1 g), quantités importées à 1 g étiquetées « exact »,
+confiance de recette inexplicable depuis ses lignes, cumul de rabais sans
+signification additive, curation polluée par des produits composés.
+
+**Décisions de conception à retenir** :
+- **Deux questions, deux choix d'offre.** `recipe_costing.py` sélectionne
+  désormais séparément l'offre qui valorise la consommation (meilleur prix
+  unitaire, inchangé) et celle qui compose le panier
+  (`min ceil(qté/format) × prix taxé`). Une seule sélection pour les deux
+  rendait le décaissement fictif — c'était la cause, pas un symptôme
+  d'affichage. Ratio médian acheté/requis 7,3× → 3,0×.
+- **Une conversion déclarée s'applique aussi à dimension identique.**
+  `maxi_capture.py` ne cherchait une règle que sur désaccord de dimension ;
+  l'ail se vend « 5 unités » et se cuisine en gousses — deux comptes, même
+  dimension. Aucune règle existante n'était dans ce cas, le changement
+  n'affecte donc que l'ail (vérifié règle par règle avant édition).
+- **La purge de curation devait précéder la conversion, pas la suivre.** Les
+  naans et croûtons appariés à `gousse_ail` n'étaient inoffensifs que parce
+  que la garde de dimension les rejetait. Ajouter la conversion en masse sans
+  les rejeter d'abord aurait rendu le pain à l'ail moins cher que l'ail.
+- **Un devis complet n'est pas un devis fiable.** `services/recipe_quality.py`
+  nomme le défaut (quantité invraisemblable, ingrédient doublé, portions
+  douteuses) sans rien corriger ni deviner : 59 devis sans réserve sur 129
+  chiffrés, 0 recette curée touchée.
+- **L'artefact devient reproductible.** `scripts/build_quote_artifact.py`
+  rend la page depuis le seul rapport JSON, qui porte maintenant son index
+  de produits. La page précédente était écrite à la main, donc invérifiable
+  et non rejouable.
+
+**Vérifié** : 172 tests passés, 51 sautés (PostgreSQL indisponible dans cette
+session — aucun fichier touché ici n'en dépend) ; deux tests neufs
+(`test_recipe_costing.py::test_checkout_buys_the_cheapest_basket...`,
+`tests/test_recipe_quality.py`, 4 cas) ; rapport de devis reproduit à
+l'identique avant modification, puis couverture mesurée **avec la
+configuration temporairement remise dans son état d'origine** — 280/308
+ingrédients et 129 devis complets dans les deux cas, aucun ingrédient perdu.
+Artefact republié à la même URL.
+
+**Non vérifié / restant** : rendu réel de la page dans un navigateur ; la
+reprise des quantités fautives dans `seed/main/imported_recipes.json` (le
+signalement existe, la donnée reste fausse) ; l'attribut « forme d'achat »
+sur l'ingrédient canonique, qui seul empêchera durablement un cheddar
+tranché sans gras ou un avocat surgelé de gagner un appariement au prix ; le
+barème de taxes ne couvre que les rayons non ambigus. **`config/` et `data/`
+ne sont pas suivis par git** — les décisions de curation modifiées ici ne
+sont versionnées nulle part.
+
+### Suite, même session : « 1 g » voulait dire « 1 unité »
+
+L'utilisateur a relevé que beaucoup de lignes classées « 1 g » étaient en
+fait « 1 unité ». Vérifié dans le corpus source : la projection amont
+recopie le compte d'articles de la ligne (« 1 aubergine », « 12 ailes »)
+dans un champ exprimé en grammes, et `import_cook_recipes.py` ne rappelait
+sa propre résolution que si la valeur projetée était **absente** — une
+valeur fausse mais présente passait intacte, et les équivalences déjà
+curées n'étaient jamais consultées. 166 lignes dans ce cas.
+
+**Portée plus large que le signalement de la veille** : le seuil de 5 g de
+`recipe_quality.py` ne voyait pas « 3 poivrons » (3 g) ni « 12 ailes »
+(12 g). Un seuil détecte l'absurde, pas le faux — la garde reste utile,
+elle ne remplace pas la correction à la source.
+
+`_count_copied_into_measured_field` rend la main à la résolution quand la
+ligne se compte, que le canonique se mesure, et que la valeur projetée
+**égale exactement** le compte brut (condition stricte, pour ne pas
+écraser une quantité légitimement égale à son compte). 47 équivalences
+ajoutées à `config/cook_recipe_curation.json` : 30 vérifiées au FCÉN 2026
+(les canoniques portaient déjà leur code d'aliment dans
+`canonical_ingredient_external_refs.json` — la source était là, personne
+ne l'avait interrogée pour ça), 17 estimations déclarées avec leur raison
+dans un nouveau bloc `grams_per_unit_provenance`. Deux lignes comptaient
+des tortillas et non leur ingrédient de base : reclassées par
+`canonical_overrides`, avec une conversion FCÉN pour la tortilla de maïs.
+
+**Vérifié** : 166 lignes concernées, 0 non résolue ; 157 lignes modifiées
+dans 86 recettes après réimport, `tags` seul autre champ touché ; coût
+consommé réel de 63 devis en hausse de 215,92 $ au total ; 129 devis
+complets et 281/309 ingrédients chiffrables (aucune perte) ; **103 devis
+sans réserve contre 59** ; 172 tests passés, 51 sautés. Artefact republié.
+
+### Troisième passe : rendements, doublons, identité du produit (2026-08-14)
+
+« Fixons les problèmes maintenant » — les 79 défauts encore signalés. Deux se
+sont révélés plus graves que leur étiquette, un troisième était un faux
+positif de ma propre règle.
+
+- **Le doublon d'ingrédient était une perte de données silencieuse, pas un
+  défaut d'affichage.** `catalog.recipe_ingredient` impose l'unicité de
+  (recette, ingrédient) et `_upsert` fait un `on_conflict_do_update` : pour
+  28 recettes, la dernière ligne **écrasait** les précédentes en base pendant
+  que le calcul de prix sur le JSON les additionnait. « Boulettes général
+  Tao » : 405 g de fécule demandés, 62,5 g en base. Corrigé à l'import par
+  addition (`_merge_duplicate_ingredients`), trace dans les tags. Leçon : deux
+  chemins de lecture d'une même donnée finissent par se contredire, et c'est
+  le plus silencieux qui gagne.
+- **Le seuil « > 12 portions » était le mauvais critère.** Le corpus publie un
+  rendement (« 20 boulettes », « 625 ml »), pas toujours des portions ; mais
+  une tourtière à « 24 portion(s) » est légitime et le seuil la signalait à
+  tort. La règle lit maintenant la **preuve** (`tags.servings_source`, ajouté
+  à l'import) et non un nombre. Dix `serving_overrides`, chacun justifié,
+  sous une convention écrite une fois.
+- **La dernière quantité « invraisemblable » était exacte** (½ c. à thé de
+  purée de chipotle = 3 g). La famille `conserves` mêle corps de recette et
+  condiments : sortie de `BODY_FAMILIES`. Un faux positif sur une valeur juste
+  coûte plus que la détection qu'il apporte.
+- **Identité du produit (P6 de la revue) :** `IdentityRules` refuse qu'un
+  produit composé tienne lieu d'ingrédient de base, sauf si le marqueur
+  appartient à l'identité du canonique (« Pain au levain » reste un pain,
+  « Sauce BBQ » est défendue par son alias). Trois marqueurs retirés après
+  vérification parce qu'ils rejetaient de vrais aliments (« Bifteck
+  sandwich », « Pêche beignet », « Soupe crème de champignons condensée »).
+  125 produits écartés, zéro perte de couverture. La règle s'applique aussi
+  aux appariements « approuvés » : les 6 831 approbations du manifeste
+  viennent d'un traitement en lot, jamais d'une relecture une à une.
+- **Un test que j'avais écrit a attrapé un vrai défaut de ma règle** :
+  « Bagels » au pluriel échappait au marqueur « bagel ». Le matcher tolère
+  maintenant le pluriel, et rien de plus — la sous-chaîne rejetterait
+  « gaufrettes » ou « beignet ».
+- **La même équivalence sert les deux côtés.** L'avocat n'était surgelé que
+  parce que « Avocat Hass » était bloqué faute de conversion pièce → masse,
+  alors que l'équivalence FCÉN existait déjà dans la curation des recettes.
+  46 `product_conversions` générées **depuis les mêmes nombres et la même
+  provenance** que les quantités de recette. Effet réel sur la sélection :
+  avocat frais, mangue fraîche, mini-concombres, et la figue devient
+  chiffrable.
+
+**Vérifié** : 180 tests passés, 51 sautés ; **130 devis complets, 130 sans
+réserve** (aucun défaut résiduel), 282/309 ingrédients chiffrables, un seul
+encore bloqué par une dimension (`feuille_riz`). Artefact republié.
+**Reste nommé** : l'attribut « forme d'achat » sur l'ingrédient canonique —
+les marqueurs par ingrédient sont un palliatif vérifié cas par cas, pas un
+modèle ; épinards et brocoli restent achetés surgelés sans que ce soit
+déclaré.
+
+### QA/QC du module de prix, puis les 15 correctifs (2026-08-16)
+
+L'utilisateur a demandé une revue qualité du module de calcul du prix d'une
+recette, puis la correction de tout ce qui en sortait, découpée en tickets.
+Diagnostic complet dans
+[`docs/qa-module-prix-recette-2026-08-16.md`](docs/qa-module-prix-recette-2026-08-16.md) ;
+tickets dans `.scratch/qa-module-prix-recette/issues/` (15, en ordre de
+dépendance) ; décisions de sémantique versées dans
+[`docs/adr-recipe-pricing-semantics.md`](docs/adr-recipe-pricing-semantics.md),
+qui passe de « accepté » à « révisé ».
+
+**Le défaut le plus grave n'était pas dans le calcul.** `GET /api/recipe-quotes`
+répondait 500 au premier appel dans la pile livrée : le chemin du fichier de
+règles était calculé en remontant trois dossiers depuis le fichier source, ce
+qui vise `/config` une fois le paquet installé — dossier absent de l'image, qui
+ne copie que `backend/`. Et `config/` n'était versionné nulle part. Aucun test
+Python ne pouvait attraper ça ; la garde vit donc aussi sur `docker-compose.yml`
+(montage + `MENU_CONFIG_DIR`), exactement la leçon déjà consignée plus haut sur
+les chemins que la documentation décrit mais que personne ne fait échouer exprès.
+
+**Décisions de conception à retenir** :
+
+- **Une seule sélection d'offre, pas deux.** La tranche précédente séparait la
+  valorisation (meilleur prix unitaire) de l'achat (panier le moins cher). Les
+  deux nombres finissaient par décrire deux produits différents : 532 lignes du
+  rapport W33 valorisées sur un produit autre que celui acheté, et un coût
+  consommé total **9,9 % sous le prix de tout panier réel** — pommes de terre
+  valorisées au sac de 50 lb pendant qu'on achète 3 lb. La valorisation suit
+  désormais le produit acheté ; le meilleur prix unitaire reste publié à part
+  (`best_unit_price_cents`), sans prétendre être ce qu'on paie.
+- **Un décaissement autonome décrit une course, pas une tournée.** Le panier se
+  compose dans une seule bannière, la moins chère qui couvre tout ; quand aucune
+  ne couvre tout, `basket_scope` vaut `multi_store` et le devis le déclare.
+- **Deux nombres, deux confiances.** `consumed_confidence` et
+  `checkout_confidence` : un produit au poids ne dégrade plus une valorisation
+  exacte. Le test qui verrouillait l'ancien comportement a été mis à jour avec
+  sa raison — c'était la spec qui n'était pas tenue, pas un accident.
+- **Un prix de zéro est une donnée manquante.** Le filtre acceptait `>= 0`, donc
+  une offre à zéro remportait toujours la sélection et rendait la recette
+  gratuite en `exact`. Le garde-fou n'existait que dans l'adaptateur de capture,
+  jamais dans le module qui déclare l'invariant.
+- **Un seul résolveur de règles d'approvisionnement** (`services/supply_rules.py`,
+  nouveau) : le calcul de prix ne faisait qu'un saut, l'audit de couverture
+  itérait jusqu'au point fixe, et l'audit annonçait donc une couverture que le
+  calcul ne savait pas livrer. Le parseur du fichier était en outre recopié dans
+  trois appelants, et le troisième oubliait `source_qty_per_target_unit`.
+  Vérifié sur données réelles : **129 = 129, zéro désaccord** entre les deux.
+- **Les essentiels du ménage sont consommés mais pas rachetés.** Ils ne
+  deviennent pas gratuits (ce serait la règle `essential`, réservée à l'eau) :
+  ils restent valorisés et restent bloquants si aucun produit ne les vend. Lus
+  dans `household.staple` par l'API et dans le seed par le script — jamais
+  recopiés dans le fichier de règles, qui serait devenu une seconde source de
+  vérité.
+- **Deux faits faux retirés du catalogue.** Une bière au miel appariée à `miel`
+  dans 8 recettes — elle perdait la valorisation mais gagnait la composition du
+  panier, donc elle n'apparaissait que dans la liste d'épicerie, ce qui explique
+  qu'elle ait survécu à la revue de la veille. Et une « demi caisse de figues »
+  déclarée 50 g (une figue), soit 200 $/kg. La garde d'identité passe par le
+  **rayon du détaillant**, pas par un mot du titre : un marqueur « bière »/« vin »
+  sur le titre, essayé d'abord, rejetait à tort « Sauce barbecue avec bière
+  Guinness », « Filets d'aiglefin en pâte à la bière » et « Vinaigre de vin
+  blanc » — vérifié produit par produit sur les 8 044 du registre avant d'écrire
+  la règle.
+- **Une borne supérieure de vraisemblance, par famille et par portion.** Le
+  contrôle ne voyait que les quantités trop petites : « 130 devis complets, 130
+  sans réserve » cohabitait avec 2 kg de roquette et 375 g de basilic pour
+  2 portions, et 2,2 kg de pain au levain pour 2 portions. Les normes sont calées
+  au-dessus du 90ᵉ centile observé sur le corpus ; elles signalent exactement les
+  4 quantités fautives connues, et rien d'autre.
+- **Un correctif du plan a été abandonné après mesure.** Rendre le seuil bas
+  inclusif (`<=` au lieu de `<`) attrapait « 5 tranches de pain » recopié en
+  grammes, mais signalait aussi le zeste d'un citron (5 g, juste) et 5 g de
+  fécule de maïs (2 c. à thé, juste) : deux faux positifs pour un vrai. Le seuil
+  reste strict, la raison est écrite dans le code, et le pain fautif reste
+  signalé par la borne supérieure sur trois autres ingrédients de sa recette.
+
+**Autres correctifs de la tranche** : économies comparées au panier réellement
+alternatif hors promo (et jamais négatives) ; déterminisme (départage explicite
++ `ORDER BY`, rapport identique octet pour octet sur deux exécutions) ; mode de
+vente inconnu refusé au lieu d'être lissé en « acheter le besoin exact » ;
+fenêtre de validité vide plus jamais publiée ; achat au poids arrondi à un pas
+qu'un comptoir sait peser (« 0,003 kg d'ail » n'existe pas) ; `servings`
+refusé sur une recette sans composante marginale — 121 des 161 recettes, pour
+lesquelles il ne changeait que la division ; couche `services` en import
+paresseux, pour que le module pur soit réellement importable sans SQLAlchemy
+comme sa docstring le promet.
+
+**Mesuré sur le rapport 2026-W33, avant/après, mêmes captures** : coût consommé
+2 011,67 $ → 2 111,56 $ (valorisation au produit acheté) ; décaissement
+4 586,89 $ → 4 067,93 $ (−11,3 %, essentiels) ; économies annoncées 374,03 $ →
+214,29 $ (la référence gonflée disparaît) ; ratio décaissement/consommé médian
+2,59 → 1,99 ; décimales filantes dans les unités achetées 46 → 0 ; devis avec
+réserve 0 → 3 ; 129/129 paniers en magasin unique. Un devis perdu
+(`figues_roties`), parce que `figue` n'a plus de produit chiffrable — la perte
+est nommée, pas absorbée.
+
+**Vérifié** : **229 tests passés, 51 sautés** (180 avant ce chantier + 49
+nouveaux ; PostgreSQL indisponible dans cette session, aucun fichier touché ici
+n'en dépend), `app.main` s'importe et expose la route, artefact de devis rendu
+sans erreur depuis le rapport régénéré. **Non vérifié** : la route en conditions
+réelles derrière `docker compose up` — Docker n'était pas disponible dans cette
+session, la garde posée sur `docker-compose.yml` remplace le sondage, elle ne le
+remplace pas.
+
+**Revue de code après coup, quatre correctifs de plus.** Une passe `/code-review`
+a trouvé quatre défauts réels dans ce chantier, chacun corrigé et verrouillé :
+
+- **Le câblage rendait la tranche 12 inerte là où ça compte.**
+  `run_weekly_catalogues.py` — le **seul** chemin qui écrit dans
+  `market.product`/`market.price` — construisait ses deux adaptateurs sans
+  `identity_rules` ni `tax_schedule`, que le rapport hors ligne leur passe
+  pourtant. La bière au miel restait donc appariée au miel en base pendant que
+  le rapport publiait des chiffres propres, et le vin y entrait détaxé. Aucun
+  test Python ne pouvait l'attraper : les deux appelants sont corrects
+  isolément, c'est leur **divergence** qui est le défaut —
+  `tests/test_weekly_runner_wiring.py` compare donc les deux chemins entre eux
+  (vérifié : le piège signale bien les deux mots-clés manquants sur la version
+  d'origine).
+- **La référence « prix régulier » shoppait dans un magasin que le panier n'a
+  pas le droit de visiter.** Interaction entre les tranches 04 et 15 :
+  `regular_totals` balayait tous les candidats alors que le panier payé est
+  restreint à `basket_store`. On comparait une course à une tournée, et
+  l'économie annoncée était systématiquement sous-estimée, souvent écrasée à 0
+  par sa propre garde `max(0, …)`.
+- **Le front-end lisait un champ que la tranche 09 venait de supprimer.**
+  `Result.tsx` affichait `quote.confidence`, remplacé par les deux niveaux
+  séparés ; `types.ts` déclarait un champ fantôme, donc TypeScript ne pouvait
+  rien voir et l'écran imprimait la chaîne `undefined`. Ma vérification
+  initiale s'était contentée d'un `grep` dont le motif ne pouvait pas
+  correspondre à une déclaration nue — l'absence de résultat ne prouvait rien.
+- **La tranche 10 cassait tout l'écran au lieu d'une ligne.** Le 422
+  (`RecipeNotScalableError`) est atteint avec des données normales, `servings`
+  étant le `x_r` du solveur ; un `Promise.all` nu effaçait alors le prix de
+  **tout** le menu. Chaque devis encaisse maintenant son propre échec, et
+  « prix incomplet » ne décrit plus les états « en cours » et « échoué », qui
+  ont leurs propres libellés.
+
+**Trouvé par la revue, hors périmètre de ce chantier, non corrigé** (défauts du
+travail non commis des sessions précédentes, à traiter séparément) :
+`services/planning.py:522` mélange `Decimal` et `float` sur les unités d'un
+produit au poids — 500 sur `POST /api/plan` dès qu'un tel produit est en promo ;
+le bloc d'exclusion `/maxi/alimentation/` de `retail_product_curation.py` est du
+code mort (103 des 625 titres exclus deviendraient des liens valides — « Soda
+gingembre » vers `gingembre_frais`) ; `poivron orange` est lié à
+`tomate_orange` ; les règles « thym/aneth en pot » sont masquées par les règles
+sèches ; `_MONEY` de `maxi_web.py` n'a pas d'ancre de devise, donc « 2/5,00 $ »
+est lu 2,00 $ ; deux troncatures silencieuses de pagination dans
+`superc_web.py` ; et `ports/dto.py` change `payload_fingerprint`, ce qui fera
+réatterrir tout l'historique une fois dans `staging.raw_offer`.
+
+**Vérifié après correctifs** : **234 tests passés, 51 sautés** ; `tsc -b` et
+`vite build` propres ; rapport régénéré sans erreur.

@@ -11,7 +11,7 @@ from app.services.prefilter import prefilter_recipes
 from app.services.validation import (
     BatchBoundsError, CapacityError, DiversityInfeasibleError,
     EmptyProblemError, MissingPriceError, SalvageBoundError,
-    UnitMismatchError, validate_problem,
+    UnitMismatchError, min_taxed_price_per_base_unit, validate_problem,
 )
 from app.solver.config import SolverConfig
 from tests.conftest import (
@@ -245,7 +245,10 @@ def test_assertion_6_catches_n_repas_2_on_seed_profile_before_solver():
     profile = dataclasses.replace(problem.profile, meals_per_horizon=2)
     problem = dataclasses.replace(problem, profile=profile)
     pre = prefilter_recipes(
-        problem.recipes, problem.profile, RuleBasedAppetenceScorer(problem)
+        problem.recipes,
+        problem.profile,
+        RuleBasedAppetenceScorer(problem),
+        frozenset(min_taxed_price_per_base_unit(problem)),
     )
     with pytest.raises(DiversityInfeasibleError) as exc_info:
         validate_problem(problem, pre.surviving, _params(problem))

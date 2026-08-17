@@ -83,6 +83,10 @@ class ProductData:
     canonical_ingredient_id: str
     package_qty_in_base_unit: Decimal            # v_p
     tax_rate: Decimal                            # t_p
+    sale_mode: str = "fixed_package"
+    purchase_increment_in_base_unit: Decimal | None = None
+    quantity_confidence: str = "exact"
+    quantity_provenance: str | None = None
 
 
 @dataclass(frozen=True)
@@ -94,6 +98,7 @@ class PriceData:
     #: Référence honnête pour les économies affichées (pilote,
     #: docs/product-pilot.md) — None si jamais annoncé au régulier.
     regular_price_cents_cad: int | None
+    pricing_confidence: str = "exact"
 
 
 @dataclass(frozen=True)
@@ -192,13 +197,20 @@ def load_problem_data(
         ProductData(id=p.id, external_key=p.external_key,
                     canonical_ingredient_id=p.canonical_ingredient_id,
                     package_qty_in_base_unit=p.package_qty_in_base_unit,
-                    tax_rate=p.tax_rate)
+                    tax_rate=p.tax_rate,
+                    sale_mode=p.sale_mode.value,
+                    purchase_increment_in_base_unit=(
+                        p.purchase_increment_in_base_unit
+                    ),
+                    quantity_confidence=p.quantity_confidence.value,
+                    quantity_provenance=p.quantity_provenance)
         for p in session.scalars(select(Product))
     )
     prices = tuple(
         PriceData(product_id=pr.product_id, store_id=pr.store_id,
                   price_cents_cad=pr.price_cents_cad, is_promo=pr.is_promo,
-                  regular_price_cents_cad=pr.regular_price_cents_cad)
+                  regular_price_cents_cad=pr.regular_price_cents_cad,
+                  pricing_confidence=pr.pricing_confidence.value)
         for pr in session.scalars(
             select(Price).where(
                 Price.valid_from <= on_date, Price.valid_to >= on_date

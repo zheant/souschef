@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { api, cents } from "../api";
 import { describeChanges } from "../changes";
 import type {
-  Household, Plan, RecipeIngredientLine, SolverConfigInput, Store,
+  Household, Plan, RecipeIngredientLine, RecipeQuote, SolverConfigInput, Store,
 } from "../types";
 
 /** Écran 3 — Résultat (piste « circulaire du quartier », disposition « P »,
@@ -98,6 +98,9 @@ export default function ResultScreen(props: {
   const [openRecipeId, setOpenRecipeId] = useState<string | null>(null);
   const [ingredients, setIngredients] = useState<RecipeIngredientLine[] | null>(null);
   const [ingredientsError, setIngredientsError] = useState<string | null>(null);
+  const [recipeQuotes, setRecipeQuotes] = useState<Record<string, RecipeQuote>>({});
+  const [quotesError, setQuotesError] = useState<string | null>(null);
+  const [quotesLoading, setQuotesLoading] = useState(false);
 
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [accepted, setAccepted] = useState(false);
@@ -112,6 +115,53 @@ export default function ResultScreen(props: {
     setBarDetailed(false);
     setOpenRecipeId(null);
   }, [plan?.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!plan) {
+      setRecipeQuotes({});
+      setQuotesLoading(false);
+      return;
+    }
+    setQuotesError(null);
+    setQuotesLoading(true);
+    // Un devis par recette, et chacun encaisse son propre échec. Un `Promise.all`
+    // nu était tout ou rien : une recette que le module refuse de rechiffrer
+    // pour un autre nombre de portions (422) — le cas courant, `servings` étant
+    // le x_r du solveur — effaçait le prix de tout le menu.
+    Promise.all(
+      plan.menu.map((line) =>
+        api
+          .recipeQuote(
+            line.recipe_id,
+            line.servings,
+            plan.on_date,
+            plan.stores_visited,
+          )
+          .catch((error: unknown) => {
+            console.warn(`Devis indisponible pour ${line.recipe_id}`, error);
+            return null;
+          }),
+      ),
+    )
+      .then((quotes) => {
+        if (cancelled) return;
+        const found = quotes.filter((q): q is RecipeQuote => q != null);
+        setRecipeQuotes(Object.fromEntries(found.map((q) => [q.recipe_id, q])));
+        setQuotesLoading(false);
+        setQuotesError(
+          found.length || !plan.menu.length
+            ? null
+            : "Prix des recettes indisponibles pour ce plan.",
+        );
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setQuotesLoading(false);
+        setQuotesError(String(error));
+      });
+    return () => { cancelled = true; };
+  }, [plan]);
 
   const itinerary = useMemo(() => {
     if (!plan) return [];
@@ -378,7 +428,7 @@ export default function ResultScreen(props: {
             {openRecipe && (
               <div className="rp-detail-meta">
                 {openRecipe.servings} portions · {Number(openRecipe.prep_time_h).toFixed(2)} h de cuisine ·{" "}
-                {cents(openRecipe.attributed_cost_cents_cad)}
+                {quotePriceLabel(recipeQuotes[openRecipe.recipe_id], quotesLoading)}
               </div>
             )}
             <div className="rp-detail-sec">Ingrédients</div>

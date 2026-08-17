@@ -2,7 +2,8 @@
 
 import type {
   Household, Plan,
-  RecipeIngredientLine, ReoptimizeResult, SolverConfigInput, StapleLine, Store,
+  RecipeIngredientLine, RecipeQuote, ReoptimizeResult, SolverConfigInput,
+  StapleLine, Store,
 } from "./types";
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
@@ -57,6 +58,22 @@ export const api = {
   stores: () => req<Store[]>("/api/stores"),
   recipeIngredients: (recipeId: string) =>
     req<RecipeIngredientLine[]>(`/api/recipes/${recipeId}/ingredients`),
+  recipeQuote: (
+    recipeId: string, servings: number, onDate: string, stores: string[],
+  ): Promise<RecipeQuote | null> => {
+    const query = new URLSearchParams({
+      recipe_id: recipeId,
+      servings: String(servings),
+      on_date: onDate,
+    });
+    stores.forEach((store) => query.append("store", store));
+    // `quotes[0]` sur une réponse vide rendait `undefined`, et l'appelant
+    // lisait `.recipe_id` dessus : le TypeError partait dans le `.then` et
+    // ressortait en bannière générique, masquant la vraie cause.
+    return req<RecipeQuote[]>(`/api/recipe-quotes?${query.toString()}`).then(
+      (quotes) => quotes[0] ?? null,
+    );
+  },
 };
 
 export const cents = (v: string | number): string =>

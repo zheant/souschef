@@ -23,8 +23,12 @@ services:
     environment:
       MENU_DATABASE_URL: postgresql+psycopg2://menu:menu@db:5432/menu_optimizer
       MENU_SEED_DIR: /seed/main
+      # Règles de curation et d'approvisionnement, montées comme le seed. La
+      # route des devis les lit; sans ce montage elle répondait 500.
+      MENU_CONFIG_DIR: /config
     volumes:
       - ./seed:/seed:ro
+      - ./config:/config:ro
     depends_on:
       db:
         condition: service_healthy
