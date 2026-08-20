@@ -28,6 +28,7 @@ class HouseholdOut(BaseModel):
     taste_preferences: dict
     available_equipment: list[str]
     max_prep_time_per_meal_h: float
+    appetence_u_min_dollars: float | None
     members: list[MemberOut]
     demand: dict  # D exact + bornes (D9)
 
@@ -48,6 +49,11 @@ class HouseholdUpdate(BaseModel):
     taste_preferences: dict | None = None
     available_equipment: list[str] | None = None
     max_prep_time_per_meal_h: float | None = Field(default=None, gt=0)
+    #: U_min. `null` explicite retire le plancher — la route sérialise avec
+    #: `exclude_unset`, donc l'omettre le laisse inchangé et l'envoyer à `null`
+    #: l'efface. Deux gestes distincts, comme il faut ici : « aucun plancher »
+    #: est une valeur, pas une absence de valeur.
+    appetence_u_min_dollars: float | None = Field(default=None, ge=0)
     members: list[MemberOut] | None = None
 
 

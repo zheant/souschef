@@ -38,8 +38,11 @@ type Tab = (typeof TABS)[number]["key"];
 
 // Défaut de développement (spec) : tout à false, un magasin, appétence en
 // objectif — on rallume un mécanisme à la fois depuis l'onglet Paramètres.
+// `appetence_mode` est volontairement absent : `undefined` signifie « suivre
+// le profil », donc le plancher d'appétence réglé dans Ménage › Préférences
+// s'applique. L'envoyer à "objective" par défaut l'écartait à chaque plan.
 const DEV_DEFAULT: SolverConfigInput = {
-  appetence_mode: "objective", solver_time_limit_s: 120, mip_gap: 0.005,
+  solver_time_limit_s: 120, mip_gap: 0.005,
 };
 
 export default function App() {

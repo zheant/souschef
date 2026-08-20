@@ -17,7 +17,8 @@ Interactions documentées (sémantiques précisées, docs/deviations.md D11) :
   sont retirés.
 - ``enable_time_cost = False`` : κ = 0 ; τ^fixe ne pèse dans l'objectif que si
   le coût du temps ET le coût fixe de lot sont actifs.
-- ``appetence_mode`` : "objective" → −Σ_k u_rk·x_rk dans l'objectif ;
+- ``appetence_mode`` : ``None`` (défaut) → suivre le plancher du profil ;
+  "objective" → −Σ_k u_rk·x_rk dans l'objectif, en écartant ce plancher ;
   "constraint" → Σ_k u_rk·x_rk ≥ U_min (``appetence_u_min_dollars`` requis).
   Dans les deux cas l'utilité est concave par morceaux (segments du scorer).
 - Avec ``enable_diversity = False``, un menu monotone est **attendu** — c'est
@@ -77,7 +78,13 @@ class SolverConfig(BaseModel):
     #: défaut.
     enable_variant_exclusion: bool = True
 
-    appetence_mode: Literal["objective", "constraint"] = "objective"
+    #: Surcharge explicite du mode d'appétence. `None` — le défaut — signifie
+    #: « suivre le profil » : le mode effectif se dérive alors du plancher
+    #: persisté sur `household_profile` (`services/params.py`). Un défaut à
+    #: "objective" rendait cette dérivation impossible : on ne pouvait pas
+    #: distinguer « non surchargé » de « objective demandé explicitement »,
+    #: donc la préférence du ménage était écartée dans le cas courant.
+    appetence_mode: Literal["objective", "constraint"] | None = None
     #: U_min en dollars, requis si appetence_mode = "constraint".
     appetence_u_min_dollars: float | None = Field(default=None, ge=0)
 

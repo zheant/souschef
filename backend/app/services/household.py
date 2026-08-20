@@ -49,6 +49,9 @@ class HouseholdView:
     taste_preferences: dict
     available_equipment: list
     max_prep_time_per_meal_h: float
+    #: U_min — plancher d'appétence du plan, en dollars. `None` : aucun
+    #: plancher, l'appétence reste un crédit dans l'objectif.
+    appetence_u_min_dollars: float | None
     members: list[MemberView]
     #: D exact + bornes (D9) — structure documentée dans docs/spec.md.
     demand: dict
@@ -151,6 +154,11 @@ def _profile_view(profile: HouseholdProfile) -> HouseholdView:
         taste_preferences=profile.taste_preferences,
         available_equipment=profile.available_equipment,
         max_prep_time_per_meal_h=float(profile.max_prep_time_per_meal_h),
+        appetence_u_min_dollars=(
+            float(profile.appetence_u_min_dollars)
+            if profile.appetence_u_min_dollars is not None
+            else None
+        ),
         members=[
             MemberView(
                 name=m.name, appetite_coefficient=float(m.appetite_coefficient)

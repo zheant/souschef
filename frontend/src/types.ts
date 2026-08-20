@@ -10,6 +10,8 @@ export interface Household {
   diet_flags: string[]; allergen_flags: string[];
   taste_preferences: { liked_tags?: string[]; disliked_tags?: string[] };
   available_equipment: string[]; max_prep_time_per_meal_h: number;
+  //: Plancher d'appétence du plan, en dollars. `null` : aucun plancher.
+  appetence_u_min_dollars: number | null;
   members: Member[];
   demand: { D_exact: string; borne_basse: number; borne_haute: number };
 }
@@ -25,6 +27,7 @@ export interface SolverConfigInput {
   enable_salvage?: boolean; enable_perishable_penalty?: boolean;
   enable_time_cost?: boolean;
   enable_staples?: boolean; enable_diversity?: boolean;
+  //: `undefined` — le défaut — suit le plancher du profil.
   appetence_mode?: "objective" | "constraint";
   appetence_u_min_dollars?: number | null;
   max_store_visits?: number | null; min_distinct_recipes?: number | null;

@@ -118,6 +118,8 @@ class ProfileData:
     available_equipment: tuple[str, ...]
     max_prep_time_per_meal_h: Decimal
     appetite_coefficients: tuple[Decimal, ...]   # ρ_h
+    #: U_min — plancher d'appétence, ou `None` (appétence en crédit).
+    appetence_u_min_dollars: Decimal | None = None
 
 
 @dataclass(frozen=True)
@@ -248,6 +250,7 @@ def load_problem_data(
             appetite_coefficients=tuple(
                 m.appetite_coefficient for m in profile.members
             ),
+            appetence_u_min_dollars=profile.appetence_u_min_dollars,
         ),
         ingredients=ingredients,
         recipes=recipes,

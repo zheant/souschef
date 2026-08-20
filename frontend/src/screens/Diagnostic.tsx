@@ -48,8 +48,16 @@ export default function DiagnosticScreen(props: {
         </div>
         <div className="grid" style={{ marginTop: 16 }}>
           <label className="field"><span>Mode d'appétence</span>
-            <select value={config.appetence_mode ?? "objective"}
-              onChange={(e) => setConfig({ ...config, appetence_mode: e.target.value as "objective" | "constraint" })}>
+            <select value={config.appetence_mode ?? ""}
+              onChange={(e) => setConfig({
+                ...config,
+                appetence_mode: e.target.value === ""
+                  ? undefined
+                  : (e.target.value as "objective" | "constraint"),
+              })}>
+              {/* Défaut : suivre le plancher persisté sur le profil. Les deux
+                  autres options sont des surcharges du mode développeur. */}
+              <option value="">— suivre le profil (Ménage › Préférences)</option>
               <option value="objective">objective (−Σu·x)</option>
               <option value="constraint">constraint (Σu·x ≥ U_min)</option>
             </select>

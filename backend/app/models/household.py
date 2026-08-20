@@ -36,6 +36,10 @@ class HouseholdProfile(TimestampMixin, Base):
             "demand_slack_epsilon >= 0 AND demand_slack_epsilon < 1",
             name="epsilon_range",
         ),
+        CheckConstraint(
+            "appetence_u_min_dollars IS NULL OR appetence_u_min_dollars >= 0",
+            name="u_min_nonneg",
+        ),
         {"schema": SCHEMA},
     )
 
@@ -64,6 +68,20 @@ class HouseholdProfile(TimestampMixin, Base):
     available_equipment: Mapped[list] = mapped_column(JSONB, default=list)
     #: Filtre dur du préfiltrage, en heures par repas.
     max_prep_time_per_meal_h: Mapped[Decimal] = mapped_column(Numeric(6, 3))
+    #: U_min — plancher d'appétence du plan, en dollars-équivalents. `NULL` :
+    #: aucun plancher, l'appétence reste un crédit dans l'objectif.
+    #:
+    #: Sans plancher, le solveur minimise `achats − Σu_r·x_r` : toute recette
+    #: dont le coût par portion est sous son u_r a un apport net négatif, donc
+    #: la moins chère gagne systématiquement. Mesuré sur `seed/main` : les six
+    #: recettes retenues étaient exactement les six apports nets les plus bas,
+    #: et « Tacos au bœuf » — deuxième meilleure appétence du catalogue —
+    #: n'était jamais choisi. Un plancher inverse la question : minimiser le
+    #: coût *sous* une appétence totale exigée. Surchargeable par SolverConfig,
+    #: résolu par `services/params.py` comme K, R_min, α et ε.
+    appetence_u_min_dollars: Mapped[Decimal | None] = mapped_column(
+        Numeric(8, 2), nullable=True
+    )
 
     members: Mapped[list["HouseholdMember"]] = relationship(
         back_populates="profile", cascade="all, delete-orphan"

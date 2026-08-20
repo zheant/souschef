@@ -65,6 +65,11 @@ export default function HouseholdScreen(props: {
     allergen_flags: h.allergen_flags.join(", "),
     liked: (h.taste_preferences.liked_tags ?? []).join(", "),
     disliked: (h.taste_preferences.disliked_tags ?? []).join(", "),
+    // Chaîne, pas nombre : `set()` convertit tout champ numérique avec
+    // `Number()`, et `Number("")` vaut 0 — un plancher de 0 $, pas « aucun
+    // plancher ». Les deux doivent rester distinguables jusqu'à la
+    // sérialisation.
+    u_min: h.appetence_u_min_dollars == null ? "" : String(h.appetence_u_min_dollars),
   });
   const [members, setMembers] = useState<Member[]>(h.members);
   const [saving, setSaving] = useState(false);
@@ -103,6 +108,9 @@ export default function HouseholdScreen(props: {
         diet_flags: csv(form.diet_flags),
         allergen_flags: csv(form.allergen_flags),
         taste_preferences: { liked_tags: csv(form.liked), disliked_tags: csv(form.disliked) },
+        // `null` explicite retire le plancher : la route sérialise avec
+        // `exclude_unset`, donc envoyer la clé à `null` l'efface réellement.
+        appetence_u_min_dollars: form.u_min.trim() === "" ? null : Number(form.u_min),
         members,
       });
       props.onSaved(saved);
@@ -193,7 +201,22 @@ export default function HouseholdScreen(props: {
                 <input value={form.liked} onChange={set("liked")} placeholder="tex-mex, asiatique" /></label>
               <label className="field"><span>Cuisines évitées</span>
                 <input value={form.disliked} onChange={set("disliked")} /></label>
+              <label className="field">
+                <span>Plancher d'appétence ($) <em>(vide = aucun)</em></span>
+                <input
+                  type="text" inputMode="decimal" value={form.u_min}
+                  onChange={(e) => setForm({ ...form, u_min: e.target.value })}
+                  placeholder="ex. 65"
+                />
+              </label>
             </div>
+            <p className="muted" style={{ marginTop: 4 }}>
+              Sans plancher, le menu part vers les recettes les moins chères :
+              l'appétence n'est qu'un crédit dans l'objectif, donc tout plat
+              bon marché l'emporte. Un plancher inverse la question — minimiser
+              le coût <em>sous</em> une appétence exigée. Plus il monte, plus le
+              menu suit vos goûts et plus l'épicerie coûte.
+            </p>
 
             <details style={{ marginTop: 16 }}>
               <summary className="muted" style={{ cursor: "pointer" }}>Paramètres avancés</summary>

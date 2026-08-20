@@ -427,8 +427,15 @@ def _add_symmetry_breaking(m: pulp.LpProblem, c: _Ctx) -> None:
 
 
 def _add_appetence_constraint(m: pulp.LpProblem, c: _Ctx) -> None:
-    """Mode « constraint » : Σ u_rk·x_rk ≥ U_min (en cents)."""
-    u_min_cents = float(Decimal(str(c.config.appetence_u_min_dollars)) * 100)
+    """Mode « constraint » : Σ u_rk·x_rk ≥ U_min (en cents).
+
+    U_min vient de `c.params`, pas de `c.config` : le plancher est un
+    paramètre surchargeable du profil, et l'invariant du projet veut que
+    `resolve_effective_params` soit la seule lecture croisée profil/config.
+    """
+    u_min_cents = float(
+        Decimal(str(c.params.appetence_u_min_dollars.value)) * 100
+    )
     m += _appetence_expr_cents(c) >= u_min_cents, "appetence_min"
 
 
@@ -599,7 +606,7 @@ class PulpMenuSolver:
             _add_surplus(m, c)
         if config.enable_perishable_penalty:
             _add_perishable_waste(m, c)
-        if config.appetence_mode == "constraint":
+        if params.appetence_mode == "constraint":
             _add_appetence_constraint(m, c)
 
         objective = _purchases_expr_cents(c)
@@ -611,7 +618,7 @@ class PulpMenuSolver:
             objective -= _salvage_expr_cents(c)
         if config.enable_perishable_penalty:
             objective += _perishable_waste_expr_cents(c)
-        if config.appetence_mode == "objective":
+        if params.appetence_mode == "objective":
             objective -= _appetence_expr_cents(c)
         m += objective
 
@@ -791,7 +798,7 @@ class PulpMenuSolver:
             Decimal(0),
         )
         appetence = Decimal(0)
-        if cfg.appetence_mode == "objective":
+        if c.params.appetence_mode == "objective":
             for r in c.recipes:
                 remaining = servings.get(r.id, 0)
                 for seg in c.scorer.utility_segments(r):

@@ -182,7 +182,7 @@ export default function PlanningScreen(props: {
           Mécanismes actifs :{" "}
           {enabled.length
             ? enabled.map((f) => <span key={f} className="badge" style={{ marginRight: 6 }}>{f}</span>)
-            : <span className="muted">aucun — configuration de développement (un magasin, appétence en objectif)</span>}
+            : <span className="muted">aucun — configuration de développement (un magasin ; appétence selon le profil)</span>}
         </p>
         <p className="muted">Les drapeaux se règlent dans l'onglet Paramètres (mode développeur).</p>
         <div className="row" style={{ gap: 10, alignItems: "baseline", margin: "0 0 14px" }}>

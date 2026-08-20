@@ -42,12 +42,14 @@ def make_recipe(rid="r1", beta=1, m=8, tags=None, allergens=(), diets=(),
 
 def make_profile(rho=("1.0", "1.0", "0.6"), meals=14, epsilon="0.10",
                  r_min=4, alpha="0.3", liked=(), disliked=(), allergens=(),
-                 diets=(), equipment=("four",), tmax="1.5", k=2):
+                 diets=(), equipment=("four",), tmax="1.5", k=2,
+                 appetence_u_min_dollars=None):
     return ProfileData(
         id="default", home_lat=Decimal("45.5"), home_lng=Decimal("-73.6"),
         time_value_cents_per_hour=1500, meals_per_horizon=meals,
         demand_slack_epsilon=Decimal(epsilon), max_store_visits=k,
         min_distinct_recipes=r_min, max_share_per_recipe=Decimal(alpha),
+        appetence_u_min_dollars=appetence_u_min_dollars,
         diet_flags=tuple(diets), allergen_flags=tuple(allergens),
         taste_preferences={"liked_tags": list(liked),
                            "disliked_tags": list(disliked)},
