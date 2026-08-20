@@ -1,7 +1,7 @@
 // Client API typé — seule porte vers le back-end.
 
 import type {
-  Household, Plan,
+  Household, Plan, PriceCoverage,
   RecipeIngredientLine, RecipeQuote, ReoptimizeResult, SolverConfigInput,
   StapleLine, Store,
 } from "./types";
@@ -56,8 +56,15 @@ export const api = {
       method: "PUT",
       body: JSON.stringify({ canonical_ingredient_ids: canonicalIngredientIds }),
     }),
-  createPlan: (config: SolverConfigInput) =>
-    req<Plan>("/api/plan", { method: "POST", body: JSON.stringify({ config }) }),
+  // `on_date` était accepté par la route depuis le début mais jamais envoyé :
+  // le plan visait donc toujours aujourd'hui, sans recours quand les prix
+  // chargés ne couvrent pas cette date.
+  createPlan: (config: SolverConfigInput, onDate?: string) =>
+    req<Plan>("/api/plan", {
+      method: "POST",
+      body: JSON.stringify(onDate ? { config, on_date: onDate } : { config }),
+    }),
+  priceCoverage: () => req<PriceCoverage>("/api/price-coverage"),
   getPlan: (id: number) => req<Plan>(`/api/plan/${id}`),
   commitPlan: (id: number) =>
     req<{ plan_id: number; status: string }>(

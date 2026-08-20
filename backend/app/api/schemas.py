@@ -176,3 +176,10 @@ class MapRequest(BaseModel):
                 "Fournir exactement un de product_id ou new_product."
             )
         return self
+
+
+class PriceCoverageOut(BaseModel):
+    """Fenêtre couverte par les prix chargés — `null` si la base est vide."""
+
+    earliest: date | None
+    latest: date | None

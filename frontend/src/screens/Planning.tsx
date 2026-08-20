@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api, messageOf } from "../api";
 import { describeChanges } from "../changes";
-import type { Household, Plan, SolverConfigInput, Store } from "../types";
+import type { Household, Plan, PriceCoverage, SolverConfigInput, Store } from "../types";
 import ResultScreen from "./Result";
 
 /** Écran 1 — Planification : orchestrateur entre la génération, la
@@ -15,6 +15,15 @@ import ResultScreen from "./Result";
  *  logistique d'achat finale. Une fois confirmé, l'écran affiche le
  *  résultat (ses propres sous-onglets « Cette semaine »/« Épicerie »,
  *  `Result.tsx`, inchangé). */
+/** Aujourd'hui en ISO local — `toISOString()` passe par UTC et décale d'un
+ *  jour en soirée au Québec (UTC−4/−5). */
+function isoToday(): string {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+const TODAY = isoToday();
+
 export default function PlanningScreen(props: {
   config: SolverConfigInput;
   plan: Plan | null;
@@ -26,6 +35,13 @@ export default function PlanningScreen(props: {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [infeasible, setInfeasible] = useState<Plan | null>(null);
+  // Date du plan. Le solveur n'accepte que les prix dont la fenêtre de
+  // validité la contient : hors couverture, aucune recette ne survit au
+  // préfiltrage. Le défaut vise aujourd'hui, et retombe sur la dernière date
+  // couverte quand les circulaires chargées sont plus anciennes — sinon le
+  // seul recours était de découvrir la borne par un échec.
+  const [coverage, setCoverage] = useState<PriceCoverage | null>(null);
+  const [onDate, setOnDate] = useState<string>(TODAY);
   // Génération et Résultat étaient deux onglets séparés — fusionnés ici,
   // il faut un moyen de revenir au formulaire même quand un plan existe
   // déjà (sinon Planification reste coincée sur le dernier résultat).
@@ -39,6 +55,22 @@ export default function PlanningScreen(props: {
   const [finalizeError, setFinalizeError] = useState<string | null>(null);
   const [finalizeMsg, setFinalizeMsg] = useState<string | null>(null);
 
+  useEffect(() => {
+    api.priceCoverage()
+      .then((c) => {
+        setCoverage(c);
+        if (c.latest && TODAY > c.latest) setOnDate(c.latest);
+        else if (c.earliest && TODAY < c.earliest) setOnDate(c.earliest);
+      })
+      .catch(() => setCoverage(null)); // information d'appoint : son absence
+                                       // ne doit pas bloquer la génération.
+  }, []);
+
+  const outsideCoverage = Boolean(
+    coverage?.earliest && coverage.latest &&
+    (onDate < coverage.earliest || onDate > coverage.latest),
+  );
+
   const enabled = Object.entries(props.config)
     .filter(([k, v]) => k.startsWith("enable_") && v)
     .map(([k]) => k.replace("enable_", ""));
@@ -46,7 +78,7 @@ export default function PlanningScreen(props: {
   async function generate() {
     setBusy(true); setError(null); setInfeasible(null); setFinalizeMsg(null);
     try {
-      const plan = await api.createPlan(props.config);
+      const plan = await api.createPlan(props.config, onDate);
       if (plan.solver_status !== "Optimal") { setInfeasible(plan); return; }
       setPendingPlan(plan);
       setToBuy(Object.fromEntries(
@@ -144,6 +176,28 @@ export default function PlanningScreen(props: {
             : <span className="muted">aucun — configuration de développement (un magasin, appétence en objectif)</span>}
         </p>
         <p className="muted">Les drapeaux se règlent dans l'onglet Paramètres (mode développeur).</p>
+        <div className="row" style={{ gap: 10, alignItems: "baseline", margin: "0 0 14px" }}>
+          <label htmlFor="on-date">Semaine du plan</label>
+          <input
+            id="on-date" type="date" value={onDate}
+            min={coverage?.earliest ?? undefined}
+            max={coverage?.latest ?? undefined}
+            onChange={(e) => setOnDate(e.target.value)}
+          />
+          {coverage?.earliest && coverage.latest && (
+            <span className="muted">
+              prix chargés du {coverage.earliest} au {coverage.latest}
+              {onDate !== TODAY && " — aujourd'hui n'est pas couvert"}
+            </span>
+          )}
+        </div>
+        {outsideCoverage && (
+          <p className="callout" role="status" style={{ margin: "0 0 14px" }}>
+            Aucun prix chargé ne couvre le {onDate} : la génération échouera.
+            Choisir une date entre {coverage?.earliest} et {coverage?.latest},
+            ou rafraîchir les circulaires.
+          </p>
+        )}
         <button className="action" onClick={generate} disabled={busy}>
           {busy ? <><span className="spin" aria-hidden />Résolution en cours…</> : "Générer le plan de la semaine"}
         </button>

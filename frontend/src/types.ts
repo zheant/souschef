@@ -131,3 +131,9 @@ export interface RecipeQuote {
   validity_reason: string | null;
   incomplete_ingredients: string[];
 }
+
+/** Fenêtre de dates réellement couverte par les prix chargés. */
+export interface PriceCoverage {
+  earliest: string | null;
+  latest: string | null;
+}

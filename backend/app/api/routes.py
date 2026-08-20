@@ -325,6 +325,21 @@ def get_stores(session: Session = Depends(get_session)):
     return [asdict(s) for s in catalog.list_stores(session)]
 
 
+@router.get("/price-coverage", response_model=schemas.PriceCoverageOut)
+def get_price_coverage(session: Session = Depends(get_session)):
+    """Fenêtre de dates que les prix chargés couvrent réellement.
+
+    Demander un plan hors de cette fenêtre échoue légitimement (aucun prix
+    valide, donc aucune recette après préfiltrage). L'écran de génération la
+    lit pour proposer une date atteignable plutôt que de laisser l'usager
+    découvrir la borne par un échec.
+    """
+    coverage = catalog.price_coverage(session)
+    return schemas.PriceCoverageOut(
+        earliest=coverage.earliest, latest=coverage.latest
+    )
+
+
 # ---------------------------------------------------------------------------
 # Mapping produit (D15/D18, docs/deviations.md)
 # ---------------------------------------------------------------------------

@@ -66,3 +66,23 @@ def test_finalize_on_an_uncovered_date_is_not_a_server_error(api_client):
     )
     assert r.status_code == 200, r.text
     assert r.status_code != 500
+
+
+def test_price_coverage_names_the_window_the_solver_accepts(api_client):
+    """L'écran de génération borne son champ de date avec cette réponse.
+
+    Sans elle, la seule façon de connaître la borne était de demander un plan
+    hors couverture et de lire l'échec.
+    """
+    r = api_client.get("/api/price-coverage")
+
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["earliest"] and body["latest"], body
+    assert body["earliest"] <= COVERED_DATE <= body["latest"], (
+        "La date couverte utilisée par les autres tests doit tomber dans la "
+        f"fenêtre annoncée : {body}"
+    )
+    assert not (body["earliest"] <= UNCOVERED_DATE <= body["latest"]), (
+        f"La date non couverte ne doit pas être annoncée comme couverte : {body}"
+    )

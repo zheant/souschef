@@ -8,11 +8,12 @@ d'ouverture interne — voir la docstring de ``planning.py``).
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
-from ..models import Recipe, RecipeIngredient, Store
+from ..models import Price, Recipe, RecipeIngredient, Store
 
 
 class RecipeNotFound(LookupError):
@@ -64,6 +65,27 @@ class StoreView:
     lat: float
     lng: float
     shopping_center_id: str | None
+
+
+@dataclass(frozen=True)
+class PriceCoverage:
+    """Fenêtre de dates réellement couverte par `market.price`.
+
+    Le solveur n'accepte que les prix dont la fenêtre de validité contient
+    `on_date` (`problem_data.py`). Hors couverture, aucune recette ne survit
+    au préfiltrage — l'échec est correct mais l'appelant ne pouvait pas le
+    prévoir, faute de savoir ce qui est chargé. `None` : aucun prix en base.
+    """
+
+    earliest: date | None
+    latest: date | None
+
+
+def price_coverage(session: Session) -> PriceCoverage:
+    earliest, latest = session.execute(
+        select(func.min(Price.valid_from), func.max(Price.valid_to))
+    ).one()
+    return PriceCoverage(earliest=earliest, latest=latest)
 
 
 def search_recipes(session: Session, query: RecipeQuery) -> RecipePage:
