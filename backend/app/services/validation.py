@@ -189,7 +189,24 @@ def validate_problem(
     if not problem.stores:
         raise EmptyProblemError("Aucun magasin.")
     if not surviving_recipes:
-        raise EmptyProblemError("Aucune recette après préfiltrage.")
+        # Distinguer les deux causes : un catalogue périmé et un préfiltrage
+        # trop serré produisaient le même message, et l'appelant ne pouvait
+        # rien en faire. `problem.prices` est déjà filtré sur la fenêtre de
+        # validité au chargement (`problem_data.py`) : vide ici veut dire
+        # qu'aucune offre ne couvre `on_date`, donc que le catalogue est
+        # périmé — pas que les recettes ont été écartées une à une.
+        if not problem.prices:
+            raise EmptyProblemError(
+                f"Aucun prix valide au {problem.on_date} : le catalogue de prix "
+                "est périmé pour cette date. Rafraîchir les circulaires "
+                "(scripts/run_weekly_catalogues.py --apply) ou demander un plan "
+                "à une date couverte par les prix déjà chargés."
+            )
+        raise EmptyProblemError(
+            "Aucune recette ne survit au préfiltrage : régime, allergènes, "
+            "équipement, temps de préparation ou absence de prix écartent "
+            "toutes les recettes du catalogue."
+        )
     passed.append(EmptyProblemError.assertion)
 
     # -- 6. Compatibilité des contraintes de diversité ----------------------

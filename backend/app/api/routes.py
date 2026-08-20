@@ -13,6 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from ..services import catalog, household, offer_resolution, planning, recipe_quotes
+from ..services.validation import ValidationError
 from ..solver import MenuSolver, SolverConfig
 from . import schemas
 from .deps import get_profile_id, get_session, get_solver
@@ -125,9 +126,18 @@ def post_plan(
         raise HTTPException(422, f"SolverConfig invalide : {exc}") from exc
     # Un plan infaisable (statut solveur != Optimal) est aussi persisté
     # et retourné : l'écran Génération affiche le message du diagnostic.
-    view = planning.generate_plan(
-        session, profile_id, body.on_date or date.today(), config, solver
-    )
+    #
+    # Une assertion de validité qui échoue est une condition métier, pas une
+    # panne : catalogue de prix périmé, profil sans demande, aucun magasin.
+    # Non traduite, elle sortait en 500 « Internal Server Error » — l'écran
+    # n'avait alors rien à montrer sinon un code, alors que le message porte
+    # déjà la cause et le geste correctif.
+    try:
+        view = planning.generate_plan(
+            session, profile_id, body.on_date or date.today(), config, solver
+        )
+    except ValidationError as exc:
+        raise HTTPException(422, str(exc)) from exc
     return _plan_out(view)
 
 
@@ -187,6 +197,9 @@ def post_reoptimize(
         planning.RecipeNotLockableError, planning.ConflictingRecipeSelectionError,
     ) as exc:
         raise HTTPException(422, str(exc)) from exc
+    except ValidationError as exc:
+        # Même raison que sur POST /plan : condition métier, pas panne.
+        raise HTTPException(422, str(exc)) from exc
     return schemas.ReoptimizeOut(
         plan=_plan_out(result.plan),
         changes=(
@@ -221,6 +234,9 @@ def post_finalize(
         raise HTTPException(404, str(exc)) from exc
     except planning.PlanAlreadyCommittedError as exc:
         raise HTTPException(409, str(exc)) from exc
+    except ValidationError as exc:
+        # Même raison que sur POST /plan : condition métier, pas panne.
+        raise HTTPException(422, str(exc)) from exc
     return schemas.ReoptimizeOut(
         plan=_plan_out(result.plan),
         changes=(

@@ -13,4 +13,7 @@ class JsonRecipeSourceAdapter:
         self._path = Path(seed_dir) / "recipes.json"
 
     def load_all(self) -> list[RecipeDTO]:
-        return [RecipeDTO(**r) for r in json.loads(self._path.read_text())]
+        return [
+            RecipeDTO(**r)
+            for r in json.loads(self._path.read_text(encoding="utf-8"))
+        ]

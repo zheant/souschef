@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { api } from "../api";
+import { api, messageOf } from "../api";
 import type { Household, Member } from "../types";
 import { StaplesPanel } from "./Staples";
 
@@ -106,7 +106,7 @@ export default function HouseholdScreen(props: {
         members,
       });
       props.onSaved(saved);
-    } catch (e) { setError(String(e)); } finally { setSaving(false); }
+    } catch (e) { setError(messageOf(e)); } finally { setSaving(false); }
   }
 
   return (

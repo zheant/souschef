@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { api } from "../api";
+import { api, messageOf } from "../api";
 import { describeChanges } from "../changes";
 import type { Household, Plan, SolverConfigInput, Store } from "../types";
 import ResultScreen from "./Result";
@@ -53,7 +53,7 @@ export default function PlanningScreen(props: {
         plan.needed_ingredients.map((l) => [l.canonical_ingredient_id, !l.is_staple])
       ));
       setForceForm(false);
-    } catch (e) { setError(String(e)); } finally { setBusy(false); }
+    } catch (e) { setError(messageOf(e)); } finally { setBusy(false); }
   }
 
   async function confirm() {
@@ -67,7 +67,7 @@ export default function PlanningScreen(props: {
       if (r.changes) setFinalizeMsg(describeChanges(r.changes));
       props.onPlan(r.plan);
       setPendingPlan(null);
-    } catch (e) { setFinalizeError(String(e)); } finally { setFinalizing(false); }
+    } catch (e) { setFinalizeError(messageOf(e)); } finally { setFinalizing(false); }
   }
 
   if (pendingPlan) {

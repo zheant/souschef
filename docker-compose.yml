@@ -41,6 +41,11 @@ services:
 
   web:
     build: ./frontend
+    # `api` est le nom du service dans ce réseau compose. Le proxy Vite ne le
+    # devine plus : son défaut vise `localhost` pour le développement hors
+    # conteneur, donc la pile doit dire explicitement où joindre l'API.
+    environment:
+      API_URL: http://api:8000
     depends_on:
       - api
     ports:

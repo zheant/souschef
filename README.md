@@ -48,7 +48,13 @@ Une seule commande démarre les trois services :
 Relancer `docker compose up` est sans effet de bord : migrations et seeding
 sont idempotents.
 
-### Sans Docker (développement backend)
+### Sans Docker (pile complète)
+
+Sur une machine sans Docker, les trois services se démarrent à la main. Il faut
+un PostgreSQL joignable — service local ou distant — puis, depuis la racine du
+dépôt, deux terminaux.
+
+**Back-end** :
 
 ```bash
 cd backend
@@ -56,8 +62,33 @@ pip install -e .
 export MENU_DATABASE_URL=postgresql+psycopg2://menu:menu@localhost:5432/menu_optimizer
 alembic upgrade head
 python -m app.seeding.seed --seed-dir ../seed/main   # ou ../seed/toy
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --port 8000
 ```
+
+**Front-end**, dans un second terminal :
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Le proxy `/api` du serveur Vite vise `http://127.0.0.1:8000` par défaut, donc
+les deux commandes ci-dessus suffisent. `API_URL` le redirige ailleurs — c'est
+ce que fait la pile compose, qui doit viser le service `api` de son réseau.
+
+**Si le port 8000 est déjà pris.** Sous Windows, la plage réservée par
+Hyper-V/WSL peut contenir 8000 : le port n'est pas occupé par un serveur, il est
+interdit, et `uvicorn` échoue sur `WinError 10013` (« accès à un socket
+interdit par ses permissions »). `netstat -ano | findstr :8000` le confirme.
+Choisir un autre port et le dire aux deux côtés :
+
+```bash
+uvicorn app.main:app --reload --port 8001          # back-end
+API_URL=http://127.0.0.1:8001 npm run dev          # front-end
+```
+
+`WEB_PORT` déplace de même le port du serveur Vite.
 
 ## Activer les mécanismes du solveur un à un
 

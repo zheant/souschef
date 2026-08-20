@@ -6,6 +6,30 @@ import type {
   StapleLine, Store,
 } from "./types";
 
+/** Message d'une exception, pour affichage.
+ *
+ *  `String(e)` sur un `Error` produit « Error: <message> » — le préfixe était
+ *  affiché tel quel à l'usager sur les dix écrans qui rattrapent une erreur.
+ *  Le message porte déjà tout ce qu'il y a à dire. */
+export const messageOf = (e: unknown): string =>
+  e instanceof Error ? e.message : String(e);
+
+function errorMessage(status: number, body: string): string {
+  try {
+    const parsed = JSON.parse(body);
+    const detail = parsed?.detail;
+    if (typeof detail === "string" && detail) return detail;
+    // 422 de validation Pydantic : une liste d'objets, pas une phrase.
+    if (Array.isArray(detail) && detail.length) {
+      const msgs = detail.map((d) => d?.msg).filter(Boolean);
+      if (msgs.length) return msgs.join(" ; ");
+    }
+  } catch {
+    // Corps non JSON (proxy, passerelle) : le texte brut est ce qu'on a.
+  }
+  return body ? `${status} — ${body}` : `Erreur ${status}`;
+}
+
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   const r = await fetch(path, {
     headers: { "Content-Type": "application/json" },
@@ -13,7 +37,11 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
   });
   if (!r.ok) {
     const body = await r.text();
-    throw new Error(`${r.status} — ${body}`);
+    // FastAPI enveloppe ses messages dans `{"detail": "..."}`. Recracher le
+    // corps brut affichait l'enveloppe à l'écran (« 422 — {"detail":"Aucun
+    // prix valide…"} ») : le message était déjà utile, sa présentation non.
+    // Le code de statut ne reste devant que s'il n'y a pas de message à dire.
+    throw new Error(errorMessage(r.status, body));
   }
   return r.json() as Promise<T>;
 }
@@ -78,3 +106,10 @@ export const api = {
 
 export const cents = (v: string | number): string =>
   (Number(v) / 100).toLocaleString("fr-CA", { style: "currency", currency: "CAD" });
+
+// Les heures se lisaient « 0.69 h » à côté d'un « 30,78 $ » : deux séparateurs
+// décimaux dans la même ligne, parce que `toFixed` est insensible à la locale.
+export const hours = (v: string | number): string =>
+  `${Number(v).toLocaleString("fr-CA", {
+    minimumFractionDigits: 2, maximumFractionDigits: 2,
+  })} h`;

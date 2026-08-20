@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api } from "./api";
+import { api, messageOf } from "./api";
 import type { Household, Plan, SolverConfigInput, Store } from "./types";
 import DiagnosticScreen from "./screens/Diagnostic";
 import HouseholdScreen from "./screens/Household";
@@ -53,7 +53,7 @@ export default function App() {
   useEffect(() => {
     Promise.all([api.household(), api.stores()])
       .then(([h, s]) => { setHousehold(h); setStores(s); })
-      .catch((e) => setError(String(e)));
+      .catch((e) => setError(messageOf(e)));
   }, []);
 
   async function refreshPlan(planId: number) {

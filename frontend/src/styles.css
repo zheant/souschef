@@ -264,6 +264,10 @@ pre.raw {
   font-size: 11.5px; font-weight: 700;
 }
 .rp-recipe-price { margin-left: auto; font-weight: 800; color: var(--rp-ink); font-size: 13px; }
+/* Prix partiel ou absent : dit sans crier. Un devis incomplet reste une
+   information utile, pas une erreur — il ne doit ni se lire comme un prix
+   ferme, ni prendre la place d'une alerte. */
+.rp-recipe-price--partial { font-weight: 600; color: var(--rp-muted, #6b7280); font-size: 12px; }
 
 /* Boutons flottants toujours visibles (maquette « Agrumes frais ») —
    plus de glissement à révéler, cohérent avec le reste de l'app qui
