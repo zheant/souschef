@@ -113,6 +113,26 @@ def _plan_out(view: planning.PlanView) -> schemas.PlanOut:
     )
 
 
+def _config_error(exc: Exception) -> HTTPException:
+    """422 lisible pour un `SolverConfig` refusé.
+
+    `str()` sur une `ValidationError` de Pydantic recrache le dictionnaire
+    d'entrée complet et une URL de documentation — affiché tel quel à l'écran,
+    ça noyait la seule phrase utile (« appetence_mode='constraint' exige
+    appetence_u_min_dollars »). On ne garde que les messages.
+    """
+    errors = getattr(exc, "errors", None)
+    if callable(errors):
+        messages = []
+        for err in errors():
+            msg = str(err.get("msg", "")).removeprefix("Value error, ").strip()
+            loc = ".".join(str(x) for x in err.get("loc", ()))
+            messages.append(f"{loc} : {msg}" if loc and loc not in msg else msg)
+        if messages:
+            return HTTPException(422, "SolverConfig invalide — " + " ; ".join(messages))
+    return HTTPException(422, f"SolverConfig invalide : {exc}")
+
+
 @router.post("/plan", response_model=schemas.PlanOut)
 def post_plan(
     body: schemas.PlanRequest,
@@ -123,7 +143,7 @@ def post_plan(
     try:
         config = SolverConfig(**body.config)
     except ValueError as exc:
-        raise HTTPException(422, f"SolverConfig invalide : {exc}") from exc
+        raise _config_error(exc) from exc
     # Un plan infaisable (statut solveur != Optimal) est aussi persisté
     # et retourné : l'écran Génération affiche le message du diagnostic.
     #
@@ -179,7 +199,7 @@ def post_reoptimize(
     try:
         config = SolverConfig(**body.config)
     except ValueError as exc:
-        raise HTTPException(422, f"SolverConfig invalide : {exc}") from exc
+        raise _config_error(exc) from exc
     try:
         result = planning.reoptimize_plan(
             session, profile_id, plan_id,
@@ -223,7 +243,7 @@ def post_finalize(
     try:
         config = SolverConfig(**body.config)
     except ValueError as exc:
-        raise HTTPException(422, f"SolverConfig invalide : {exc}") from exc
+        raise _config_error(exc) from exc
     try:
         result = planning.finalize_plan(
             session, profile_id, plan_id,

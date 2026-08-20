@@ -66,6 +66,15 @@ export default function PlanningScreen(props: {
                                        // ne doit pas bloquer la génération.
   }, []);
 
+  // « constraint » exige U_min : le mode se choisit dans un onglet, la valeur
+  // se saisit dans un autre champ, et rien n'empêchait de générer entre les
+  // deux. Le serveur refusait alors la configuration — correctement, mais
+  // l'écran affichait le refus au lieu de l'éviter.
+  const missingUMin =
+    props.config.appetence_mode === "constraint" &&
+    (props.config.appetence_u_min_dollars == null ||
+      Number.isNaN(Number(props.config.appetence_u_min_dollars)));
+
   const outsideCoverage = Boolean(
     coverage?.earliest && coverage.latest &&
     (onDate < coverage.earliest || onDate > coverage.latest),
@@ -198,7 +207,14 @@ export default function PlanningScreen(props: {
             ou rafraîchir les circulaires.
           </p>
         )}
-        <button className="action" onClick={generate} disabled={busy}>
+        {missingUMin && (
+          <p className="callout" role="status" style={{ margin: "0 0 14px" }}>
+            Le mode d'appétence « constraint » a besoin d'un plancher : saisir
+            <strong> U_min ($)</strong> dans l'onglet Paramètres, ou revenir au
+            mode « objective ».
+          </p>
+        )}
+        <button className="action" onClick={generate} disabled={busy || missingUMin}>
           {busy ? <><span className="spin" aria-hidden />Résolution en cours…</> : "Générer le plan de la semaine"}
         </button>
         {error && <p className="callout error" role="alert">{error}</p>}

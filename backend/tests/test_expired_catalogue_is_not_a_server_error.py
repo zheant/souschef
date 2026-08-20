@@ -86,3 +86,25 @@ def test_price_coverage_names_the_window_the_solver_accepts(api_client):
     assert not (body["earliest"] <= UNCOVERED_DATE <= body["latest"]), (
         f"La date non couverte ne doit pas être annoncée comme couverte : {body}"
     )
+
+
+def test_invalid_solver_config_reports_only_its_message(api_client):
+    """Le refus d'un `SolverConfig` ne recrache pas le dump Pydantic.
+
+    « constraint » sans plancher est l'erreur de configuration la plus
+    probable — le mode se choisit dans un onglet et la valeur se saisit dans
+    un autre champ. `str()` sur la `ValidationError` affichait le
+    dictionnaire d'entrée complet et une URL de documentation, noyant la
+    seule phrase utile.
+    """
+    r = api_client.post(
+        "/api/plan",
+        json={"config": {"appetence_mode": "constraint"}, "on_date": COVERED_DATE},
+    )
+
+    assert r.status_code == 422, r.text
+    detail = r.json()["detail"]
+    assert "appetence_u_min_dollars" in detail, detail
+    assert "input_value" not in detail, f"Le dump Pydantic fuit encore : {detail}"
+    assert "errors.pydantic.dev" not in detail, f"URL de doc exposée : {detail}"
+    assert detail.count("\n") == 0, f"Message multiligne : {detail!r}"
