@@ -1886,3 +1886,120 @@ une sous-chaîne dans un texte qui contient les deux ne prouve rien.
 **Vérifié en exécutant : 489 tests passés, 0 échec**, dont 12 nouveaux
 (règlement, grand livre, mesures, épingle de couverture). Couverture mesurée
 après correctifs : 105/121, 1 050 lignes calculées, 16 bloquants.
+
+
+## D37 — Ce que le fichier fédéral publie autrement : fractions, cuillères, étiquettes arrondies
+
+**Suite immédiate de D36.** Après les 194 décisions d'appariement, seize
+ingrédients bloquaient encore. Douze le faisaient pour une raison qui n'était
+pas un trou du fichier fédéral, mais une **forme** que la dérivation ne savait
+pas lire. Chacune a été trouvée en relisant les mesures publiées, ingrédient par
+ingrédient, jamais en relisant le code.
+
+**Trois lectures ajoutées, chacune avec son test.**
+
+1. **Un compte fractionnaire est un compte.** Le FCÉN publie parfois la demie :
+   « 1/2 pita (16,5 cm dia) = 30 g » et rien d'autre pour le pain pita. La
+   division par le compte existait déjà pour « 2 oeufs = 105 g »; elle lit
+   maintenant la fraction, et le pita rend 60 g par unité.
+2. **La cuillère fédérale est un volume.** « 2 cuillère à table (2) = 29,1 g »
+   est la seule mesure de la poudre à boisson, dont le canon se mesure au
+   millilitre. À la convention canadienne (table 15 ml, thé 5 ml), c'est
+   0,970 g/ml — une densité que le fichier donnait et que personne ne lisait.
+3. **Une étiquette arrondie ne vote plus.** « 15 ml = 15,203 g » pour du lait de
+   coco, c'est 15,92 ml à la densité des trois autres mesures : une cuillère à
+   table écrite « 15 ml ». Ce libellé faisait échouer l'accord à 5 % et refusait
+   une densité que 60, 100 et 125 ml donnent à l'identique. L'accord se juge
+   désormais sur les volumes d'au moins 50 ml; les petits sont **cités dans la
+   provenance**, plus décisifs. Deux grands volumes qui se contredisent refusent
+   toujours.
+
+**Une déclaration d'apport négligeable là où la substitution aurait menti.** Le
+FCÉN ne publie pas l'origan frais, seulement l'origan moulu séché — quatre fois
+l'énergie par gramme. Déclarer une substitution aurait compté du séché pour du
+frais. À la place, une déclaration bornée au sens de D29 : la borne prend la
+teneur du **séché** (265 kcal/100 g), qui majore le frais à masse égale, au
+plafond de 4 g par portion (le double du maximum observé, 1,875 g). L'écran
+affiche « 0 kcal ± 5 ».
+
+**Trois quantités d'import fausses, révélées par le déblocage.** Elles étaient
+masquées : un ingrédient bloquant ne publie pas de total. Une fois débloquées,
+trois recettes sortaient un chiffre faux d'un facteur 3 à 20 — exactement ce que
+ce module existe pour ne pas faire.
+
+| recette | ingrédient | avant | après | ce que dit le fichier fédéral |
+| --- | --- | --- | --- | --- |
+| Sandwich fondant au thon | `pain_levain` | 2 200 g | 384 g | aliment 4063, 1 grosse tranche (15 cm) = 96 g |
+| Soupe won-ton | `pate_wonton` | 454 unités | 57 unités | paquet de 454 g à 8 g l'enveloppe (aliment 4001) |
+| Salade façon panzanella | `roquette` | 2 000 g | 169 g | aliment 2352, 250 ml = 21,133 g |
+
+La cause commune : l'estimation par pièce du fichier de curation vaut pour une
+**miche** et non pour une tranche; « 1 paquet (454 g) » est arrivé comme un
+compte; et 8 tasses de feuilles ont été converties à 1 g/ml, soit de l'eau.
+
+**Le défaut de mécanisme derrière ces trois-là.** Les `quantity_overrides` —
+des décisions humaines écrites — n'étaient consultés que si la projection amont
+était incomplète, ou si un compte avait visiblement été recopié dans un champ
+mesuré, un contrôle qui ne se déclenche pas quand le canonique se compte à
+l'unité. L'override du won-ton ne servait donc à rien. Un override gagne
+maintenant toujours, et un test le dit.
+
+**Effet mesuré.** 105 → **113 recettes calculables sur 121**, 1 050 → 1 058
+lignes calculées, 16 → **8 ingrédients bloquants**. Les huit restants sont des
+trous réels : aucun aliment publié (pâte brisée, pâte de cari vert thaï,
+gnocchis frais), aucune mesure de compte (feuille de riz, pain à sous-marin —
+le fichier ne publie que des tranches de pain italien), ou une seule mesure de
+volume qui décrit un solide en dés (feuillage de fenouil, aubergine grillée, jus
+de cornichon). Ces trois derniers demandent une décision qui n'existe pas
+encore : une **masse par volume tassé**, distincte d'une densité, avec sa propre
+bande de validité. Leur canon se mesure au millilitre alors que la recette
+manipule un solide; c'est en amont que ça se corrige, pas par une densité de
+0,37 g/ml présentée comme telle.
+
+**Ce que la curation ne corrige pas, et qu'il faut savoir.** Dix-neuf recettes
+dépassent 900 kcal par portion, et le premier suspect n'est plus une erreur de
+donnée : « Bouchées d'aubergine parmigiana » compte 750 ml d'huile de friture
+pour six portions (1 019 kcal par portion) parce que la recette *achète* cette
+huile sans qu'on la mange. La distinction entre quantité achetée et quantité
+consommée n'existe pas dans le contrat de recette — c'est un chantier, pas un
+correctif.
+
+**Cinq constats de revue, cinq corrigés.** Le plus sérieux est un piège que
+cette session avait fabriqué elle-même : la dérivation de masse par unité, quand
+**aucune** mesure de compte ne nommait l'ingrédient, prenait toutes les mesures
+plutôt que d'échouer. Elle proposait donc 35 g — « 1 tranche » de pain italien —
+pour un pain à sous-marin d'environ 85 g, sans le moindre refus, dans un rapport
+qu'un curateur lit pour décider. Désormais : plusieurs mesures dont aucune ne
+nomme l'ingrédient donnent `no_named_count_measure`; une mesure unique reste
+prise (« 9 branches » de coriandre est la seule que l'aliment publie, et le canon
+n'a pas à nommer la branche).
+
+Les quatre autres :
+
+1. **Le même libellé était un volume ici et un compte là.** « 2 cuillère à
+   table = 29,1 g » se lisait comme 30 ml pour la densité *et* comme 14,55 g par
+   unité pour la masse. Quatre lignes de l'archive 2026 sont dans ce cas. Une
+   cuillère est maintenant refusée comme compte, et le motif fractionnaire de la
+   cuillère est reconnu pour que « 1/2 cuillère à table » ne bascule pas dans
+   l'autre lecture.
+2. **Une cuillère « comble » est un tas.** Le mot rejoint la liste des états non
+   versables : sinon seule la bande 0,7–1,5 g/ml séparait un écoulement d'un
+   monticule.
+3. **La part marginale d'une recette survit à une résolution de quantité.**
+   Forcer la résolution pour tout override — nécessaire, voir plus haut — la
+   remettait à zéro. Aucune recette du corpus n'était touchée; la garde manquait
+   quand même.
+4. **Un override dérivé n'est plus classé « estimation ».** Les trois quantités
+   corrigées ici viennent d'une mesure fédérale : les voir figurer dans
+   `quantity_estimates` avec une justification qui dit « masse vérifiée » était
+   contradictoire. Un override peut désormais déclarer `"estimated": false`.
+
+**Et une apostrophe.** Le canon écrit « Jaune d’œuf » (apostrophe courbe), le
+fichier fédéral « 4 jaunes d'œuf » (droite) : aucun mot commun, donc un refus
+qui citait la mauvaise raison. Les apostrophes sont ramenées l'une à l'autre
+comme la ligature « œ » l'était déjà. Le refus du jaune reste — les deux mesures
+qui le nomment se contredisent, 17 g contre 12,5 g — mais il le dit maintenant
+correctement, et sa provenance cite les deux.
+
+**Vérifié en exécutant : 499 tests passés, 0 échec.** Couverture après revue :
+113/121, 1 058 lignes calculées, 8 bloquants.

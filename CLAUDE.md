@@ -2323,13 +2323,14 @@ script étant balayé par le test paramétré de `test_weekly_runner_wiring.py`.
 `docs/deviations.md`, D35.
 
 
-## Curation nutritionnelle — 105 recettes calculables sur 121 (2026-08-21)
+## Curation nutritionnelle — 113 recettes calculables sur 121 (2026-08-21)
 
 Suite directe de D29–D33. Le calcul nutritionnel était livré et **1 recette sur
 121** sortait un chiffre : ce qui manquait n'était pas du code mais des
 décisions d'appariement. Cette session en a écrit 193, et la couverture passe à
-**105/121** (1 050 lignes calculées, 16 ingrédients encore bloquants). Détail et
-rationnel : `docs/deviations.md`, D36.
+**113/121** (1 058 lignes calculées, 8 ingrédients encore bloquants). Détail et
+rationnel : `docs/deviations.md`, D36 (les décisions) et D37 (les formes que le
+fichier fédéral publie autrement, et trois quantités d'import fausses).
 
 **Le mécanisme qui manquait.** 189 des 198 bloquants portaient `no_cnf_food` —
 aucun aliment fédéral rattaché — et aucun des trois titres de D30 ne décrivait
@@ -2367,3 +2368,28 @@ pita, pain à sous-marin, feuille de riz…), ou des mesures qui ne s'accordent 
 wonton reste **un jugement écrit à la main**, avec les calibres écartés : la
 dérivation refuse, et c'est voulu — elle propose 35 g (« 1 tranche » de pain
 italien) pour un pain à sous-marin entier.
+
+**Ce que D37 a ajouté.** Trois lectures que la dérivation ne faisait pas : un
+compte fractionnaire (« 1/2 pita = 30 g » → 60 g l'unité), la cuillère fédérale
+comme volume (table 15 ml, thé 5 ml — la seule mesure de certaines poudres), et
+l'accord des ratios jugé sur les volumes d'au moins 50 ml (« 15 ml = 15,203 g »
+est une cuillère à table écrite en millilitres, et faisait refuser une densité
+que trois grands volumes donnent à l'identique). Plus une déclaration d'apport
+négligeable pour l'origan frais, bornée par la teneur du séché — qui majore.
+
+**Trois quantités d'import fausses, révélées par le déblocage** : `pain_levain`
+2 200 g → 384 g, `pate_wonton` 454 unités → 57, `roquette` 2 000 g → 169 g. Un
+ingrédient bloquant ne publie pas de total : c'est le déblocage qui a rendu ces
+erreurs visibles. Corrigées par `quantity_overrides`, qui gagnent désormais
+**toujours** — ils n'étaient consultés que si la projection amont était
+incomplète, donc jamais pour un canonique qui se compte à l'unité.
+
+**Ce qui reste, et pourquoi.** Huit bloquants : trois sans aliment publié (pâte
+brisée, cari vert, gnocchis), deux sans mesure de compte (feuille de riz, pain à
+sous-marin), trois dont la seule mesure de volume décrit un solide en dés
+(feuillage de fenouil, aubergine grillée, jus de cornichon) — ceux-là demandent
+une **masse par volume tassé**, distincte d'une densité, et leur canon devrait
+se mesurer en grammes. Par ailleurs 19 recettes dépassent 900 kcal/portion, et
+le premier cas n'est pas une erreur de donnée : 750 ml d'huile de friture
+comptés comme consommés. Quantité achetée contre quantité consommée : le contrat
+de recette ne les distingue pas.

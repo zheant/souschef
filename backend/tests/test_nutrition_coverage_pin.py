@@ -29,11 +29,11 @@ UNIT_CURATION = ROOT / "config" / "cook_recipe_curation.json"
 #: Recettes calculables sur le corpus livré, règlement 2026-08-21d. Descendre
 #: ce plancher est une décision, pas un effet de bord : le baisser demande de
 #: dire quelle recette a cessé d'être calculable, et pourquoi.
-MINIMUM_COMPLETE_RECIPES = 105
+MINIMUM_COMPLETE_RECIPES = 113
 
 #: Ingrédients encore bloquants, et la raison de chacun. Le total est borné
 #: plutôt que fixé : curer en fait baisser le nombre, ce qui doit passer.
-MAXIMUM_BLOCKING_INGREDIENTS = 16
+MAXIMUM_BLOCKING_INGREDIENTS = 8
 
 #: L'archive est ignorée par git (25 Mo), donc absente d'un clone neuf : le
 #: saut par défaut évite de faire échouer un poste qui ne l'a pas téléchargée.
@@ -88,10 +88,20 @@ def test_the_coverage_floor_holds(audit):
 def test_every_remaining_gap_names_a_reason_the_module_publishes(audit):
     """Aucun trou muet : chaque bloquant restant porte une raison connue.
 
-    Les seize qui restent sont des trous du fichier fédéral, pas de la
-    curation : aucun aliment publié (pâte brisée, gomme de xanthane), aucune
-    mesure de volume ou de compte (pain pita, cognac), ou des mesures qui ne
-    s'accordent pas (lait de coco en conserve).
+    Les huit qui restent sont des trous du fichier fédéral, pas de la
+    curation :
+
+    - aucun aliment publié : pâte brisée, pâte de cari vert thaï, gnocchis frais;
+    - aucune mesure de compte : feuille de riz;
+    - des mesures de compte dont aucune ne nomme l'ingrédient : pain à
+      sous-marin, dont l'aliment ne publie que des tranches de pain italien
+      (35 g). La dérivation les proposait avant qu'elle refuse ce cas — 35 g
+      pour une pièce d'environ 85 g, qu'un curateur pouvait recopier de bonne
+      foi;
+    - une seule mesure de volume, qui décrit un solide en dés : feuillage de
+      fenouil, aubergine grillée, jus de cornichon. Leur canon se mesure au
+      millilitre alors que la recette manipule un solide, et 0,37 g/ml n'est
+      pas une densité.
     """
     from app.services.recipe_nutrition import (
         AMBIGUOUS_CNF_FOOD,

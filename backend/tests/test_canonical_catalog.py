@@ -77,9 +77,9 @@ def test_only_historical_solver_values_and_known_densities_are_populated():
     assert densities == {
         # Écrites à la main avant l'import du FCÉN, sans provenance. Quatre
         # d'entre elles sont contredites de peu par la dérivation fédérale
-        # (voir ci-dessous) : elles restent en place parce qu'elles portent
-        # déjà des prix, et qu'un écart de 0,4 à 2,6 % ne vaut pas de les
-        # déplacer.
+        # (nommées sous l'assertion) : elles restent en place parce qu'elles
+        # portent déjà des prix, et qu'un écart de 0,4 à 2,6 % ne vaut pas de
+        # les déplacer.
         "bouillon_poulet": 1.0,
         "creme_35": 0.98,
         "eau": 1.0,
@@ -87,18 +87,23 @@ def test_only_historical_solver_values_and_known_densities_are_populated():
         "lait_325": 1.03,
         "sauce_soja": 1.1,
         # Dérivées des mesures de service fédérales (type 6) par
-        # scripts/derive_fcen_measures.py, chacune avec sa provenance en
-        # commentaire dans scripts/catalog_seed_data.py.
+        # scripts/derive_fcen_measures.py, chacune avec sa provenance : en
+        # commentaire dans scripts/catalog_seed_data.py pour la table
+        # statique, dans seed/main/cook_recipe_canonical_curation.json pour
+        # les ingrédients nés de la curation des recettes.
         "aromatisant_eau": 1.014,
         "babeurre": 1.036,
         "biere_blonde": 1.004,
         "cidre_pomme": 1.0,
+        "cognac": 0.94,
+        "confiture_abricot": 1.351,
         "creme_15": 1.014,
         "huile_canola": 0.921,
         "huile_non_precisee": 0.921,
         "huile_sesame_grillee": 0.921,
         "huile_vegetale": 0.921,
         "ketchup": 1.014,
+        "lait_coco_conserve": 0.955,
         "lait_evapore": 1.065,
         "lait_non_precise": 1.031,
         "lait_soya": 1.042,
@@ -109,6 +114,7 @@ def test_only_historical_solver_values_and_known_densities_are_populated():
         "moutarde_dijon": 1.04,
         "moutarde_jaune": 1.053,
         "moutarde_non_precisee": 1.053,
+        "poudre_boisson_aromatisee": 0.97,
         "relish": 1.036,
         "salsa": 1.095,
         "sambal_oelek": 1.014,
@@ -119,6 +125,7 @@ def test_only_historical_solver_values_and_known_densities_are_populated():
         "sauce_tabasco": 0.959,
         "sauce_tomate": 1.036,
         "sauce_worcestershire": 1.162,
+        "sirop_aromatise": 1.351,
         "sirop_erable": 1.331,
         "sriracha": 1.327,
         "toum": 0.93,
@@ -130,8 +137,8 @@ def test_only_historical_solver_values_and_known_densities_are_populated():
         "vinaigre_riz": 1.014,
         "vinaigre_vin_rouge": 1.01,
     }
-    # Les quatre valeurs à la main que la dérivation contredit, nommées ici
-    # pour qu'un désaccord connu ne se lise pas comme un accord :
+    # Les valeurs à la main que la dérivation contredit, nommées ici pour
+    # qu'un désaccord connu ne se lise pas comme un accord :
     #   creme_35 : seed 0.98, FCÉN 1.006
     #   huile_olive : seed 0.91, FCÉN 0.913
     #   lait_325 : seed 1.03, FCÉN 1.031

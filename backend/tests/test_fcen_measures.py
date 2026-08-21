@@ -15,6 +15,7 @@ from app.services.fcen_measures import (
     INCONSISTENT_RATIOS,
     NOT_POURABLE,
     NO_COUNT_MEASURE,
+    NO_NAMED_COUNT_MEASURE,
     NO_VOLUME_MEASURE,
     OUT_OF_LIQUID_RANGE,
     MeasureWeight,
@@ -265,5 +266,156 @@ def test_a_whipped_measure_sets_itself_aside_instead_of_refusing_the_cream():
         " Mesures tassées ou aérées écartées : "
     )
     assert "250 ml liquide (donne 2 tasses fouettée) = 251.479 g" in retenue
-    assert ecartees == "100 ml fouetté, 250 ml fouetté."
+    assert ecartees.startswith("100 ml fouetté, 250 ml fouetté.")
+    # Le 15 ml est cité comme petit volume, jamais comme mesure retenue.
+    assert "Petits volumes cités mais non décisifs" in ecartees
+    assert "15 ml = 15.088 g" in ecartees
     assert len(proposal.examined) == 5
+
+
+def test_a_half_unit_measure_is_a_count_scaled_up_not_a_refusal():
+    """« 1/2 pita (16.5cm dia) = 30 g » dit la masse d'un pita : 60 g.
+
+    Le fichier fédéral publie parfois la demie plutôt que l'unité. Sans lire la
+    fraction, le pain pita restait bloquant sur `no_count_measure` alors que sa
+    masse est publiée — et la division par le compte existait déjà pour
+    « 2 oeufs = 105 g ».
+    """
+    proposal = propose_unit_mass(
+        "pain_pita",
+        "Pain pita",
+        "3708",
+        "Pain, pita, blanc",
+        [
+            measure("50 g", "50", food="3708"),
+            measure("1/2 pita (16.5cm dia)", "30", code="2", food="3708"),
+        ],
+    )
+    assert proposal.reason is None
+    assert proposal.grams_per_unit == Decimal("60.000")
+    assert "1/2 pita" in proposal.provenance
+
+
+def test_a_small_rounded_label_does_not_veto_three_large_volumes_that_agree():
+    """« 15 ml = 15,203 g » pour du lait de coco : l'étiquette est arrondie.
+
+    15,203 g à 0,955 g/ml, c'est 15,92 ml — une cuillère à table, écrite « 15 ml »
+    par le fichier. Ce libellé arrondi faisait échouer l'accord à 5 % et refusait
+    une densité que trois volumes d'au moins 60 ml donnent à l'identique. Les
+    petits volumes sont désormais cités, pas décisifs; deux grands volumes qui se
+    contredisent refusent toujours (le test voisin le dit).
+    """
+    proposal = propose_density(
+        "lait_coco_conserve", "2565", "Noix de coco, lait, conserve",
+        [
+            measure("100 ml", "95.52", food="2565"),
+            measure("15 ml", "15.203", code="2", food="2565"),
+            measure("60 ml", "57.312", code="3", food="2565"),
+            measure("125 ml", "119.4", code="4", food="2565"),
+        ],
+    )
+    assert proposal.reason is None
+    assert proposal.density_g_per_ml == Decimal("0.955")
+    assert "15 ml" in proposal.provenance
+
+
+def test_a_spoon_label_is_a_volume_the_recipe_measures_with():
+    """« 2 cuillère à table = 29,1 g » : deux cuillères, c'est 30 ml.
+
+    Le fichier fédéral publie parfois une poudre à la cuillère et jamais en
+    millilitres. Un ingrédient dont l'unité de base est le millilitre restait
+    alors bloqué faute de densité, alors que la mesure publiée en est une — à la
+    convention canadienne près (cuillère à table 15 ml, à thé 5 ml).
+    """
+    proposal = propose_density(
+        "poudre_boisson_aromatisee", "2982", "Boisson, saveur limonade, poudre",
+        [measure("2 cuillère à table (2)", "29.1", food="2982")],
+    )
+    assert proposal.reason is None
+    assert proposal.density_g_per_ml == Decimal("0.970")
+    assert "cuillère à table" in proposal.provenance
+
+
+def test_a_teaspoon_label_is_read_at_five_millilitres():
+    proposal = propose_density(
+        "sirop_test", "1", "Aliment d'essai",
+        [measure("1 cuillère à thé", "5.2", food="1")],
+    )
+    assert proposal.density_g_per_ml == Decimal("1.040")
+
+
+def test_a_count_measure_that_does_not_name_the_ingredient_is_refused():
+    """« 1 tranche » de pain italien n'est pas la masse d'un pain à sous-marin.
+
+    Le repli « aucun libellé ne nomme l'ingrédient, alors prends-les tous »
+    proposait 35 g pour un pain entier (environ 85 g), sans rien refuser. Un
+    curateur lisant le rapport pouvait le recopier de bonne foi. Le nom
+    canonique départage déjà quand plusieurs libellés le nomment; quand aucun
+    ne le nomme, il n'y a rien à départager.
+    """
+    proposal = propose_unit_mass(
+        "pain_sous_marin",
+        "Pain à sous-marin",
+        "3700",
+        "Pain, Italien",
+        [
+            measure("1 tranche", "35", food="3700"),
+            measure("1 tranche = portion du guide alimentaire", "35",
+                    code="2", food="3700"),
+        ],
+    )
+    assert proposal.grams_per_unit is None
+    assert proposal.reason == NO_NAMED_COUNT_MEASURE
+    assert "tranche" in proposal.provenance
+
+
+def test_a_spoon_of_powder_is_not_a_count_of_units():
+    """Le même libellé ne peut pas être un volume ici et un compte là.
+
+    « 2 cuillère à table (2) = 29,1 g » est lu comme volume par la densité; lu
+    comme compte, il rendait 14,55 g « par unité » sans le moindre refus. Quatre
+    lignes de l'archive 2026 sont dans ce cas.
+    """
+    proposal = propose_unit_mass(
+        "poudre_boisson_aromatisee",
+        "Poudre pour boisson aromatisée",
+        "2982",
+        "Boisson, saveur limonade, poudre",
+        [measure("2 cuillère à table (2)", "29.1", food="2982")],
+    )
+    assert proposal.grams_per_unit is None
+    assert proposal.reason == NO_COUNT_MEASURE
+
+
+def test_a_heaping_spoon_is_a_scoop_not_a_poured_volume():
+    """« 2 cuillères à thé comble » mesure un tas, pas un écoulement."""
+    proposal = propose_density(
+        "poudre_test", "2980", "Poudre d'essai",
+        [measure("2 cuillères à thé comble", "12", food="2980")],
+    )
+    assert proposal.density_g_per_ml is None
+    assert proposal.reason == NOT_POURABLE
+
+
+def test_a_typographic_apostrophe_does_not_split_a_measure_from_its_ingredient():
+    """« Jaune d’œuf » et « 4 jaunes d'œuf » doivent partager un mot.
+
+    Le canon écrit l'apostrophe courbe, le fichier fédéral la droite. Sans les
+    ramener l'une à l'autre, aucun libellé ne nommait l'ingrédient et le refus
+    citait la mauvaise raison : « aucune mesure ne le nomme », alors que deux le
+    nomment et se contredisent — 68 g pour quatre jaunes (17 g) contre 25 g pour
+    deux (12,5 g). C'est un calibre à trancher, et le refus doit le dire. Même
+    famille de défaut que la ligature « œ ».
+    """
+    proposal = propose_unit_mass(
+        "jaune_oeuf",
+        "Jaune d’œuf",
+        "127",
+        "Oeuf, poule, jaune, frais ou congelé, cru",
+        [
+            measure("4 jaunes d'oeuf", "68", food="127"),
+            measure("2 jaunes d'oeuf", "25", code="2", food="127"),
+        ],
+    )
+    assert proposal.reason == AMBIGUOUS_COUNT_MEASURES
+    assert "4 jaunes" in proposal.provenance and "2 jaunes" in proposal.provenance

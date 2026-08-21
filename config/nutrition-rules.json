@@ -1,5 +1,5 @@
 {
-  "rule_version": "2026-08-21d",
+  "rule_version": "2026-08-21f",
   "source": "cnf",
   "source_version": "2026",
   "source_archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD",
@@ -121,6 +121,18 @@
       "protein_g_per_100g": "1.05",
       "fat_g_per_100g": "0.23",
       "carbohydrate_g_per_100g": "0.77"
+    },
+    {
+      "ingredient_id": "origan_frais",
+      "base_unit": "g",
+      "kcal_per_100g": "265",
+      "protein_g_per_100g": "9",
+      "fat_g_per_100g": "4.28",
+      "carbohydrate_g_per_100g": "68.92",
+      "max_qty_per_serving_base_unit": "4",
+      "grams_per_base_unit_ceiling": "1",
+      "basis": "Le FCÉN 2026 ne publie pas l'origan frais : seulement l'origan moulu, séché. Déclarer une substitution reviendrait à compter du séché pour du frais, à quatre fois l'énergie par gramme. La borne prend donc la teneur du séché — plus dense en énergie que le frais à masse égale, donc une vraie borne supérieure — au plafond de 4 g par portion, le double du maximum observé (1,875 g dans ricardo_4037_salade_de_mais_et_de_haricots_noirs). Au-delà, la déclaration se retire et l'ingrédient redevient bloquant.",
+      "provenance": "FCÉN 2026, aliment 195 « Épices, origan, moulu » : 265 kcal, 9 g de protéines, 4.28 g de lipides, 68.92 g de glucides par 100 g."
     }
   ],
   "food_choices": [
@@ -627,6 +639,13 @@
       "kind": "substitution",
       "rationale": "Le FCÉN 2026 ne publie aucune forme de pâte sèche de semoule de blé dur sous son nom commercial : ni fusilli, ni penne, ni rotini, ni linguine, ni fettuccine, ni spaghettoni, ni orzo. Il publie l'aliment générique « Pâtes (spaghetti, macaroni), enrichi, sec », dont la forme ne change ni l'énergie ni les macronutriments — seule la géométrie diffère. Substitution déclarée, pas un appariement : le nom ne correspond pas, la composition oui.",
       "provenance": "FCÉN 2026, aliment 4515 « Pâtes (spaghetti, macaroni), enrichi, sec » : 371 kcal, 13,04 g de protéines, 1,51 g de lipides, 74,67 g de glucides par 100 g. Forme sèche, conformément à l'hypothèse d'appariement du projet (les quantités de recette sont des quantités d'achat crues)."
+    },
+    {
+      "ingredient_id": "gomme_xanthane",
+      "food_code": "4301",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas la gomme de xanthane. La pectine non sucrée en mélange sec est le polysaccharide soluble vendu en poudre du fichier — même classe, même usage d'épaississant, 325 kcal et 90,4 g de glucides par 100 g. Écart assumé sur la fraction réellement métabolisée (les deux sont en bonne part des fibres), et il porte sur 1 à 2 g par recette. Écartées : les gommes à mâcher (4221, 5529), que seul le mot « gomme » rapprochait.",
+      "provenance": "FCÉN 2026, aliment 4301 « Confiseries, pectine, non sucrée, mélange sec » : 325 kcal, 0,3 g de protéines, 0,3 g de lipides, 90,4 g de glucides par 100 g."
     },
     {
       "ingredient_id": "graine_sesame",

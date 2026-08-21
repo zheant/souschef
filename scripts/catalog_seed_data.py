@@ -296,7 +296,10 @@ INGREDIENTS = [
     # FCÉN 2026, aliment 1029 « Sauce, piments forts, prête-à-servir » : 250
     # ml = 239.796 g, soit 0.959 g/ml.
     ("sauce_piquante", "sauces", "Sauce piquante", "Hot sauce", "volume", 0.959, ()),
-    ("lait_coco_conserve", "conserves", "Lait de coco en conserve", "Canned coconut milk", "volume", None, ()),
+    # FCÉN 2026, aliment 2565 « Noix de coco, lait (liquide de la noix râpée
+    # et eau), conserve » : 125 ml = 119.4 g, soit 0.955 g/ml. Petits volumes
+    # cités mais non décisifs (étiquette arrondie) : 15 ml = 15.203 g.
+    ("lait_coco_conserve", "conserves", "Lait de coco en conserve", "Canned coconut milk", "volume", 0.955, ()),
     ("mais_conserve", "conserves", "Maïs en conserve", "Canned corn", "mass", None, ()),
     ("olive_noire", "conserves", "Olives noires", "Black olives", "mass", None, ()),
     ("olive_verte", "conserves", "Olives vertes", "Green olives", "mass", None, ()),

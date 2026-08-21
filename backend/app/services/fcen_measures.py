@@ -36,6 +36,7 @@ __all__ = [
     "MeasureWeight",
     "NOT_POURABLE",
     "NO_COUNT_MEASURE",
+    "NO_NAMED_COUNT_MEASURE",
     "NO_VOLUME_MEASURE",
     "OUT_OF_LIQUID_RANGE",
     "SERVING_MEASURE_TYPE",
@@ -50,6 +51,11 @@ __all__ = [
 SERVING_MEASURE_TYPE = "6"
 
 NO_COUNT_MEASURE = "no_count_measure"
+#: Des mesures de compte existent, mais aucune ne nomme l'ingrédient.
+#: « 1 tranche » de pain italien n'est pas la masse d'un pain à
+#: sous-marin : prendre le premier libellé venu, c'est proposer 35 g
+#: pour une pièce de 85 g, sans rien refuser.
+NO_NAMED_COUNT_MEASURE = "no_named_count_measure"
 AMBIGUOUS_COUNT_MEASURES = "ambiguous_count_measures"
 NO_VOLUME_MEASURE = "no_volume_measure"
 NOT_POURABLE = "not_pourable"
@@ -67,11 +73,22 @@ _MAX_DENSITY = Decimal("1.5")
 #: borne l'écart admis entre deux mesures de compte candidates.
 _MAX_SPREAD = Decimal("0.05")
 
+#: Volume à partir duquel l'étiquette fédérale est prise pour exacte. En
+#: dessous, « 15 ml » peut désigner une cuillère à table (15,92 ml) et le
+#: rapport s'en trouve décalé de 6 % sans que la densité ait bougé.
+_RELIABLE_ML = Decimal("50")
+
 #: Ligatures que la décomposition Unicode ne défait pas. Le fichier fédéral
 #: écrit « 1 œuf jumbo » et « 1 oeufs large (gros) » dans le même aliment :
 #: sans réduction, le premier libellé seul répondait au canon « Œuf de calibre
 #: gros », et 66,06 g étaient proposés pour un œuf de 52,61 g.
 _LIGATURES = {"œ": "oe", "Œ": "oe", "æ": "ae", "Æ": "ae"}
+
+#: Le canon écrit l'apostrophe courbe (« Jaune d’œuf »), le fichier fédéral
+#: la droite (« 4 jaunes d'oeuf »). Sans les ramener l'une à l'autre, aucun
+#: mot n'est commun et le refus cite la mauvaise raison — même famille de
+#: défaut que la ligature « œ ».
+_APOSTROPHES = {"’": "'", "ʼ": "'", "‘": "'"}
 
 #: Libellés qui décrivent un solide découpé, râpé ou tassé. Le rapport
 #: grammes/millilitre y mesure l'entassement.
@@ -83,6 +100,8 @@ _PACKED_WORDS = (
     # Un état aéré : 100 ml de crème fouettée pèsent la moitié de 100 ml de
     # crème. C'est de l'air mesuré, exactement comme le tassement du râpé.
     "fouette",
+    # Une cuillère « comble » est un tas, pas un volume rempli à ras.
+    "comble",
 )
 
 #: « 250 ml liquide (donne 2 tasses fouettée) » — ce qui suit « donne » dit ce
@@ -94,7 +113,19 @@ _YIELD_CLAUSE = re.compile(r"\(\s*donne\b[^)]*\)?", re.IGNORECASE)
 _VOLUME_ML = re.compile(r"(?<![\d.,])(\d+(?:[.,]\d+)?)\s*ml\b")
 
 #: « 1 gousse », « 1 fruit », « 1 moyen (10.5cm long) » — un compte en tête.
-_COUNT = re.compile(r"^(\d+(?:[.,]\d+)?)\s+(?!ml\b)(\S.*)$")
+#: Aussi « 1/2 pita » : le fichier fédéral publie parfois la demie plutôt
+#: que l'unité, et un compte fractionnaire se divise comme les autres.
+_COUNT = re.compile(
+    r"^(\d+(?:[.,]\d+)?(?:\s*/\s*\d+)?)\s+(?!ml\b)(\S.*)$"
+)
+
+#: « 2 cuillère à table (2) », « 1 cuillère à thé » — un volume écrit en
+#: cuillères, jamais en millilitres.
+_SPOON = re.compile(
+    r"^(\d+(?:[.,]\d+)?(?:\s*/\s*\d+)?)?\s*cuillere?s?\s+a\s+(table|the)"
+)
+_TABLESPOON_ML = Decimal("15")
+_TEASPOON_ML = Decimal("5")
 
 _THREE = Decimal("0.001")
 
@@ -168,7 +199,27 @@ def propose_unit_mass(
     named = _fold(ingredient_name).split()
     preferred = [
         row for row in counted if _shares_word(row[0].description, named)
-    ] or counted
+    ]
+    # Une seule mesure de compte publiée ne demande aucun arbitrage : « 9
+    # branches » de coriandre est la seule que l'aliment porte, et le canon n'a
+    # pas à nommer la branche pour qu'elle soit prise. Plusieurs mesures dont
+    # aucune ne nomme l'ingrédient, en revanche, ne se départagent pas — c'est
+    # là que « 1 tranche » de pain italien passait pour un pain à sous-marin.
+    if not preferred and len(counted) == 1:
+        preferred = counted
+    if not preferred:
+        return UnitMassProposal(
+            ingredient_id,
+            food_code,
+            None,
+            None,
+            f"FCÉN 2026, aliment {food_code} « {food_name} » : aucune mesure "
+            f"de compte ne nomme {ingredient_name!r} "
+            f"({', '.join(row[0].description or '' for row in counted)}). "
+            "Le nom canonique départage quand plusieurs libellés le nomment; "
+            "quand aucun ne le nomme, il n'y a rien à départager.",
+            NO_NAMED_COUNT_MEASURE,
+        )
     # Plusieurs mesures de compte peuvent nommer l'ingrédient sans décrire la
     # même chose : l'aliment 125 publie « 1 oeufs large (gros) » (52,61 g),
     # « 1 oeuf extra gros » (58,09 g) et « 1 œuf jumbo » (66,06 g). Départager
@@ -265,7 +316,20 @@ def propose_density(
             examined,
         )
     volumetric = pourable
-    ratios = [_round(measure.grams / ml) for measure, ml in volumetric]
+    # L'accord se juge sur les volumes assez grands pour que l'étiquette soit
+    # fiable. « 15 ml = 15,203 g » pour du lait de coco, c'est 15,92 ml à la
+    # densité des autres mesures : une cuillère à table écrite « 15 ml ». Ce
+    # libellé arrondi faisait échouer l'accord à 5 % et refusait une densité que
+    # trois volumes de 60 ml et plus donnent à l'identique. Les petits volumes
+    # restent cités; ils ne tranchent plus.
+    reliable = [row for row in volumetric if row[1] >= _RELIABLE_ML]
+    judged = reliable or volumetric
+    small_labels = [
+        f"{measure.description} = {measure.grams} g"
+        for measure, ml in volumetric
+        if ml < _RELIABLE_ML
+    ] if reliable else []
+    ratios = [_round(measure.grams / ml) for measure, ml in judged]
     lowest, highest = min(ratios), max(ratios)
     if highest - lowest > highest * _MAX_SPREAD:
         return DensityProposal(
@@ -279,7 +343,7 @@ def propose_density(
             examined,
         )
     # Le plus grand volume publié porte le moins d'arrondi fédéral.
-    largest, millilitres = max(volumetric, key=lambda row: row[1])
+    largest, millilitres = max(judged, key=lambda row: row[1])
     density = _round(largest.grams / millilitres)
     if not _MIN_DENSITY <= density <= _MAX_DENSITY:
         return DensityProposal(
@@ -302,6 +366,12 @@ def propose_density(
             f" Mesures tassées ou aérées écartées : {', '.join(packed)}."
             if packed
             else ""
+        )
+        + (
+            " Petits volumes cités mais non décisifs (étiquette arrondie) : "
+            f"{', '.join(small_labels)}."
+            if small_labels
+            else ""
         ),
         None,
         examined,
@@ -317,15 +387,27 @@ def _servings(measures: Iterable[MeasureWeight]) -> list[MeasureWeight]:
 
 
 def _millilitres_of(measure: MeasureWeight) -> Decimal | None:
-    found = _VOLUME_ML.search(_fold(measure.description or ""))
-    if found is None:
+    text = _fold(measure.description or "")
+    found = _VOLUME_ML.search(text)
+    if found is not None:
+        return Decimal(found.group(1).replace(",", "."))
+    # La cuillère fédérale est un volume, à la convention canadienne : table
+    # 15 ml, thé 5 ml. Certaines poudres ne sont publiées qu'ainsi, et leur
+    # ingrédient — mesuré au millilitre par la recette — restait bloqué faute
+    # d'une densité que le fichier donne pourtant.
+    spoons = _SPOON.match(text)
+    if spoons is None:
         return None
-    return Decimal(found.group(1).replace(",", "."))
+    count = Decimal((spoons.group(1) or "1").replace(",", "."))
+    return count * (_TABLESPOON_ML if "table" in spoons.group(2) else _TEASPOON_ML)
 
 
 def _count_of(measure: MeasureWeight) -> Decimal | None:
     text = _fold(measure.description or "").strip()
-    if _VOLUME_ML.search(text) is not None:
+    # Un volume n'est pas un compte, et la cuillère en est un : sans ce second
+    # refus, « 2 cuillère à table = 29,1 g » rendait 14,55 g « par unité » en
+    # même temps que la densité le lisait comme 30 ml.
+    if _VOLUME_ML.search(text) is not None or _SPOON.match(text) is not None:
         return None
     found = _COUNT.match(text)
     if found is None:
@@ -333,7 +415,11 @@ def _count_of(measure: MeasureWeight) -> Decimal | None:
     # « 0.5g » n'est pas un compte : c'est une masse déguisée en libellé.
     if re.match(r"^\d+(?:[.,]\d+)?\s*g\b", text):
         return None
-    return Decimal(found.group(1).replace(",", "."))
+    count = found.group(1).replace(",", ".")
+    if "/" in count:
+        numerator, _, denominator = count.partition("/")
+        return Decimal(numerator.strip()) / Decimal(denominator.strip())
+    return Decimal(count)
 
 
 def _shares_word(description: str | None, named: Sequence[str]) -> bool:
@@ -354,8 +440,8 @@ def _describes_packed_solid(description: str | None) -> bool:
 
 
 def _fold(text: str) -> str:
-    for ligature, plain in _LIGATURES.items():
-        text = text.replace(ligature, plain)
+    for source, plain in (*_LIGATURES.items(), *_APOSTROPHES.items()):
+        text = text.replace(source, plain)
     return "".join(
         character
         for character in unicodedata.normalize("NFD", text.lower())

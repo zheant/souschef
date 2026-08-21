@@ -1997,7 +1997,7 @@
     "base_unit": "ml",
     "perishability": null,
     "salvage_value_cents_per_base_unit": null,
-    "density_g_per_ml": null
+    "density_g_per_ml": 0.955
   },
   {
     "id": "mais_conserve",
@@ -10547,7 +10547,7 @@
     "base_unit": "ml",
     "perishability": null,
     "salvage_value_cents_per_base_unit": null,
-    "density_g_per_ml": null
+    "density_g_per_ml": 0.94
   },
   {
     "id": "confiture_abricot",
@@ -10557,7 +10557,7 @@
     "base_unit": "ml",
     "perishability": null,
     "salvage_value_cents_per_base_unit": null,
-    "density_g_per_ml": null
+    "density_g_per_ml": 1.351
   },
   {
     "id": "feuillage_fenouil",
@@ -10637,7 +10637,7 @@
     "base_unit": "ml",
     "perishability": null,
     "salvage_value_cents_per_base_unit": null,
-    "density_g_per_ml": null
+    "density_g_per_ml": 0.97
   },
   {
     "id": "boulette_porc_preparee",
@@ -10657,6 +10657,6 @@
     "base_unit": "ml",
     "perishability": null,
     "salvage_value_cents_per_base_unit": null,
-    "density_g_per_ml": null
+    "density_g_per_ml": 1.351
   }
 ]
