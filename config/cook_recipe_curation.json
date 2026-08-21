@@ -171,7 +171,14 @@
     "brocoli|piece": 151,
     "oignon_vert|piece": 15,
     "oignon_vert|unit": 15,
-    "mais|piece": 90
+    "mais|piece": 90,
+    "gousse_ail|unit": 3,
+    "pain_tranche_blanc|unit": 36,
+    "oeuf|unit": 52.61,
+    "tortilla|unit": 49,
+    "jaune_oeuf|unit": 18.34,
+    "tortilla_mais|unit": 25,
+    "pate_wonton|unit": 8
   },
   "estimated_grams_per_unit": {
     "bacon|slice": 31.25,
@@ -322,7 +329,14 @@
     "prosciutto|piece": "Paquet vendu 100 g pour environ sept tranches : 15 g par tranche, estimation Souschef",
     "bretzel_mini|piece": "3 g par mini-bretzel, estimation Souschef",
     "boulette_boeuf_preparee|piece": "30 g par boulette, aligné sur l'équivalence déjà curée pour la boulette de veau préparée",
-    "aile_poulet|piece": "90 g par aile entière crue avec os, estimation Souschef à remplacer par un format publié"
+    "aile_poulet|piece": "90 g par aile entière crue avec os, estimation Souschef à remplacer par un format publié",
+    "gousse_ail|unit": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 2394 « Ail, cru » : 1 gousse = 3,0 g (mesure de service, type 6). Dérivé par scripts/derive_fcen_measures.py. L'aliment publie aussi « 1 bulbe » = 24 g; c'est le nom canonique « Gousse d'ail » qui départage.",
+    "pain_tranche_blanc|unit": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 4066 « Pain, blanc, commercial » : 1 tranche = 36 g (mesure de service, type 6). Dérivé par scripts/derive_fcen_measures.py.",
+    "oeuf|unit": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 125 « Oeuf, poule, entier, frais ou congelé, cru » : 1 oeufs large (gros) = 52,61 g (mesure de service, type 6). La dérivation automatique refuse (ambiguous_count_measures) parce que sept calibres s'accordent avec le nom canonique : très petit 34,71 g, petit 39,13 g, moyen 45,62 g, gros 52,61 g, extra gros 58,09 g, jumbo 66,06 g. C'est le canon « Œuf de calibre gros » qui départage, comme « Gousse d'ail » départage la gousse du bulbe.",
+    "tortilla|unit": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 4049 « Tortilla, prêt-à-cuire /frire, farine, nature » : 1 tortilla (17.8-20cm dia) = 49 g (mesure de service, type 6). La dérivation automatique refuse (ambiguous_count_measures) : le fichier publie quatre diamètres (15,2 cm = 32 g; 17,8-20 cm = 49 g; 25 cm = 72 g; 30,5 cm = 117 g) et le canon « Tortilla de blé » n'en nomme aucun. Le format de 20 cm est la tortilla souple d'épicerie que les recettes garnissent; les 25 et 30,5 cm sont des formats à burrito.",
+    "jaune_oeuf|unit": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 127 « Oeuf, poule, jaune, frais ou congelé, cru » : 1 oeufs large (gros) = 18,34 g (mesure de service, type 6). La dérivation automatique refuse (ambiguous_count_measures) : le fichier publie huit calibres (très petit 9,6 g à jumbo 20,75 g). Le calibre gros est celui retenu pour l'œuf entier (52,61 g), et un jaune ne se compte pas dans un autre calibre que l'œuf dont il sort.",
+    "tortilla_mais|unit": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 3997 « Tortilla, prêt-à-cuire /frire, maïs, salé » : 1 tortilla = 25 g (mesure de service, type 6). La dérivation automatique refuse (ambiguous_count_measures) : le fichier publie cinq diamètres (7,6 cm = 5 g à 25 cm = 52 g) en plus de cette mesure sans diamètre. C'est celle-là qui est retenue — le fichier y nomme la tortilla de maïs sans qualifier son calibre, comme le canon.",
+    "pate_wonton|unit": "Health Canada, Fichier canadien sur les éléments nutritifs 2026, aliment 4001 « Wonton, enveloppe (enveloppe à rouleaux impériaux) » : 1 carré (8,9 cm × 8,9 cm) = 8 g (mesure de service, type 6). La dérivation automatique refuse (ambiguous_count_measures) : le fichier publie aussi le carré de 17,8 cm (32 g), qui est l'enveloppe à rouleaux impériaux. Le canon dit « pâte à wonton », donc le petit carré."
   },
   "serving_override_basis": {
     "https://www.ricardocuisine.com/recettes/5732-boulettes-de-veau-aperitives": "Rendement de la source : '20 boulettes'. 20 boulettes publiées, 4 boulettes par portion.",

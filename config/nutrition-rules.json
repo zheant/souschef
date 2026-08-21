@@ -1,0 +1,1563 @@
+{
+  "rule_version": "2026-08-21d",
+  "source": "cnf",
+  "source_version": "2026",
+  "source_archive_sha256": "F5FAAD8977EE6BBDD9D69C8649077CACD87D8658AD200509A4047DB1E29EDCDD",
+  "notes": [
+    "Chaque borne est dérivée d'une teneur publiée par le FCÉN 2026 : l'entrée",
+    "porte la teneur mesurée et le plafond de quantité sur lequel elle porte,",
+    "et la borne s'en déduit. Aucune borne n'est saisie à la main.",
+    "Au-delà du plafond, la déclaration se retire : l'ingrédient redevient",
+    "bloquant et la donnée fautive remonte, au lieu d'être absorbée en silence.",
+    "Les plafonds de quantité sont fixés sur le maximum par portion observé",
+    "dans seed/main/recipes.json, arrondi vers le haut.",
+    "Une borne porte sur les quatre nombres publiés, pas seulement sur l'énergie : un gramme de gras non déclaré n'est pas plus acceptable qu'une calorie non déclarée."
+  ],
+  "negligible_contributions": [
+    {
+      "ingredient_id": "sel_table",
+      "base_unit": "g",
+      "kcal_per_100g": "0",
+      "max_qty_per_serving_base_unit": "15",
+      "grams_per_base_unit_ceiling": "1",
+      "basis": "Le sel ne porte aucune énergie ni macronutriment, à toute quantité. Le plafond est le double du maximum observé (7,5 g par portion dans bon_pour_toi_navets_marines) : au-delà, c'est la quantité qu'il faut relire, pas la borne.",
+      "provenance": "FCÉN 2026, aliment 214 « Sel, table » : 0 kcal, 0 g de protéines, 0 g de lipides, 0 g de glucides par 100 g.",
+      "protein_g_per_100g": "0",
+      "fat_g_per_100g": "0",
+      "carbohydrate_g_per_100g": "0"
+    },
+    {
+      "ingredient_id": "eau",
+      "base_unit": "ml",
+      "kcal_per_100g": "0",
+      "max_qty_per_serving_base_unit": "1000",
+      "grams_per_base_unit_ceiling": "1",
+      "basis": "L'eau ne porte aucune énergie. Maximum observé : 895,83 ml par portion (bon_pour_toi_melange_a_slush_maison). Déjà déclarée essentielle côté approvisionnement (config/ingredient-procurement-rules.json) : la même omission, cotée des deux côtés.",
+      "provenance": "Le FCÉN 2026 ne publie aucun aliment « eau du robinet » — les seuls résultats sont des boissons préparées avec elle (café 2873, thé 4985). La teneur nulle est une définition, pas une mesure : elle est déclarée comme telle.",
+      "protein_g_per_100g": "0",
+      "fat_g_per_100g": "0",
+      "carbohydrate_g_per_100g": "0"
+    },
+    {
+      "ingredient_id": "jus_citron",
+      "base_unit": "ml",
+      "kcal_per_100g": "22",
+      "max_qty_per_serving_base_unit": "30",
+      "grams_per_base_unit_ceiling": "1.04",
+      "basis": "Teneur du plus énergétique des trois jus de citron du FCÉN (frais 22, congelé 22, conserve 17). Maximum observé : 22,5 ml par portion (bon_pour_toi_meilleure_recette_de_marinade_a_steak). Borne au plafond : 6,9 kcal.",
+      "provenance": "FCÉN 2026, aliment 1589 « Citron, jus, frais » : 22 kcal/100 g ; masse de service 100 ml = 103,128 g, d'où le plafond de 1,04 g/ml. Pires valeurs des trois jus : aliment 1591 (congelé) pour les protéines et les lipides.",
+      "protein_g_per_100g": "0.46",
+      "fat_g_per_100g": "0.32",
+      "carbohydrate_g_per_100g": "6.9"
+    },
+    {
+      "ingredient_id": "jus_lime",
+      "base_unit": "ml",
+      "kcal_per_100g": "25",
+      "max_qty_per_serving_base_unit": "30",
+      "grams_per_base_unit_ceiling": "1.05",
+      "basis": "Teneur du plus énergétique des deux jus de lime du FCÉN (frais 25, conserve 21). Maximum observé : 7,5 ml par portion (ricardo_6694_pad_thai_le_meilleur). Borne au plafond : 7,9 kcal.",
+      "provenance": "FCÉN 2026, aliment 1594 « Lime, jus, frais » : 25 kcal/100 g ; masse de service 100 ml = 103,973 g, d'où le plafond de 1,05 g/ml. Pires valeurs des deux jus : aliment 1595 (conserve) pour les lipides.",
+      "protein_g_per_100g": "0.42",
+      "fat_g_per_100g": "0.23",
+      "carbohydrate_g_per_100g": "8.42"
+    },
+    {
+      "ingredient_id": "feuille_laurier",
+      "base_unit": "unit",
+      "kcal_per_100g": "314",
+      "max_qty_per_serving_base_unit": "2",
+      "grams_per_base_unit_ceiling": "0.5",
+      "basis": "Le laurier se compte en feuilles et le FCÉN ne publie aucune masse par feuille : le plafond de 0,5 g par feuille est déclaré, pas mesuré, et majore largement (15 ml de feuilles émiettées pèsent 1,824 g). Maximum observé : 1 feuille par portion. Borne au plafond : 3,2 kcal. La feuille n'est pas mangée, ce qui rend la borne d'autant plus généreuse.",
+      "provenance": "FCÉN 2026, aliment 172 « Épices, laurier, feuilles » : 314 kcal/100 g ; masses de service publiées : 5 ml émietté = 0,612 g, 15 ml émietté = 1,824 g — aucune mesure « 1 feuille ».",
+      "protein_g_per_100g": "7.61",
+      "fat_g_per_100g": "8.36",
+      "carbohydrate_g_per_100g": "74.97"
+    },
+    {
+      "ingredient_id": "cannelle_baton",
+      "base_unit": "unit",
+      "kcal_per_100g": "247",
+      "max_qty_per_serving_base_unit": "1",
+      "grams_per_base_unit_ceiling": "3",
+      "basis": "Même cas que le laurier : le FCÉN ne publie pas de masse par bâton. Le plafond de 3 g est déclaré et majore (15 ml de cannelle moulue pèsent 6,892 g). Maximum observé : 0,2 bâton par portion. Borne au plafond : 7,5 kcal, pour un bâton qu'on retire du plat.",
+      "provenance": "FCÉN 2026, aliment 178 « Épices, cannelle, moulue » : 247 kcal/100 g ; masse de service 15 ml = 6,892 g.",
+      "protein_g_per_100g": "3.99",
+      "fat_g_per_100g": "1.24",
+      "carbohydrate_g_per_100g": "80.59"
+    },
+    {
+      "ingredient_id": "cardamome_graine",
+      "base_unit": "ml",
+      "kcal_per_100g": "312",
+      "max_qty_per_serving_base_unit": "2.5",
+      "grams_per_base_unit_ceiling": "0.5",
+      "basis": "Épice mesurée en volume dans le corpus. Maximum observé : 1,25 ml par portion (bon_pour_toi_navets_marines). Borne au plafond : 3,9 kcal.",
+      "provenance": "FCÉN 2026, aliment 174 « Épices, cardamome, moulue » : 312 kcal/100 g ; masse de service 5 ml = 2,041 g, soit 0,409 g/ml — le plafond de 0,5 g/ml majore.",
+      "protein_g_per_100g": "10.76",
+      "fat_g_per_100g": "6.7",
+      "carbohydrate_g_per_100g": "68.47"
+    },
+    {
+      "family_id": "epices",
+      "base_unit": "g",
+      "kcal_per_100g": "525",
+      "max_qty_per_serving_base_unit": "2.5",
+      "grams_per_base_unit_ceiling": "1",
+      "basis": "Borne de famille : elle doit tenir pour une épice quelconque, donc elle prend la pire densité énergétique des 49 aliments « Épices, … » du FCÉN 2026. Le plafond de 2,5 g par portion couvre 13 des 19 épices non encore appariées du corpus ; les six autres (11,25 g d'épices à steak, 7,5 g de sel de mer, 7,5 g d'assaisonnement à chili, 5 g d'épices italiennes, 3,75 g d'origan séché, 3,75 g de moutarde sèche) dépassent le plafond dans certaines recettes et y redeviennent bloquantes — c'est voulu : à ces quantités, une épice n'est plus un assaisonnement. Borne au plafond : 13,2 kcal.",
+      "provenance": "FCÉN 2026, aliment 193 « Épices, muscade, moulue » : 525 kcal/100 g — maximum de la famille, à égalité avec l'aliment 201 « Épices, pavot, graines ». Les trois macronutriments prennent chacun leur pire valeur de la famille, séparément : protéines 26,63 g (aliment 197, persil déshydraté), lipides 41,56 g (aliment 201, graines de pavot), glucides 80,59 g (aliment 178, cannelle moulue). Une borne prise sur un seul aliment n'en serait pas une pour les autres.",
+      "protein_g_per_100g": "26.63",
+      "fat_g_per_100g": "41.56",
+      "carbohydrate_g_per_100g": "80.59"
+    },
+    {
+      "family_id": "bouillons",
+      "base_unit": "ml",
+      "kcal_per_100g": "7",
+      "max_qty_per_serving_base_unit": "400",
+      "grams_per_base_unit_ceiling": "1.11",
+      "basis": "Le bouillon est le goulot le plus fréquent du corpus (bouillon_poulet dans 43 recettes) et aucun des cinq bouillons n'est apparié. La teneur retenue est celle du plus énergétique des bouillons prêts-à-servir du FCÉN ; un bouillon condensé non dilué ou fait maison est deux fois plus énergétique et sort du périmètre de cette déclaration. Maximum observé : 375 ml par portion (ricardo_9410_risotto_aux_boulettes). Borne au plafond : 31,1 kcal — la plus grosse du règlement, et elle s'affiche.",
+      "provenance": "FCÉN 2026, aliment 5340 « Soupe, bouillon, poulet, prête à servir, réduite en sodium » : 7 kcal/100 g, maximum des bouillons prêts-à-servir (927, 1052, 1078, 1079, 1083, 1084, 5363, 6541, 7371, 7372, 7374, 7378, 7451 : 3 à 6 kcal). Masse de service 100 ml = 110,063 g pour l'aliment 6541, d'où le plafond de 1,11 g/ml. Pires valeurs des bouillons prêts-à-servir, séparément : protéines 1,05 g (aliment 5340), lipides 0,23 g (aliment 1083), glucides 0,77 g (aliment 1060).",
+      "protein_g_per_100g": "1.05",
+      "fat_g_per_100g": "0.23",
+      "carbohydrate_g_per_100g": "0.77"
+    }
+  ],
+  "food_choices": [
+    {
+      "ingredient_id": "aile_poulet",
+      "food_code": "626",
+      "kind": "attachment",
+      "rationale": "L'aile de poulet crue, viande et peau : une aile se cuisine avec sa peau. Écartée : la viande seule (631, 126 kcal), et l'aile congelée saveur barbecue (5852), qui est un produit assaisonné.",
+      "provenance": "FCÉN 2026, aliment 626 « Poulet à griller, aile, viande et peau, cru » : 191 kcal, 17,52 g de protéines, 12,85 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "ananas",
+      "food_code": "1734",
+      "kind": "primary",
+      "rationale": "Deux aliments sont rattachés : « Ananas, cru » (1734, 50 kcal) et « Ananas, cru, variétés traditionnelles » (5403, 45). Le premier est le générique toutes variétés, comme pour l'avocat.",
+      "provenance": "FCÉN 2026, aliment 1734 « Ananas, cru » : 50 kcal, 0,54 g de protéines, 0,12 g de lipides, 13,12 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "arachide",
+      "food_code": "3396",
+      "kind": "attachment",
+      "rationale": "Les arachides crues, tous les types — le générique. Écartées : les variétés nommées (espagnoles, Valencia, Virginia), qui publient 563 à 570 kcal, soit 2 kcal d'écart avec le générique.",
+      "provenance": "FCÉN 2026, aliment 3396 « Arachides, tous les types, crues » : 568 kcal, 25,8 g de protéines, 49,24 g de lipides, 16,13 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "aromatisant_eau",
+      "food_code": "5522",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas d'aromatisant liquide pour eau. Le sirop diététique est la préparation édulcorée sans sucre du fichier, à 51 kcal/100 g. Écart assumé : ces aromatisants sont plus dilués encore, la borne est donc haute plutôt que basse.",
+      "provenance": "FCÉN 2026, aliment 5522 « Confiseries, sirop, diététique » : 51 kcal, 0,8 g de protéines, 0 g de lipides, 11,99 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "assaisonnement_chili",
+      "food_code": "7203",
+      "kind": "attachment",
+      "rationale": "L'assaisonnement à chili en mélange sec, nommé exactement (335 kcal/100 g). L'ingrédient dépassait le plafond de la déclaration d'apport négligeable de la famille des épices — 11,25 g par portion là où la borne s'arrête bien avant — donc il ne pouvait plus être omis : il devait être calculé. Écartée : la poudre de chili (177, 282 kcal), qui est l'épice seule et non le mélange.",
+      "provenance": "FCÉN 2026, aliment 7203 « Assaisonnement, chili, mélange sec » : 335 kcal, 10,82 g de protéines, 7,3 g de lipides, 56,56 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "aubergine_grillee",
+      "food_code": "2089",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas l'aubergine grillée. L'aubergine bouillie égouttée est la même chair cuite et égouttée, à 35 kcal/100 g. Écartée : la crue (2088, 25 kcal), qui n'a pas perdu son eau, et la marinée (5550), qui porte de l'huile.",
+      "provenance": "FCÉN 2026, aliment 2089 « Aubergine, bouillie, égouttée » : 35 kcal, 0,83 g de protéines, 0,23 g de lipides, 8,73 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "avocat",
+      "food_code": "1511",
+      "kind": "primary",
+      "rationale": "Trois aliments FCÉN sont rattachés à cet ingrédient — 1511 toutes variétés (160 kcal/100 g), 1512 Californie (167), 1513 Floride (120). L'écart de 39 % n'est pas arbitrable par un tri : le générique « toutes variétés commerciales » est le seul qui ne présume pas une origine que les recettes ne nomment pas.",
+      "provenance": "FCÉN 2026, aliment 1511 « Avocat, cru, toutes variétés commerciales » : 160 kcal/100 g. Masse de service publiée : 1 fruit = 201 g — exactement la quantité de ricardo_5899."
+    },
+    {
+      "ingredient_id": "avoine_flacons",
+      "food_code": "4421",
+      "kind": "attachment",
+      "rationale": "Les grains d'avoine secs. Écartés : le son d'avoine (4493), qui est l'enveloppe, et le bagel au son (3677).",
+      "provenance": "FCÉN 2026, aliment 4421 « Grains céréaliers, avoine, sec » : 389 kcal, 16,89 g de protéines, 6,9 g de lipides, 66,27 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "babeurre",
+      "food_code": "5487",
+      "kind": "attachment",
+      "rationale": "Le babeurre liquide 2 % M.G., le format d'épicerie. Écarté : l'entier 3,25 % (7024), qui publie 55 kcal contre 56 — l'écart est nul, le format courant tranche.",
+      "provenance": "FCÉN 2026, aliment 5487 « Babeurre, liquide, 2% M.G. » : 56 kcal, 4,1 g de protéines, 2 g de lipides, 5,3 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "bacon",
+      "food_code": "1936",
+      "kind": "attachment",
+      "rationale": "Le bacon de porc cru, salé. Tous les autres candidats sont cuits (sauté, au four, grillé, micro-ondes), donc concentrés : 468 à 548 kcal/100 g contre 393 pour le cru. Une recette pèse du bacon cru.",
+      "provenance": "FCÉN 2026, aliment 1936 « Porc, salé, bacon, cru » : 393 kcal, 13,66 g de protéines, 37,13 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "basilic_non_precise",
+      "food_code": "212",
+      "kind": "substitution",
+      "rationale": "Le canon ne dit pas si le basilic est frais ou séché; le FCÉN publie les deux et aucun « non précisé ». Le frais est celui que les recettes concernées emploient. Écart assumé : le basilic séché publie près de dix fois l'énergie par 100 g, la substitution ne vaut donc que pour un basilic frais.",
+      "provenance": "FCÉN 2026, aliment 212 « Épices, basilic, frais » : 22 kcal, 3,15 g de protéines, 0,64 g de lipides, 2,65 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "beurre_non_precise",
+      "food_code": "118",
+      "kind": "substitution",
+      "rationale": "Le canon ne précise pas le beurre; le FCÉN ne publie aucun « beurre non précisé ». Le beurre salé est le beurre de détail par défaut au Québec, et c'est celui que les recettes qui écrivent « beurre » sans qualificatif emploient. Écartés : les beurres légers (499 kcal/100 g), qui sont un autre produit, et le beurre fouetté (731), dont la masse par volume diffère.",
+      "provenance": "FCÉN 2026, aliment 118 « Beurre, salé » : 717 kcal, 0,85 g de protéines, 81,11 g de lipides, 0,06 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "beurre_non_sale",
+      "food_code": "92",
+      "kind": "attachment",
+      "rationale": "Le canon nomme l'absence de sel, le fichier la publie. Écarté : le beurre léger sans sel (5308, 499 kcal), qui est un autre produit.",
+      "provenance": "FCÉN 2026, aliment 92 « Beurre, sans sel » : 717 kcal, 0,85 g de protéines, 81,11 g de lipides, 0,06 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "bicarbonate_soude",
+      "food_code": "4005",
+      "kind": "attachment",
+      "rationale": "Le bicarbonate de soude, nommé exactement, à 0 kcal. L'autre candidat est un pain irlandais qui en contient.",
+      "provenance": "FCÉN 2026, aliment 4005 « Agent de levage, bicarbonate de soude » : 0 kcal, 0 g de protéines, 0 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "biere_blonde",
+      "food_code": "2943",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas la blonde, seulement la bière ordinaire à 5 % d'alcool. C'est le générique dont la blonde relève, à 43 kcal/100 g. Écartée : la limonade de bière maltée (7615).",
+      "provenance": "FCÉN 2026, aliment 2943 « Boisson alcoolisée, bière, ordinaire (5% alcool par volume) » : 43 kcal, 0,46 g de protéines, 0 g de lipides, 3,55 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "bocconcini",
+      "food_code": "7743",
+      "kind": "attachment",
+      "rationale": "Le fromage bocconcini, nommé exactement. Écartée : la version légère (7744).",
+      "provenance": "FCÉN 2026, aliment 7743 « Fromage bocconcini » : 325 kcal, 18,82 g de protéines, 26,515 g de lipides, 2,96 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "boeuf_bifteck_surlonge",
+      "food_code": "6143",
+      "kind": "attachment",
+      "rationale": "Le bifteck de haut de surlonge désossé, maigre, cru. Le manifeste ne le trouvait pas : il proposait un pâté au bifteck et des coupes de veau. Écarté : le rôti de la même coupe (6137), qui publie les mêmes teneurs mais n'est pas un bifteck.",
+      "provenance": "FCÉN 2026, aliment 6143 « Boeuf, longe, bifteck de haut de surlonge, désossé, maigre, cru » : 132 kcal, 22,51 g de protéines, 3,95 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "boeuf_faux_filet",
+      "food_code": "6066",
+      "kind": "attachment",
+      "rationale": "Le bifteck de faux-filet désossé, maigre et gras, non paré, cru : le faux-filet s'achète avec son gras. Écarté : le maigre seul (6068, 163 kcal), qui décrit la portion dégraissée.",
+      "provenance": "FCÉN 2026, aliment 6066 « Boeuf, côte, bifteck de faux-filet, désossé, maigre et gras, 0mm (0) paré, cru » : 200 kcal, 21,18 g de protéines, 12,26 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "boeuf_hache",
+      "food_code": "2690",
+      "kind": "attachment",
+      "rationale": "Le canon nomme le mi-maigre, le fichier le publie. Écartés : le maigre (2683, 207 kcal), retenu là où le canon dit « maigre », et le régulier (2786, 293).",
+      "provenance": "FCÉN 2026, aliment 2690 « Boeuf, haché, mi-maigre, cru » : 226 kcal, 18,9 g de protéines, 16,1 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "boeuf_hache_maigre",
+      "food_code": "2683",
+      "kind": "attachment",
+      "rationale": "Le canon nomme la maigreur, le fichier la publie : bœuf haché maigre cru. Écartés : le mi-maigre (226 kcal) et l'extra-maigre (158), qui sont les formats voisins que le canon ne nomme pas.",
+      "provenance": "FCÉN 2026, aliment 2683 « Boeuf, haché, maigre, cru » : 207 kcal, 19,575 g de protéines, 13,675 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "boeuf_roti_palette",
+      "food_code": "5945",
+      "kind": "attachment",
+      "rationale": "Le rôti de palette désossé, maigre et gras, paré à 3 mm, cru : c'est la coupe telle qu'elle s'achète. Écarté : le maigre seul (5946, 147 kcal), qui décrit la portion dégraissée après cuisson, et les formes braisées (5948, 5949), qui sont cuites.",
+      "provenance": "FCÉN 2026, aliment 5945 « Boeuf, épaule, rôti de palette, désossé, maigre et gras, 3mm (1/8'') paré, cru » : 191 kcal, 19,4 g de protéines, 12,04 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "bonbon",
+      "food_code": "4175",
+      "kind": "attachment",
+      "rationale": "Les bonbons durs (sucre d'orge), le bonbon générique du fichier, à 394 kcal/100 g et 98 g de glucides. Écartés : le caramel (4143), les jujubes (4174) et la guimauve (4183), qui sont des confiseries nommées.",
+      "provenance": "FCÉN 2026, aliment 4175 « Bonbons, durs (sucre d'orge) » : 394 kcal, 0 g de protéines, 0,2 g de lipides, 98 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "bonbon_petillant",
+      "food_code": "4175",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas de bonbon pétillant. Le bonbon dur est la même confiserie — sucre cuit — à 394 kcal/100 g; l'effet pétillant vient d'un gaz emprisonné, qui ne pèse rien.",
+      "provenance": "FCÉN 2026, aliment 4175 « Bonbons, durs (sucre d'orge) » : 394 kcal, 0 g de protéines, 0,2 g de lipides, 98 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "boulette_boeuf_preparee",
+      "food_code": "7424",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas de boulettes de bœuf préparées. Les boulettes à l'italienne congelées sont le produit préparé équivalent, déjà retenu pour les boulettes de veau et de porc. Écartés : les abats de bœuf, remontés par le seul mot « bœuf ».",
+      "provenance": "FCÉN 2026, aliment 7424 « Boulettes de viande, à l'italienne, congelées » : 286 kcal, 14,4 g de protéines, 22,21 g de lipides, 8,06 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "boulette_porc_preparee",
+      "food_code": "7424",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas de boulettes de porc préparées. Les boulettes à l'italienne congelées sont le produit préparé équivalent, et c'est déjà l'aliment retenu pour les boulettes de veau. Écartés : les abats de porc, remontés par le seul mot « porc ».",
+      "provenance": "FCÉN 2026, aliment 7424 « Boulettes de viande, à l'italienne, congelées » : 286 kcal, 14,4 g de protéines, 22,21 g de lipides, 8,06 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "boulette_veau_preparee",
+      "food_code": "7424",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas de boulettes de veau préparées. Les boulettes de viande à l'italienne congelées sont le produit préparé équivalent — viande hachée, chapelure, assaisonnement — à 286 kcal/100 g. Écarté : le veau haché cru (3561), qui est l'ingrédient et non la boulette prête à réchauffer.",
+      "provenance": "FCÉN 2026, aliment 7424 « Boulettes de viande, à l'italienne, congelées » : 286 kcal, 14,4 g de protéines, 22,21 g de lipides, 8,06 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "cacao_poudre",
+      "food_code": "4223",
+      "kind": "attachment",
+      "rationale": "Le cacao en poudre non sucré. Écartés : le procédé néerlandais (4224), qui ne diffère que de 8 kcal, et les mélanges au café (7281).",
+      "provenance": "FCÉN 2026, aliment 4223 « Confiseries, cacao, poudre, non sucré » : 228 kcal, 19,6 g de protéines, 13,7 g de lipides, 57,9 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "capre",
+      "food_code": "4890",
+      "kind": "attachment",
+      "rationale": "Les câpres en conserve, seul aliment du fichier qui les nomme.",
+      "provenance": "FCÉN 2026, aliment 4890 « Câpres, conserve » : 23 kcal, 2,36 g de protéines, 0,86 g de lipides, 4,89 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "cassonade",
+      "food_code": "4317",
+      "kind": "attachment",
+      "rationale": "Le seul aliment du fichier qui nomme la cassonade, et il la nomme exactement. Rien n'était rattaché : la recherche par chaîne entière ne trouvait pas « cassonade » derrière « Confiseries, sucre, brun ».",
+      "provenance": "FCÉN 2026, aliment 4317 « Confiseries, sucre, brun (cassonade) » : 380 kcal, 0,12 g de protéines, 0 g de lipides, 98,9 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "cereales_riz_souffle",
+      "food_code": "1292",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie qu'une céréale de riz soufflé, de marque et au riz brun. C'est le seul riz soufflé du fichier; l'écart avec un riz soufflé blanc porte sur le son, pas sur l'énergie (395 kcal/100 g).",
+      "provenance": "FCÉN 2026, aliment 1292 « Céréale, prête-à-manger, riz brun soufflé, Barbara's Bakery » : 395 kcal, 6,8 g de protéines, 1,9 g de lipides, 85 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "champignon_non_precise",
+      "food_code": "2399",
+      "kind": "substitution",
+      "rationale": "Le canon ne nomme pas l'espèce; le FCÉN ne publie aucun champignon « non précisé ». Le champignon blanc cru est le champignon de couche vendu partout, à 22 kcal/100 g. Écartés : l'enoki (2343, 44 kcal), le pleurote (4866) et le maitake (6219), qui sont des espèces nommées.",
+      "provenance": "FCÉN 2026, aliment 2399 « Champignon, blanc, cru » : 22 kcal, 3,09 g de protéines, 0,34 g de lipides, 3,28 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "champignon_seche",
+      "food_code": "2124",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie que le shiitake séché comme champignon déshydraté (296 kcal/100 g). L'écart avec un mélange de champignons séchés porte sur l'espèce, pas sur la déshydratation, qui domine les teneurs.",
+      "provenance": "FCÉN 2026, aliment 2124 « Champignon shiitake, séché » : 296 kcal, 9,58 g de protéines, 0,99 g de lipides, 75,37 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "chapelure",
+      "food_code": "4069",
+      "kind": "attachment",
+      "rationale": "La chapelure sèche nature, nommée exactement. Écartée : l'assaisonnée (4060), que le canon ne qualifie pas.",
+      "provenance": "FCÉN 2026, aliment 4069 « Pain, chapelure, séchée, émiettée, nature » : 395 kcal, 13,35 g de protéines, 5,3 g de lipides, 71,98 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "chapelure_panko",
+      "food_code": "4069",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas la chapelure panko. La chapelure sèche nature est la même denrée à la mouture près : mêmes ingrédients, mêmes teneurs publiées à 395 kcal/100 g. Écartée : la chapelure assaisonnée (4060), qui porte du sel et des épices que le panko ne porte pas.",
+      "provenance": "FCÉN 2026, aliment 4069 « Pain, chapelure, séchée, émiettée, nature » : 395 kcal, 13,35 g de protéines, 5,3 g de lipides, 71,98 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "cheddar",
+      "food_code": "7737",
+      "kind": "attachment",
+      "rationale": "Le cheddar mi-fort est le cheddar de détail par défaut. L'écart entre les forces publiées est de 6 kcal/100 g (doux 418, fort 423, extra-fort 410) : le choix de la force ne change pas un total. Écartés : les produits de fromage fondu (7005, 7012), qui ne sont pas du cheddar, et l'imitation (5566).",
+      "provenance": "FCÉN 2026, aliment 7737 « Fromage cheddar, mi-fort » : 412 kcal, 23,3 g de protéines, 32,645 g de lipides, 6,49 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "chipotle_adobo",
+      "food_code": "5354",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas les piments chipotle en sauce adobo. La sauce de piments forts rouges en conserve est la préparation la plus proche — piments rouges, vinaigre, sel — à 21 kcal/100 g. Écartés : la sauce Tabasco (1030), qui est liquide et bien plus diluée, et les piments crus (4857, 4858), qui ne portent pas la sauce.",
+      "provenance": "FCÉN 2026, aliment 5354 « Sauce, chili, piments forts, chili, rouges, conserve » : 21 kcal, 0,9 g de protéines, 0,6 g de lipides, 3,9 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "ciboulette_fraiche",
+      "food_code": "2059",
+      "kind": "attachment",
+      "rationale": "La ciboulette crue, nommée exactement. Les autres candidats sont des pâtes fraîches, remontées par le mot « fraîche ».",
+      "provenance": "FCÉN 2026, aliment 2059 « Ciboulette, crue » : 30 kcal, 3,27 g de protéines, 0,73 g de lipides, 4,35 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "cidre_pomme",
+      "food_code": "7617",
+      "kind": "attachment",
+      "rationale": "Le cidre est publié sous « Boisson alcoolisée, cidre » (56 kcal/100 g). Le manifeste plaçait devant le vinaigre de cidre (13) et des pommes crues.",
+      "provenance": "FCÉN 2026, aliment 7617 « Boisson alcoolisée, cidre » : 56 kcal, 0 g de protéines, 0 g de lipides, 5,92 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "citron",
+      "food_code": "1587",
+      "kind": "primary",
+      "rationale": "Deux aliments sont rattachés : le citron cru sans pelure (1587) et le zeste (1592, 47 kcal). Une recette qui pèse « citron » pèse le fruit.",
+      "provenance": "FCÉN 2026, aliment 1587 « Citron, cru, sans pelure » : 29 kcal, 1,1 g de protéines, 0,3 g de lipides, 9,32 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "cognac",
+      "food_code": "2844",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie ni cognac ni brandy. Le whisky à 40 % d'alcool par volume est l'eau-de-vie du fichier au même degré : 231 kcal/100 g, aucun macronutriment. L'énergie d'un spiritueux vient de son alcool, et le degré est ce qui la fixe.",
+      "provenance": "FCÉN 2026, aliment 2844 « Boisson alcoolisée, whisky (40% alcool par volume) » : 231 kcal, 0 g de protéines, 0 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "concombre",
+      "food_code": "2363",
+      "kind": "primary",
+      "rationale": "Deux aliments sont rattachés : concombre cru (2363) et concombre pelé cru (4848, 10 kcal). Les recettes ne pèlent pas; le non pelé est le générique.",
+      "provenance": "FCÉN 2026, aliment 2363 « Concombre, cru » : 16 kcal, 0,65 g de protéines, 0,11 g de lipides, 3,63 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "confiture_abricot",
+      "food_code": "4379",
+      "kind": "attachment",
+      "rationale": "La confiture d'abricot, nommée exactement. Écartées : les marmelades et gelées réduites en sucre, que le canon ne qualifie pas.",
+      "provenance": "FCÉN 2026, aliment 4379 « Confiseries, confitures et conserves, abricot » : 242 kcal, 0,7 g de protéines, 0,2 g de lipides, 64,4 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "cornichon_aneth",
+      "food_code": "2495",
+      "kind": "attachment",
+      "rationale": "Les cornichons à l'aneth, nommés exactement. Écartées : la version faible en sodium (2497), que le canon ne qualifie pas, et les cornichons sucrés (2337, 91 kcal), qui sont un autre condiment.",
+      "provenance": "FCÉN 2026, aliment 2495 « Marinades, cornichons à l'aneth (inclus Cacher et Polonais) » : 12 kcal, 0,5 g de protéines, 0,3 g de lipides, 2,41 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "courgette",
+      "food_code": "2225",
+      "kind": "attachment",
+      "rationale": "Le FCÉN écrit la courgette « Courge d'été, courgette (zucchini), crue » — c'est pourquoi la similarité de chaînes la manquait. Écartées : la naine (2346), la congelée (2227) et la conserve au jus de tomates (2229).",
+      "provenance": "FCÉN 2026, aliment 2225 « Courge d'été, courgette (zucchini), crue » : 17 kcal, 1,21 g de protéines, 0,32 g de lipides, 3,11 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "creme_15",
+      "food_code": "151",
+      "kind": "attachment",
+      "rationale": "La crème de table 15 % M.G., que le canon nomme par son pourcentage. Écartées : la légère 5 % (7589) et la crème à fouetter (137).",
+      "provenance": "FCÉN 2026, aliment 151 « Crème de table (champêtre), 15% M.G. » : 154 kcal, 2,8 g de protéines, 15 g de lipides, 2,67 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "creme_35",
+      "food_code": "138",
+      "kind": "attachment",
+      "rationale": "La crème à fouetter 35 % M.G., que le canon nomme par son pourcentage. Écartée : la version sucrée déjà fouettée (6639).",
+      "provenance": "FCÉN 2026, aliment 138 « Crème à fouetter, 35% M.G. » : 328 kcal, 2,08941 g de protéines, 35 g de lipides, 2,84583 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "creme_champignon_condensee",
+      "food_code": "949",
+      "kind": "attachment",
+      "rationale": "La crème de champignons condensée, telle qu'elle sort de la conserve. Écartées : les versions déjà diluées à l'eau (1063) ou au lait (5260), qui sont la soupe préparée, et la réduite en sodium (5339).",
+      "provenance": "FCÉN 2026, aliment 949 « Soupe, crème, champignons, conserve, condensée » : 86 kcal, 1,58 g de protéines, 6,52 g de lipides, 5,34 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "creme_glace_vanille",
+      "food_code": "4163",
+      "kind": "attachment",
+      "rationale": "La crème glacée à la vanille à 11 % M.G., le format d'épicerie. Écartées : la légère (4156, 181 kcal), la riche 16 % (4157, 249) et la sans gras (5453).",
+      "provenance": "FCÉN 2026, aliment 4163 « Dessert, congelé, crème glacée, vanille, 11% M.G. » : 208 kcal, 3,5 g de protéines, 11 g de lipides, 23,6 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "creme_sure",
+      "food_code": "139",
+      "kind": "attachment",
+      "rationale": "La crème sure de culture 14 % M.G. est le format de détail. Écartées : la légère (5299) et la sans gras (5300), que le canon ne qualifie pas, et la 18 % (152), moins courante en épicerie.",
+      "provenance": "FCÉN 2026, aliment 139 « Crème sure, de culture, 14% M.G. » : 181 kcal, 7 g de protéines, 14,1 g de lipides, 7 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "epices_italiennes",
+      "food_code": "195",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas de mélange d'épices italiennes. L'origan moulu est l'herbe séchée dominante du mélange, à 265 kcal/100 g, et les autres composantes publient des teneurs voisines (basilic déshydraté 233). Comme pour l'assaisonnement à chili, la quantité par portion dépasse le plafond de l'apport négligeable : il faut la calculer, pas l'omettre.",
+      "provenance": "FCÉN 2026, aliment 195 « Épices, origan, moulu » : 265 kcal, 9 g de protéines, 4,28 g de lipides, 68,92 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "epices_steak_montreal",
+      "food_code": "202",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas l'épice à steak de Montréal. L'assaisonnement pour volaille est le mélange d'épices sèches du fichier (307 kcal/100 g). Écart assumé, et il va dans le sens prudent : l'épice à steak est en bonne part du sel et du poivre concassé, donc moins dense en énergie que ce mélange d'herbes — la valeur retenue majore.",
+      "provenance": "FCÉN 2026, aliment 202 « Épices, assaisonnement pour volaille » : 307 kcal, 9,59 g de protéines, 7,53 g de lipides, 65,59 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "epinard_frais",
+      "food_code": "2213",
+      "kind": "attachment",
+      "rationale": "L'épinard cru, nommé exactement. Écartés : le congelé (2216), la conserve (2447) et le soufflé (2315), qui est un plat.",
+      "provenance": "FCÉN 2026, aliment 2213 « Épinard, cru » : 23 kcal, 2,86 g de protéines, 0,39 g de lipides, 3,63 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "escalope_porc",
+      "food_code": "1969",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas d'escalope de porc; il publie des escalopes de veau. Une escalope de porc est une tranche mince de longe : « Porc, longe, milieu, désossé, maigre, cru » (123 kcal/100 g) est cette pièce. Écartées : les escalopes de veau (3518, 3649), qui sont une autre viande.",
+      "provenance": "FCÉN 2026, aliment 1969 « Porc, longe, milieu, désossé, maigre, cru » : 123 kcal, 23,8 g de protéines, 2,4 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "escalope_veau",
+      "food_code": "3518",
+      "kind": "attachment",
+      "rationale": "L'escalope de veau de lait (ronde d'intérieur), crue. Écartée : celle de veau de grain (3649, 105 kcal), qui est le veau nourri au grain — 11 kcal d'écart, et le veau de lait est celui que nomment les recettes.",
+      "provenance": "FCÉN 2026, aliment 3518 « Veau de lait, escalopes (ronde d'intérieur), cru » : 94 kcal, 20,721 g de protéines, 0,594 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "farine_grillee",
+      "food_code": "4484",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas de farine grillée. La farine de blé tout usage enrichie est la même denrée avant grillage : le grillage colore et sèche, il ne change pas les macronutriments publiés au-delà de la perte d'eau. Écart assumé de ce côté-là, et c'est le seul.",
+      "provenance": "FCÉN 2026, aliment 4484 « Grains céréaliers, farine de blé, tout usage, enrichie, calcium ajouté » : 364 kcal, 10,33 g de protéines, 0,98 g de lipides, 76,31 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "farine_tout_usage",
+      "food_code": "4484",
+      "kind": "attachment",
+      "rationale": "La curation d'identité n'a rien rattaché, et le FCÉN publie exactement cet aliment. Les autres candidats du manifeste sont des farines d'autres graines (caroube, lentilles, manioc, igname) : le mot « farine » les rapproche, la classe d'aliment les sépare.",
+      "provenance": "FCÉN 2026, aliment 4484 « Grains céréaliers, farine de blé, tout usage, enrichie, calcium ajouté » : 364 kcal, 10,33 g de protéines, 0,98 g de lipides, 76,31 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "feta",
+      "food_code": "108",
+      "kind": "attachment",
+      "rationale": "Le fromage féta, nommé exactement. Écartée : la version légère (7754).",
+      "provenance": "FCÉN 2026, aliment 108 « Fromage féta » : 270 kcal, 16,77 g de protéines, 22,461 g de lipides, 0,37 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "fettuccine",
+      "food_code": "4515",
+      "kind": "substitution",
+      "rationale": "Le FCÉN 2026 ne publie aucune forme de pâte sèche de semoule de blé dur sous son nom commercial : ni fusilli, ni penne, ni rotini, ni linguine, ni fettuccine, ni spaghettoni, ni orzo. Il publie l'aliment générique « Pâtes (spaghetti, macaroni), enrichi, sec », dont la forme ne change ni l'énergie ni les macronutriments — seule la géométrie diffère. Substitution déclarée, pas un appariement : le nom ne correspond pas, la composition oui.",
+      "provenance": "FCÉN 2026, aliment 4515 « Pâtes (spaghetti, macaroni), enrichi, sec » : 371 kcal, 13,04 g de protéines, 1,51 g de lipides, 74,67 g de glucides par 100 g. Forme sèche, conformément à l'hypothèse d'appariement du projet (les quantités de recette sont des quantités d'achat crues)."
+    },
+    {
+      "ingredient_id": "feuillage_fenouil",
+      "food_code": "2350",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas le feuillage de fenouil, seulement le bulbe cru et les graines. Le bulbe est la partie de la même plante dont les teneurs approchent le plus le feuillage frais (31 kcal/100 g); les graines (186, 345 kcal) sont une épice sèche et fausseraient tout. Écart assumé sur la teneur en eau du feuillage.",
+      "provenance": "FCÉN 2026, aliment 2350 « Fenouil, bulbe, cru » : 31 kcal, 1,24 g de protéines, 0,2 g de lipides, 7,3 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "feuille_riz",
+      "food_code": "4888",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas la feuille de riz. Les nouilles de riz sèches sont la même denrée — farine de riz et eau, séchée — à 364 kcal/100 g. L'ingrédient se compte à l'unité et reste bloquant jusqu'à sa masse par unité.",
+      "provenance": "FCÉN 2026, aliment 4888 « Pâtes, nouilles de riz, sèches » : 364 kcal, 5,95 g de protéines, 0,56 g de lipides, 80,18 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "feve_germee",
+      "food_code": "2008",
+      "kind": "attachment",
+      "rationale": "Les germes de haricot mungo crus : c'est la fève germée des cuisines asiatiques, à 30 kcal/100 g. Écartés : les germes de soya (2210, 122 kcal), qui sont une autre légumineuse, et l'edamame (2208).",
+      "provenance": "FCÉN 2026, aliment 2008 « Haricots, mungo, grains immatures, germés, germes de haricot, crus » : 30 kcal, 3,04 g de protéines, 0,18 g de lipides, 5,94 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "filet_anchois",
+      "food_code": "2985",
+      "kind": "attachment",
+      "rationale": "Les filets d'anchois en conserve à l'huile, égouttés — la forme sous laquelle ils s'achètent. Écarté : l'anchois cru (2984, 131 kcal), qui est le poisson frais.",
+      "provenance": "FCÉN 2026, aliment 2985 « Poisson, anchois, européen, conserve avec huile d'olive, égoutté » : 210 kcal, 28,89 g de protéines, 9,71 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "filet_sole",
+      "food_code": "3216",
+      "kind": "attachment",
+      "rationale": "Le FCÉN regroupe la sole avec la plie et le flet sous « Poisson plat », cru. C'est pourquoi la recherche par nom la manquait. Les autres candidats sont des filets d'autruche et d'émeu, remontés par le mot « filet ».",
+      "provenance": "FCÉN 2026, aliment 3216 « Poisson plat (plie ou flet ou sole), cru » : 70 kcal, 12,41 g de protéines, 1,93 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "fromage_bleu",
+      "food_code": "18",
+      "kind": "attachment",
+      "rationale": "Le fromage bleu, nommé exactement. Écartés : le roquefort (46), qui est une appellation, et les vinaigrettes au bleu (534, 5489).",
+      "provenance": "FCÉN 2026, aliment 18 « Fromage bleu » : 353 kcal, 21,4 g de protéines, 28,74 g de lipides, 2,34 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "fromage_chevre",
+      "food_code": "98",
+      "kind": "attachment",
+      "rationale": "Le fromage de chèvre à pâte ferme (plus de 55 % d'eau) est le chèvre frais en bûche des recettes, à 288 kcal/100 g. Écartés : la pâte dure (96, 452 kcal), qui est un chèvre affiné, et la pâte molle aux canneberges (7756), qui est aromatisée.",
+      "provenance": "FCÉN 2026, aliment 98 « Fromage de chèvre, pâte ferme, (plus de 55% eau, 24% M.G.) » : 288 kcal, 17,18 g de protéines, 23,727 g de lipides, 1,53 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "fromage_cottage",
+      "food_code": "120",
+      "kind": "attachment",
+      "rationale": "Le fromage cottage 2 % M.G., le format d'épicerie. Écartés : le 1 % (107) et la version aux légumes (5562).",
+      "provenance": "FCÉN 2026, aliment 120 « Fromage cottage, 2% M.G. » : 81 kcal, 10,45 g de protéines, 2,27 g de lipides, 4,76 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "fromage_creme",
+      "food_code": "28",
+      "kind": "attachment",
+      "rationale": "Le fromage à la crème nature. Écartées : les versions sans gras (4722), légère (5563) et aromatisée (5565).",
+      "provenance": "FCÉN 2026, aliment 28 « Fromage, produit de fromage à la crème, nature » : 310 kcal, 6,59 g de protéines, 28,461 g de lipides, 8,3 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "fromage_suisse",
+      "food_code": "47",
+      "kind": "attachment",
+      "rationale": "Le fromage suisse (emmental), nommé exactement. Écartées : les versions faible en sodium (5604) ou faible en gras (5617), et la fondue (100).",
+      "provenance": "FCÉN 2026, aliment 47 « Fromage suisse (emmental) » : 404 kcal, 22 g de protéines, 27,674 g de lipides, 17,15 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "fromage_tex_mex",
+      "food_code": "7041",
+      "kind": "attachment",
+      "rationale": "Le mélange Tex Mex râpé, nommé exactement. Écartée : la version légère (7770).",
+      "provenance": "FCÉN 2026, aliment 7041 « Fromage, mélange Tex Mex, rapé » : 370 kcal, 23,92 g de protéines, 27,92 g de lipides, 5,68 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "fromage_vegetalien",
+      "food_code": "5623",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas de fromage végétalien. La « préparation de fromage, imitation » est le succédané du fichier, à 257 kcal/100 g. Écart assumé : les imitations recensées sont à base de caséine plutôt que de noix, ce qui déplace le profil sans changer l'ordre de grandeur.",
+      "provenance": "FCÉN 2026, aliment 5623 « Fromage, préparation, imitation » : 257 kcal, 4,08 g de protéines, 19,5 g de lipides, 16,18 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "fromage_velveeta",
+      "food_code": "51",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas ce fromage de marque. Le fromage fondu de cheddar conditionné à froid est le produit fondu équivalent, à 331 kcal/100 g. Écartée : la préparation imitation (5623), qui n'est pas du fromage fondu.",
+      "provenance": "FCÉN 2026, aliment 51 « Fromage fondu, préparation, cheddar, conditionné à froid » : 331 kcal, 19,66 g de protéines, 24,46 g de lipides, 8,32 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "fusilli",
+      "food_code": "4515",
+      "kind": "substitution",
+      "rationale": "Le FCÉN 2026 ne publie aucune forme de pâte sèche de semoule de blé dur sous son nom commercial : ni fusilli, ni penne, ni rotini, ni linguine, ni fettuccine, ni spaghettoni, ni orzo. Il publie l'aliment générique « Pâtes (spaghetti, macaroni), enrichi, sec », dont la forme ne change ni l'énergie ni les macronutriments — seule la géométrie diffère. Substitution déclarée, pas un appariement : le nom ne correspond pas, la composition oui.",
+      "provenance": "FCÉN 2026, aliment 4515 « Pâtes (spaghetti, macaroni), enrichi, sec » : 371 kcal, 13,04 g de protéines, 1,51 g de lipides, 74,67 g de glucides par 100 g. Forme sèche, conformément à l'hypothèse d'appariement du projet (les quantités de recette sont des quantités d'achat crues)."
+    },
+    {
+      "ingredient_id": "graine_sesame",
+      "food_code": "2522",
+      "kind": "attachment",
+      "rationale": "Les graines de sésame grillées décortiquées, la forme vendue en épicerie. Écartées : les farines de sésame (2523, 2524, 2597), qui sont moulues et dégraissées, et la version salée (6538), qui publie les mêmes quatre nombres.",
+      "provenance": "FCÉN 2026, aliment 2522 « Graines, sésame, graines, grillées, décortiquées » : 567 kcal, 16,96 g de protéines, 48 g de lipides, 26,04 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "gruyere",
+      "food_code": "32",
+      "kind": "attachment",
+      "rationale": "Le fromage gruyère, nommé exactement. L'autre candidat est une fondue prête-à-servir.",
+      "provenance": "FCÉN 2026, aliment 32 « Fromage gruyère » : 413 kcal, 29,81 g de protéines, 32,34 g de lipides, 0,36 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "haricot_blanc_conserve",
+      "food_code": "3276",
+      "kind": "attachment",
+      "rationale": "Les haricots blancs en conserve. Écartés : les petits blancs (3266, 113 kcal), variété nommée, et les adzuki sucrés (3245).",
+      "provenance": "FCÉN 2026, aliment 3276 « Haricots, blancs, conserve, solides et liquide » : 114 kcal, 7,26 g de protéines, 0,29 g de lipides, 21,2 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "haricot_lima_conserve",
+      "food_code": "2005",
+      "kind": "attachment",
+      "rationale": "Les haricots de Lima en conserve. Écartés : les gros secs mis en conserve (3290), les crus (2003) et les petits congelés (2368).",
+      "provenance": "FCÉN 2026, aliment 2005 « Haricots, lima, conserve, solides et liquide » : 71 kcal, 4,07 g de protéines, 0,29 g de lipides, 13,33 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "haricot_noir_conserve",
+      "food_code": "7235",
+      "kind": "attachment",
+      "rationale": "Le seul haricot noir en conserve que le fichier publie. Sa mention « réduit en sodium » ne porte pas sur les quatre nombres retenus — le sodium n'en fait pas partie. Écartés : les grains secs (3376, 341 kcal) et bouillis (3377), qui ne sont pas la conserve que la recette égoutte.",
+      "provenance": "FCÉN 2026, aliment 7235 « Haricots, noirs, grains mûrs, conserve, solides et liquide, réduit en sodium » : 91 kcal, 6,03 g de protéines, 0,29 g de lipides, 16,55 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "haricot_rouge_conserve",
+      "food_code": "7081",
+      "kind": "attachment",
+      "rationale": "Les haricots rouges en conserve, égouttés : une recette égoutte. Écartées : les versions avec le liquide (3379, 3265), dont les teneurs par 100 g comptent la saumure, et la version rincée (7085), qui ne diffère que de 3 kcal.",
+      "provenance": "FCÉN 2026, aliment 7081 « Haricots, rouges, conserve, égouttés » : 124 kcal, 7,98 g de protéines, 1,05 g de lipides, 21,49 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "haricot_vert",
+      "food_code": "2370",
+      "kind": "substitution",
+      "rationale": "Le FCÉN classe le haricot vert frais sous « Haricots italiens, jaunes ou verts, crus » et ne publie pas de « haricot vert » séparé. Écartés : les grains mûrs secs (3257, 343 kcal), qui sont une légumineuse sèche, et les formes congelée (2018) ou en conserve (2016).",
+      "provenance": "FCÉN 2026, aliment 2370 « Haricots italiens, jaunes ou verts, crus » : 31 kcal, 1,83 g de protéines, 0,22 g de lipides, 6,97 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "havarti",
+      "food_code": "7757",
+      "kind": "attachment",
+      "rationale": "Le fromage havarti, nommé exactement. Écartée : la version légère (7758).",
+      "provenance": "FCÉN 2026, aliment 7757 « Fromage havarti » : 396 kcal, 22,05 g de protéines, 33,246 g de lipides, 2,58 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "huile_non_precisee",
+      "food_code": "451",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie aucune huile « non précisée ». Le canola est l'huile de cuisson par défaut au Canada, et c'est déjà l'aliment retenu pour « huile végétale ». Comme toutes les huiles du fichier : 885 kcal et 100 g de lipides par 100 g, donc le choix ne déplace aucun des quatre nombres.",
+      "provenance": "FCÉN 2026, aliment 451 « Huile végétale, canola (colza) » : 885 kcal, 0 g de protéines, 100 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "huile_sesame_grillee",
+      "food_code": "424",
+      "kind": "substitution",
+      "rationale": "Le FCÉN publie l'huile de sésame sans distinguer le grillage de la graine. Comme toutes les huiles du fichier, elle publie 885 kcal et 100 g de lipides par 100 g : l'écart entre grillée et non grillée est un écart d'arôme, pas de macronutriments.",
+      "provenance": "FCÉN 2026, aliment 424 « Huile végétale, sésame » : 885 kcal, 0 g de protéines, 100 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "huile_vegetale",
+      "food_code": "451",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie aucune « huile végétale » non précisée. Le canola est l'huile de cuisson par défaut au Canada. L'écart assumé est nul sur les quatre nombres retenus : toutes les huiles végétales du fichier publient 885 kcal, 0 g de protéines, 100 g de lipides et 0 g de glucides par 100 g — le choix ne change que le profil d'acides gras, qui n'est pas publié ici.",
+      "provenance": "FCÉN 2026, aliment 451 « Huile végétale, canola (colza) » : 885 kcal, 0 g de protéines, 100 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "jambon_fume_epaule",
+      "food_code": "1978",
+      "kind": "attachment",
+      "rationale": "Le jambon d'épaule picnic désossé, maigre, non chauffé — la pièce crue que le canon nomme. Écartées : les formes rôties (1877, 1878), qui sont cuites, et le gras seul (1876, 591 kcal).",
+      "provenance": "FCÉN 2026, aliment 1978 « Porc, salé, jambon, épaule, picnic, désossé, maigre, non chauffé » : 141 kcal, 14,4 g de protéines, 8,3 g de lipides, 1,1 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "jarret_porc",
+      "food_code": "1769",
+      "kind": "attachment",
+      "rationale": "Le bout de jarret de fesse de porc, maigre et gras, cru : un jarret s'achète avec son gras. Écartés : le maigre seul (1771, 119 kcal) et le jarret mariné (6206), qui est un produit assaisonné.",
+      "provenance": "FCÉN 2026, aliment 1769 « Porc, fesse, bout jarret, maigre et gras, cru » : 193 kcal, 19,87 g de protéines, 11,96 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "jaune_oeuf",
+      "food_code": "127",
+      "kind": "attachment",
+      "rationale": "Le jaune d'œuf de poule frais cru, nommé exactement. L'ingrédient se compte à l'unité et reste bloquant jusqu'à ce qu'une masse par jaune soit dérivée.",
+      "provenance": "FCÉN 2026, aliment 127 « Oeuf, poule, jaune, frais ou congelé, cru » : 351 kcal, 16,474 g de protéines, 30,43 g de lipides, 1,101 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "jus_cornichon",
+      "food_code": "2495",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas le jus (la saumure) de cornichon. Le cornichon à l'aneth lui-même, à 12 kcal/100 g, borne l'apport par le haut : la saumure est plus diluée que le légume qui y trempe.",
+      "provenance": "FCÉN 2026, aliment 2495 « Marinades, cornichons à l'aneth (inclus Cacher et Polonais) » : 12 kcal, 0,5 g de protéines, 0,3 g de lipides, 2,41 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "ketchup",
+      "food_code": "2494",
+      "kind": "attachment",
+      "rationale": "Le ketchup ordinaire; la seule autre entrée est sa version faible en sodium, qui publie les mêmes quatre nombres. Le manifeste l'a trouvé là où la similarité de chaînes échouait : le FCÉN l'écrit « Tomates, ketchup (catsup) ».",
+      "provenance": "FCÉN 2026, aliment 2494 « Tomates, ketchup (catsup) » : 101 kcal, 1,04 g de protéines, 0,1 g de lipides, 27,4 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "lait_325",
+      "food_code": "113",
+      "kind": "attachment",
+      "rationale": "Le lait entier homogénéisé pasteurisé 3,25 % M.G., que le canon nomme par son pourcentage. Écartés : les laits de chèvre au même pourcentage (72, 6353) et le lait de poule (7788).",
+      "provenance": "FCÉN 2026, aliment 113 « Lait, liquide, entier, homogénéisé, pasteurisé, 3.25% M.G. » : 59 kcal, 3,3 g de protéines, 3,094 g de lipides, 4,46 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "lait_coco_conserve",
+      "food_code": "2565",
+      "kind": "attachment",
+      "rationale": "Le lait de coco en conserve, nommé exactement. Écartés : le lait de coco cru (2643), qui est extrait à la maison, et l'eau de coco (2566).",
+      "provenance": "FCÉN 2026, aliment 2565 « Noix de coco, lait (liquide de la noix râpée et eau), conserve » : 197 kcal, 2,02 g de protéines, 21,33 g de lipides, 2,81 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "lait_evapore",
+      "food_code": "140",
+      "kind": "attachment",
+      "rationale": "Le lait concentré entier non dilué (7,8 % M.G.), à 134 kcal/100 g : c'est le lait évaporé en conserve. Écarté : le lait concentré sucré (68, 321 kcal), qui est un autre produit, et les versions écrémées (112, 7585).",
+      "provenance": "FCÉN 2026, aliment 140 « Lait, concentré, entier, conserve, non dilué, 7,8% M.G. » : 134 kcal, 6,81 g de protéines, 7,8 g de lipides, 10,04 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "lait_non_precise",
+      "food_code": "113",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie aucun lait « non précisé ». Le lait entier 3,25 % est le générique du fichier et la variété vers laquelle ce marqueur devait de toute façon être résolu. Écart assumé : 12 kcal/100 g de plus que le lait 2 % (47), 26 de plus que l'écrémé.",
+      "provenance": "FCÉN 2026, aliment 113 « Lait, liquide, entier, homogénéisé, pasteurisé, 3.25% M.G. » : 59 kcal, 3,3 g de protéines, 3,094 g de lipides, 4,46 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "lait_soya",
+      "food_code": "5241",
+      "kind": "attachment",
+      "rationale": "La boisson de soya nature non enrichie réfrigérée, à 55 kcal/100 g. Écartées : la version chocolatée (5429), la sans gras enrichie (6332) et la non sucrée (7814), que le canon ne qualifie pas.",
+      "provenance": "FCÉN 2026, aliment 5241 « Boisson à base de plantes, soya, nature, non-enrichie, réfrigérée » : 55 kcal, 3,06 g de protéines, 1,17 g de lipides, 8,19 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "laitue_iceberg",
+      "food_code": "2398",
+      "kind": "attachment",
+      "rationale": "La laitue iceberg (pommée), nommée exactement. Écartées : la romaine (2116), la frisée (2117) et la Boston (2115), qui sont d'autres variétés.",
+      "provenance": "FCÉN 2026, aliment 2398 « Laitue, iceberg (pommée) » : 14 kcal, 0,9 g de protéines, 0,14 g de lipides, 2,97 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "laitue_romaine",
+      "food_code": "2116",
+      "kind": "attachment",
+      "rationale": "La laitue romaine, nommée exactement. Écartées : la frisée (2117), la Boston (2115) et l'iceberg (2398), qui sont d'autres variétés.",
+      "provenance": "FCÉN 2026, aliment 2116 « Laitue, romaine » : 17 kcal, 1,23 g de protéines, 0,3 g de lipides, 3,29 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "lard_sale",
+      "food_code": "1874",
+      "kind": "attachment",
+      "rationale": "Le lard salé cru (« Porc, salé, porc salé, cru »), à 748 kcal/100 g. Écarté : le bacon (1936, 393 kcal), qui est tranché et fumé — c'est un autre produit, retenu sous son propre canon.",
+      "provenance": "FCÉN 2026, aliment 1874 « Porc, salé, porc salé, cru » : 748 kcal, 5,05 g de protéines, 80,5 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "lasagne_seche",
+      "food_code": "4515",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas de lasagne sèche. Les pâtes enrichies sèches sont la même denrée sous une autre découpe : mêmes ingrédients, 371 kcal/100 g. Écartées : les lasagnes du fichier (6252, 6743, 7276), qui sont des plats cuisinés garnis.",
+      "provenance": "FCÉN 2026, aliment 4515 « Pâtes (spaghetti, macaroni), enrichi, sec » : 371 kcal, 13,04 g de protéines, 1,51 g de lipides, 74,67 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "lentille_conserve",
+      "food_code": "3393",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas de lentilles en conserve. Les lentilles bouillies sont l'état dans lequel la conserve les livre — cuites, hydratées — à 116 kcal/100 g. Écartées : les sèches (3392, 352 kcal), qui pèsent trois fois plus par gramme, et les germées (2113).",
+      "provenance": "FCÉN 2026, aliment 3393 « Lentilles, grains mûrs, bouillis » : 116 kcal, 9,02 g de protéines, 0,38 g de lipides, 20,13 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "lentille_rouge",
+      "food_code": "4869",
+      "kind": "attachment",
+      "rationale": "Le FCÉN écrit la lentille rouge « Lentilles, roses, grains mûrs, secs » — c'est la même légumineuse, et c'est pourquoi la recherche par nom la manquait. Écartées : les lentilles brunes (3392) et les germées (2113).",
+      "provenance": "FCÉN 2026, aliment 4869 « Lentilles, roses, grains mûrs, secs » : 358 kcal, 23,91 g de protéines, 2,17 g de lipides, 63,1 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "levure_alimentaire",
+      "food_code": "4008",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas la levure alimentaire (levure inactivée en flocons). La levure de boulangerie séchée active est la même levure sous forme sèche, à 325 kcal/100 g. Écartées : la levure comprimée fraîche (4007, 105 kcal), qui est hydratée, et les poudres à pâte (4003, 4004), qui sont des agents chimiques.",
+      "provenance": "FCÉN 2026, aliment 4008 « Agent de levage, levure, boulangerie, séché, active » : 325 kcal, 40,44 g de protéines, 7,61 g de lipides, 41,22 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "levure_chimique",
+      "food_code": "4003",
+      "kind": "attachment",
+      "rationale": "La poudre à pâte à action double, phosphate : l'aliment que le fichier publie sous « Agent de levage, levure chimique » — c'est ce préfixe qui la rendait introuvable par ressemblance de nom. Écartées : la version faible en sodium (4004) et les biscuits qui en contiennent.",
+      "provenance": "FCÉN 2026, aliment 4003 « Agent de levage, levure chimique, action double, phosphate » : 51 kcal, 0,1 g de protéines, 0 g de lipides, 24,1 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "linguine",
+      "food_code": "4515",
+      "kind": "substitution",
+      "rationale": "Le FCÉN 2026 ne publie aucune forme de pâte sèche de semoule de blé dur sous son nom commercial : ni fusilli, ni penne, ni rotini, ni linguine, ni fettuccine, ni spaghettoni, ni orzo. Il publie l'aliment générique « Pâtes (spaghetti, macaroni), enrichi, sec », dont la forme ne change ni l'énergie ni les macronutriments — seule la géométrie diffère. Substitution déclarée, pas un appariement : le nom ne correspond pas, la composition oui.",
+      "provenance": "FCÉN 2026, aliment 4515 « Pâtes (spaghetti, macaroni), enrichi, sec » : 371 kcal, 13,04 g de protéines, 1,51 g de lipides, 74,67 g de glucides par 100 g. Forme sèche, conformément à l'hypothèse d'appariement du projet (les quantités de recette sont des quantités d'achat crues)."
+    },
+    {
+      "ingredient_id": "macaroni",
+      "food_code": "4515",
+      "kind": "attachment",
+      "rationale": "Les pâtes enrichies sèches, l'aliment que le fichier publie pour les macaronis. Écartées : la version aux légumes (4510), la blé entier (4516) et la non enrichie (4522), que le canon ne qualifie pas; et le macaroni au fromage en conserve (4919), qui est un plat.",
+      "provenance": "FCÉN 2026, aliment 4515 « Pâtes (spaghetti, macaroni), enrichi, sec » : 371 kcal, 13,04 g de protéines, 1,51 g de lipides, 74,67 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "mais",
+      "food_code": "2388",
+      "kind": "correction",
+      "rationale": "Le canon « mais » a été créé par la curation d'identité depuis l'aliment 4452 « Pâtes, maïs, sèches » (357 kcal/100 g) : le nom se ressemble, la classe d'aliment n'est pas la même. Les recettes qui l'utilisent désignent le légume (salsa de maïs grillé, salade de maïs), pas des pâtes. La curation de prix pouvait vivre avec cette approximation; un calcul nutritionnel non, l'écart étant de plus du quadruple.",
+      "provenance": "FCÉN 2026, aliment 2388 « Maïs sucré, jaune, cru » : 86 kcal/100 g. Forme crue, conformément à l'hypothèse d'appariement du projet (les quantités de recette sont des quantités d'achat crues)."
+    },
+    {
+      "ingredient_id": "mais_conserve",
+      "food_code": "2070",
+      "kind": "attachment",
+      "rationale": "Le maïs sucré en conserve, solides égouttés : une recette égoutte. Écartées : les versions avec le liquide (2069, 6410), dont les teneurs comptent la saumure, et la rincée (7052).",
+      "provenance": "FCÉN 2026, aliment 2070 « Maïs sucré, conserve, saumure, solides égouttés » : 67 kcal, 2,29 g de protéines, 1,22 g de lipides, 14,34 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "mais_grain_surgele",
+      "food_code": "2391",
+      "kind": "attachment",
+      "rationale": "Le maïs sucré jaune congelé en grains, non préparé. Écartés : le blanc (2491), que le canon ne nomme pas, et le maïs sec de grande culture (4415, 365 kcal), qui n'est pas un légume surgelé.",
+      "provenance": "FCÉN 2026, aliment 2391 « Maïs sucré, jaune, congelé, en grains, non préparé » : 88 kcal, 3,02 g de protéines, 0,78 g de lipides, 20,71 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "mayonnaise",
+      "food_code": "531",
+      "kind": "attachment",
+      "rationale": "La mayonnaise régulière, à 680 kcal/100 g. Écartés : « type mayonnaise » (527, 250 kcal), qui est une tartinade allégée sous un autre nom, et les versions sans gras (5490) ou à base de tofu (5480).",
+      "provenance": "FCÉN 2026, aliment 531 « Vinaigrette, mayonnaise, régulière » : 680 kcal, 0,96 g de protéines, 74,85 g de lipides, 0,57 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "melasse",
+      "food_code": "4299",
+      "kind": "attachment",
+      "rationale": "La mélasse de fantaisie est la mélasse de table. Écartée : la mélasse noire (4300, 235 kcal), qui est le résidu de troisième cuisson et un autre produit en cuisine.",
+      "provenance": "FCÉN 2026, aliment 4299 « Confiseries, mélasse de fantaisie » : 290 kcal, 0 g de protéines, 0,1 g de lipides, 74,73 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "miel",
+      "food_code": "4294",
+      "kind": "attachment",
+      "rationale": "Le miel filtré ou extrait. Le manifeste plaçait devant le melon miel (36 kcal) et une saucisse au miel : le mot est le même, l'aliment non. Rien n'était rattaché.",
+      "provenance": "FCÉN 2026, aliment 4294 « Confiseries, miel, filtre ou extrait » : 304 kcal, 0,3 g de protéines, 0 g de lipides, 82,4 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "monterey_jack",
+      "food_code": "34",
+      "kind": "attachment",
+      "rationale": "Le fromage monterey jack, nommé exactement. Écartée : la version faible en gras (5474).",
+      "provenance": "FCÉN 2026, aliment 34 « Fromage monterey jack » : 400 kcal, 24,39 g de protéines, 33,429 g de lipides, 0,44 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "moutarde_ancienne",
+      "food_code": "1135",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas la moutarde à l'ancienne (à grains). La moutarde brune prête-à-servir est la même denrée à la mouture près, et c'est déjà l'aliment retenu pour la moutarde de Dijon. Écartés : les feuilles de moutarde (2126), qui sont un légume, et la vinaigrette au miel (7045).",
+      "provenance": "FCÉN 2026, aliment 1135 « Sauce, moutarde, brune, prête-à-servir » : 91 kcal, 5,9 g de protéines, 6,3 g de lipides, 5,3 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "moutarde_dijon",
+      "food_code": "1135",
+      "kind": "substitution",
+      "rationale": "Le FCÉN 2026 ne publie pas la moutarde de Dijon. Il publie deux moutardes prêtes-à-servir : jaune (aliment 4970, 60 kcal/100 g) et brune (aliment 1135, 91 kcal/100 g). La dijon est une moutarde brune forte; c'est celle-là qui la remplace, et non la jaune américaine, plus diluée et plus sucrée.",
+      "provenance": "FCÉN 2026, aliment 1135 « Sauce, moutarde, brune, prête-à-servir » : 91 kcal/100 g."
+    },
+    {
+      "ingredient_id": "moutarde_jaune",
+      "food_code": "4970",
+      "kind": "attachment",
+      "rationale": "La moutarde jaune prête-à-servir, nommée exactement. Écartées : les feuilles de moutarde (2126, 2128), qui sont un légume, et les graines (192, 508 kcal).",
+      "provenance": "FCÉN 2026, aliment 4970 « Sauce, moutarde, jaune, prête-à-servir » : 60 kcal, 3,74 g de protéines, 3,34 g de lipides, 5,83 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "moutarde_non_precisee",
+      "food_code": "4970",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie aucune moutarde « non précisée ». La moutarde jaune prête-à-servir est la moutarde de table par défaut, à 60 kcal/100 g. Écartée : la brune (1135, 91 kcal), retenue là où le canon nomme Dijon ou l'ancienne.",
+      "provenance": "FCÉN 2026, aliment 4970 « Sauce, moutarde, jaune, prête-à-servir » : 60 kcal, 3,74 g de protéines, 3,34 g de lipides, 5,83 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "moutarde_seche",
+      "food_code": "192",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas la moutarde sèche en poudre, seulement la graine de moutarde jaune (508 kcal/100 g). C'est la même graine, moulue : la mouture ne change pas les teneurs par 100 g. La quantité par portion dépasse le plafond de l'apport négligeable de la famille des épices.",
+      "provenance": "FCÉN 2026, aliment 192 « Épices, graines de moutarde, jaunes » : 508 kcal, 26,08 g de protéines, 36,24 g de lipides, 28,09 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "mozzarella",
+      "food_code": "35",
+      "kind": "attachment",
+      "rationale": "La mozzarella générique du fichier (48 % d'humidité, 25 % M.G.). Écartés : les produits de fromage fondu (7006, 7010), qui n'en sont pas, et les versions sans gras (5512) ou faible en sodium (5619), que le canon ne qualifie pas.",
+      "provenance": "FCÉN 2026, aliment 35 « Fromage mozzarella (48%d'humidité, 25% M.G.) » : 319 kcal, 21,6 g de protéines, 24,64 g de lipides, 2,47 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "noix_grenoble",
+      "food_code": "2590",
+      "kind": "attachment",
+      "rationale": "Les noix de Grenoble, nommées exactement. Écartée : la version givrée (7221), qui est sucrée.",
+      "provenance": "FCÉN 2026, aliment 2590 « Noix de Grenoble » : 655 kcal, 15,23 g de protéines, 65,21 g de lipides, 13,71 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "nouille_oeuf",
+      "food_code": "4512",
+      "kind": "attachment",
+      "rationale": "Les nouilles aux œufs enrichies sèches. Écartées : la version non enrichie (4521), qui publie les mêmes teneurs, et celle aux épinards (4513).",
+      "provenance": "FCÉN 2026, aliment 4512 « Pâtes, nouilles aux oeufs, enrichies, sèches » : 385 kcal, 14,16 g de protéines, 4,44 g de lipides, 71,27 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "nouille_ramen_instantanee",
+      "food_code": "5347",
+      "kind": "attachment",
+      "rationale": "Les nouilles ramen sèches, toutes saveurs — le format instantané que le canon nomme, frites avant séchage (440 kcal/100 g). Écartées : les nouilles chinoises chow mein (4459) et les nouilles japonaises soba (4460) ou somen (4462), qui ne sont pas des ramen instantanés.",
+      "provenance": "FCÉN 2026, aliment 5347 « Soupe, nouilles ramen, toutes saveurs, sèche » : 440 kcal, 10,17 g de protéines, 17,59 g de lipides, 60,26 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "oeuf",
+      "food_code": "125",
+      "kind": "attachment",
+      "rationale": "Le FCÉN publie l'œuf de poule entier cru; rien n'était rattaché. Le premier candidat du manifeste était l'œuf de cane (186 kcal) faute de savoir choisir l'espèce : le canon « Œuf de calibre gros » ne la nomme pas, les recettes québécoises l'impliquent. La masse par unité se dérive à part, et l'ingrédient reste bloquant jusque-là.",
+      "provenance": "FCÉN 2026, aliment 125 « Oeuf, poule, entier, frais ou congelé, cru » : 152 kcal, 12,268 g de protéines, 10,608 g de lipides, 0,793 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "oignon_jaune",
+      "food_code": "2401",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas la variété jaune. « Oignon, cru » est le générique dont elle relève, et c'est aussi l'aliment déjà retenu pour l'ingrédient « oignon ». Écartés : l'oignon doux (5414, 32 kcal), qui est une variété nommée, et l'oignon vert, qui est une autre espèce culinaire.",
+      "provenance": "FCÉN 2026, aliment 2401 « Oignon, cru » : 40 kcal, 1,1 g de protéines, 0,1 g de lipides, 9,34 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "oignon_rouge",
+      "food_code": "2401",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas la variété rouge. « Oignon, cru » est le générique dont elle relève, déjà retenu pour « oignon » et « oignon jaune ». Écarté : l'oignon doux (5414), qui est une variété nommée.",
+      "provenance": "FCÉN 2026, aliment 2401 « Oignon, cru » : 40 kcal, 1,1 g de protéines, 0,1 g de lipides, 9,34 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "oignon_vert",
+      "food_code": "2144",
+      "kind": "primary",
+      "rationale": "Deux aliments rattachés : 2144 « Oignon, vert (inclus le bout et le bulbe) » et 2145 « Oignon vert (ciboule) », qui est l'oignon de Galles (Welsh onion), une autre espèce. L'oignon vert des recettes québécoises est le premier.",
+      "provenance": "FCÉN 2026, aliment 2144 « Oignon, vert (inclus le bout et le bulbe), cru » : 32 kcal/100 g. Masse de service publiée : 1 moyen (10,5 cm) = 15 g."
+    },
+    {
+      "ingredient_id": "olive_kalamata",
+      "food_code": "1613",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas l'olive Kalamata. L'olive mûre en conserve est l'olive noire du fichier, à 116 kcal/100 g. Écartée : l'olive verte marinée (5391, 146 kcal), qui est saumurée autrement, et le format jumbo (1614), qui publie 81 kcal pour la même olive — écart que le canon ne permet pas de trancher, le format n'étant pas nommé.",
+      "provenance": "FCÉN 2026, aliment 1613 « Olive, mûre, conserve, petite à extra large » : 116 kcal, 0,84 g de protéines, 10,9 g de lipides, 6,04 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "olive_verte",
+      "food_code": "5391",
+      "kind": "attachment",
+      "rationale": "L'olive verte marinée en conserve ou embouteillée, nommée exactement. Écartées : les olives mûres (1613, 1614), qui sont noires.",
+      "provenance": "FCÉN 2026, aliment 5391 « Olive, marinée, conserve ou embouteillées, verte » : 146 kcal, 1,03 g de protéines, 15,32 g de lipides, 3,84 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "origan_seche",
+      "food_code": "195",
+      "kind": "attachment",
+      "rationale": "L'origan moulu, seul origan séché du fichier (265 kcal/100 g). La quantité par portion dépasse le plafond de l'apport négligeable, donc l'omission n'est plus déclarable.",
+      "provenance": "FCÉN 2026, aliment 195 « Épices, origan, moulu » : 265 kcal, 9 g de protéines, 4,28 g de lipides, 68,92 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "orzo",
+      "food_code": "4515",
+      "kind": "substitution",
+      "rationale": "Le FCÉN 2026 ne publie aucune forme de pâte sèche de semoule de blé dur sous son nom commercial : ni fusilli, ni penne, ni rotini, ni linguine, ni fettuccine, ni spaghettoni, ni orzo. Il publie l'aliment générique « Pâtes (spaghetti, macaroni), enrichi, sec », dont la forme ne change ni l'énergie ni les macronutriments — seule la géométrie diffère. Substitution déclarée, pas un appariement : le nom ne correspond pas, la composition oui.",
+      "provenance": "FCÉN 2026, aliment 4515 « Pâtes (spaghetti, macaroni), enrichi, sec » : 371 kcal, 13,04 g de protéines, 1,51 g de lipides, 74,67 g de glucides par 100 g. Forme sèche, conformément à l'hypothèse d'appariement du projet (les quantités de recette sont des quantités d'achat crues)."
+    },
+    {
+      "ingredient_id": "pain_levain",
+      "food_code": "4063",
+      "kind": "attachment",
+      "rationale": "Le fichier nomme le levain dans cet aliment (« Pain, Français ou Viennois (aussi levain) »). Écartés : le pain italien (3700) et le bâtonnet nature (3739).",
+      "provenance": "FCÉN 2026, aliment 4063 « Pain, Français ou Viennois (aussi levain) » : 272 kcal, 10,75 g de protéines, 2,42 g de lipides, 51,88 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "pain_pita",
+      "food_code": "3708",
+      "kind": "attachment",
+      "rationale": "Le pain pita blanc. Écartés : la version blé entier (3709) et les styles grecs (7915, 7916), que le canon ne nomme pas. L'ingrédient se compte à l'unité et reste bloquant jusqu'à sa masse par unité.",
+      "provenance": "FCÉN 2026, aliment 3708 « Pain, pita, blanc » : 301,015991808 kcal, 10,498217587 g de protéines, 1,695 g de lipides, 59,703688161 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "pain_sous_marin",
+      "food_code": "3700",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas de pain à sous-marin. Le pain italien est le pain blanc en miche allongée du fichier, à 260 kcal/100 g. Écartés : le bâtonnet nature (3739, 412 kcal), qui est un gressin, et les petits pains aux œufs (3979) ou au son (3980). L'ingrédient se compte à l'unité et reste bloquant jusqu'à sa masse par unité.",
+      "provenance": "FCÉN 2026, aliment 3700 « Pain, Italien » : 260 kcal, 8,82 g de protéines, 2,51 g de lipides, 49,44 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "pain_tranche_blanc",
+      "food_code": "4066",
+      "kind": "attachment",
+      "rationale": "Le pain blanc commercial. Écartés : le pain pita (3708), le pain maison au lait (3735) et la version réduite en sodium (4036). L'ingrédient se compte à la tranche : il reste bloquant jusqu'à ce qu'une masse par unité soit dérivée.",
+      "provenance": "FCÉN 2026, aliment 4066 « Pain, blanc, commercial » : 261 kcal, 9,14 g de protéines, 2,66 g de lipides, 49,21 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "pancetta",
+      "food_code": "1936",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas la pancetta — aucun candidat. Le bacon de porc cru salé est la même pièce (poitrine de porc salée) sans le fumage, à 393 kcal/100 g. Écart assumé : le fumage du bacon, qui ne déplace pas les macronutriments publiés.",
+      "provenance": "FCÉN 2026, aliment 1936 « Porc, salé, bacon, cru » : 393 kcal, 13,66 g de protéines, 37,13 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "parmesan",
+      "food_code": "40",
+      "kind": "attachment",
+      "rationale": "Le parmesan en pâte dure est la forme d'achat que les recettes râpent. Écartés : « râpé en filaments » (415 kcal), qui est le même fromage vendu râpé, et « longue conservation » (424). L'écart entre les formes du fichier est de 32 kcal/100 g au plus.",
+      "provenance": "FCÉN 2026, aliment 40 « Fromage parmesan, pâte dure » : 392 kcal, 35,75 g de protéines, 25 g de lipides, 3,22 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "pate_miso",
+      "food_code": "3319",
+      "kind": "attachment",
+      "rationale": "Le seul miso du fichier (« Soya, produits fermentés, miso »). Le manifeste ne le trouvait pas : la recherche par jetons sur « pâte » remontait des pâtés de viande.",
+      "provenance": "FCÉN 2026, aliment 3319 « Soya, produits fermentés, miso » : 198 kcal, 12,79 g de protéines, 6,01 g de lipides, 25,37 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "pate_phyllo",
+      "food_code": "3974",
+      "kind": "attachment",
+      "rationale": "La pâte phyllo, nommée exactement (« Phyllo, pâte »). Le manifeste plaçait devant des pâtés de viande, remontés par le mot « pâte ».",
+      "provenance": "FCÉN 2026, aliment 3974 « Phyllo, pâte » : 299 kcal, 7,1 g de protéines, 6 g de lipides, 52,6 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "pate_tomate",
+      "food_code": "6579",
+      "kind": "attachment",
+      "rationale": "La pâte de tomates en conserve. Écartées : la version sans sel ajouté (2258), qui publie les mêmes quatre nombres mais que le canon ne qualifie pas; et les pâtés de viande, remontés par le mot « pâte ».",
+      "provenance": "FCÉN 2026, aliment 6579 « Produits à base de tomates, conserve, pâte » : 82 kcal, 4,32 g de protéines, 0,47 g de lipides, 18,91 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "pate_wonton",
+      "food_code": "4001",
+      "kind": "attachment",
+      "rationale": "L'enveloppe à wonton (aussi à rouleaux impériaux), nommée exactement, à 291 kcal/100 g. Écarté : le wonton farci congelé (7274), qui est le produit garni. L'ingrédient se compte à l'unité et reste bloquant jusqu'à sa masse par unité.",
+      "provenance": "FCÉN 2026, aliment 4001 « Wonton, enveloppe (enveloppe à rouleaux impériaux) » : 291 kcal, 9,8 g de protéines, 1,5 g de lipides, 57,9 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "pecorino_romano",
+      "food_code": "45",
+      "kind": "attachment",
+      "rationale": "Le fromage romano est le seul romano du fichier; le pecorino est le romano au lait de brebis. Écart assumé sur la matière grasse du lait de brebis, non publié séparément.",
+      "provenance": "FCÉN 2026, aliment 45 « Fromage romano » : 387 kcal, 31,8 g de protéines, 26,94 g de lipides, 3,63 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "penne",
+      "food_code": "4515",
+      "kind": "substitution",
+      "rationale": "Le FCÉN 2026 ne publie aucune forme de pâte sèche de semoule de blé dur sous son nom commercial : ni fusilli, ni penne, ni rotini, ni linguine, ni fettuccine, ni spaghettoni, ni orzo. Il publie l'aliment générique « Pâtes (spaghetti, macaroni), enrichi, sec », dont la forme ne change ni l'énergie ni les macronutriments — seule la géométrie diffère. Substitution déclarée, pas un appariement : le nom ne correspond pas, la composition oui.",
+      "provenance": "FCÉN 2026, aliment 4515 « Pâtes (spaghetti, macaroni), enrichi, sec » : 371 kcal, 13,04 g de protéines, 1,51 g de lipides, 74,67 g de glucides par 100 g. Forme sèche, conformément à l'hypothèse d'appariement du projet (les quantités de recette sont des quantités d'achat crues)."
+    },
+    {
+      "ingredient_id": "persil_frais_non_precise",
+      "food_code": "2405",
+      "kind": "attachment",
+      "rationale": "Le FCÉN publie « Persil, frais » sans distinguer les variétés : le « non précisé » du canon est exactement ce que cet aliment couvre. Les autres candidats sont des fraises, remontées par le pied « frais ».",
+      "provenance": "FCÉN 2026, aliment 2405 « Persil, frais » : 36 kcal, 2,97 g de protéines, 0,79 g de lipides, 6,33 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "persil_plat",
+      "food_code": "2405",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne distingue pas le persil plat du frisé : il publie « Persil, frais ». La substitution est déclarée plutôt que présentée comme un rattachement exact.",
+      "provenance": "FCÉN 2026, aliment 2405 « Persil, frais » : 36 kcal, 2,97 g de protéines, 0,79 g de lipides, 6,33 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "pilon_poulet",
+      "food_code": "844",
+      "kind": "attachment",
+      "rationale": "Le pilon de poulet cru, viande et peau : un pilon se cuisine avec sa peau. Écartée : la viande seule (847, 116 kcal), et les formes à l'étuvée, qui sont cuites.",
+      "provenance": "FCÉN 2026, aliment 844 « Poulet à griller, pilon, viande et peau, cru » : 161 kcal, 18,08 g de protéines, 9,2 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "pleurote_erige",
+      "food_code": "4866",
+      "kind": "attachment",
+      "rationale": "Le pleurote cru, seul pleurote du fichier.",
+      "provenance": "FCÉN 2026, aliment 4866 « Champignon, pleurote, cru » : 33 kcal, 3,31 g de protéines, 0,41 g de lipides, 6,09 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "poire",
+      "food_code": "7125",
+      "kind": "primary",
+      "rationale": "Cinq aliments sont rattachés, tous des variétés : asiatique (1693, 42 kcal), Bartlett (7125, 63), anjou rouge (7211, 62), anjou verte (7213, 62), bosc (7212, 67). Le générique « Poire, crue, avec pelure » (1731, 57) n'est pas rattaché, donc pas éligible à un « primary ». La Bartlett est la poire d'épicerie courante au Québec, et l'écart entre les quatre variétés européennes rattachées est de 5 kcal/100 g. L'asiatique est écartée : c'est un autre fruit, à 42 kcal.",
+      "provenance": "FCÉN 2026, aliment 7125 « Poire, Bartlett, crue » : 63 kcal, 0,39 g de protéines, 0,16 g de lipides, 15,01 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "poireau",
+      "food_code": "2396",
+      "kind": "attachment",
+      "rationale": "Le seul poireau du fichier, cru, bulbe et portion inférieure — la partie qu'une recette utilise. Le manifeste l'a trouvé là où la similarité de chaînes échouait sur le pluriel et la parenthèse.",
+      "provenance": "FCÉN 2026, aliment 2396 « Poireaux (bulbe et portion inférieure), crus » : 61 kcal, 1,5 g de protéines, 0,3 g de lipides, 14,15 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "pois_chiche_conserve",
+      "food_code": "7060",
+      "kind": "attachment",
+      "rationale": "Les pois chiches en conserve, égouttés. Écartées : les versions avec le liquide (3279, 7242), dont les teneurs comptent la saumure, et la rincée (7061), qui ne diffère que de 1 kcal.",
+      "provenance": "FCÉN 2026, aliment 7060 « Pois chiches (garbanzo), conserve, égouttés » : 139 kcal, 7,05 g de protéines, 2,77 g de lipides, 22,53 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "pois_jaune_entier",
+      "food_code": "3394",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas le pois jaune entier, seulement le pois cassé sec (364 kcal/100 g) — la même légumineuse, fendue. Écartés : le pois cajan (3312), qui est une autre espèce, et les pois verts frais (2409).",
+      "provenance": "FCÉN 2026, aliment 3394 « Pois, cassés, grains mûrs, secs » : 364 kcal, 23,12 g de protéines, 3,89 g de lipides, 61,63 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "poivron_melange",
+      "food_code": "2484",
+      "kind": "substitution",
+      "rationale": "Le canon nomme un mélange de couleurs, que le FCÉN ne publie pas. Le poivron rouge cru est le générique retenu, et l'écart entre les couleurs publiées est de 7 kcal/100 g (vert 20, jaune 27, rouge 26). Écartés : les mélanges à farce, remontés par le mot « mélange ».",
+      "provenance": "FCÉN 2026, aliment 2484 « Poivron rouge, cru » : 26 kcal, 0,99 g de protéines, 0,3 g de lipides, 6,03 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "pomme_de_terre",
+      "food_code": "2505",
+      "kind": "attachment",
+      "rationale": "Chair et pelure crues : les recettes qui pèsent des pommes de terre les pèsent entières. Écartés : la chair seule (2417) et la pelure seule (2418), qui sont des parties, et les variétés nommées (Russet, blanche), que le canon ne nomme pas.",
+      "provenance": "FCÉN 2026, aliment 2505 « Pomme de terre, chair et pelure, crue » : 77 kcal, 2,05 g de protéines, 0,09 g de lipides, 17,49 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "porc_cotelette",
+      "food_code": "1781",
+      "kind": "attachment",
+      "rationale": "La côtelette de longe de porc, milieu, avec os, maigre et gras, crue : une côtelette s'achète avec son gras et son os. Écartées : la version maigre seule (1785, 127 kcal) et les côtelettes de surlonge (1801) ou de bout de côte (1793), que le canon ne nomme pas.",
+      "provenance": "FCÉN 2026, aliment 1781 « Porc, longe, milieu (côtelette centre), avec os, maigre et gras, cru » : 170 kcal, 20,71 g de protéines, 9,03 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "porc_hache",
+      "food_code": "6121",
+      "kind": "attachment",
+      "rationale": "Le canon ne qualifie pas la maigreur; le porc haché mi-maigre est le format de détail courant. Écart assumé : 49 kcal/100 g de plus que le maigre (221), 45 de moins que les fricadelles salées (315) que le manifeste plaçait troisième.",
+      "provenance": "FCÉN 2026, aliment 6121 « Porc, haché, mi-maigre, cru » : 270 kcal, 17,3 g de protéines, 21,7 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "poudre_boisson_aromatisee",
+      "food_code": "2982",
+      "kind": "substitution",
+      "rationale": "Le canon ne nomme pas l'arôme; le FCÉN publie la poudre à saveur de limonade (380 kcal/100 g), qui est ce type de préparation. Écartées : les poudres protéinées (7231, 7232), qui sont des suppléments, et la poudre de caroube (2862).",
+      "provenance": "FCÉN 2026, aliment 2982 « Boisson, saveur limonade, poudre » : 380 kcal, 0 g de protéines, 1,01 g de lipides, 97,9 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "poulet_cuisse",
+      "food_code": "607",
+      "kind": "attachment",
+      "rationale": "La cuisse de poulet crue, viande et peau : une cuisse se cuisine avec sa peau. Écartée : la viande seule (612, 120 kcal), et les formes à l'étuvée, qui sont cuites.",
+      "provenance": "FCÉN 2026, aliment 607 « Poulet à griller, cuisse, viande et peau, cru » : 214 kcal, 16,37 g de protéines, 15,95 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "poulet_hache",
+      "food_code": "918",
+      "kind": "attachment",
+      "rationale": "Le poulet haché maigre cru, nommé exactement. Écartés : les abats de chapon (660) et le poulet de Cornouailles (817).",
+      "provenance": "FCÉN 2026, aliment 918 « Poulet, haché, maigre, cru » : 143 kcal, 17,44 g de protéines, 8,1 g de lipides, 0,04 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "poulet_non_precise",
+      "food_code": "565",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie aucun « poulet non précisé ». « Poulet à griller, viande seulement, cru » est le générique de chair de poulet sans peau, à 119 kcal/100 g. Écartés : la viande avec peau (560, 215 kcal), les abats et le poulet haché (918), qui sont des coupes nommées.",
+      "provenance": "FCÉN 2026, aliment 565 « Poulet à griller, viande seulement, cru » : 119 kcal, 21,39 g de protéines, 3,08 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "poulet_poitrine",
+      "food_code": "841",
+      "kind": "attachment",
+      "rationale": "La poitrine de poulet crue, désossée et sans la peau — la forme vendue en épicerie et celle que les recettes emploient. Écartée : la poitrine avec peau (838, 172 kcal).",
+      "provenance": "FCÉN 2026, aliment 841 « Poulet à griller, poitrine, sans la peau, désossée, viande, crue » : 120 kcal, 22,5 g de protéines, 2,62 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "prosciutto",
+      "food_code": "6306",
+      "kind": "attachment",
+      "rationale": "Le prosciutto salé à sec (jambon de Parme), à 306 kcal/100 g. Écarté : le prosciutto cotto extra maigre (7152, 126 kcal), qui est un jambon cuit — le canon nomme le cru.",
+      "provenance": "FCÉN 2026, aliment 6306 « Charcuterie, prosciutto, (jambon de Parme), salé à sec » : 306 kcal, 26,65 g de protéines, 16,27 g de lipides, 11,71 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "provolone",
+      "food_code": "42",
+      "kind": "attachment",
+      "rationale": "Le fromage provolone, nommé exactement. Écartée : la version réduite en gras (6311).",
+      "provenance": "FCÉN 2026, aliment 42 « Fromage provolone » : 330 kcal, 24,68 g de protéines, 23,711 g de lipides, 4,09 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "raisin_sec",
+      "food_code": "1745",
+      "kind": "attachment",
+      "rationale": "Le raisin sec sans pépin (sultana), le raisin sec courant. Écartés : le doré (1744) et l'épépiné (1746), qui publient 296 à 302 kcal — 6 kcal d'écart entre les trois.",
+      "provenance": "FCÉN 2026, aliment 1745 « Raisin sec, sans pépin (sultana) » : 299 kcal, 3,07 g de protéines, 0,46 g de lipides, 79,18 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "ravioli_fromage",
+      "food_code": "5455",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas de ravioli au fromage frais. Les tortellinis au fromage frais réfrigérés sont la même denrée — pâte fraîche farcie de fromage — à 307 kcal/100 g. Écartés : le ravioli en conserve (7103, 77 kcal) et le congelé en sauce (7036), qui sont des plats cuisinés.",
+      "provenance": "FCÉN 2026, aliment 5455 « Pâtes, fraîches-réfrigérées, tortellinis au fromage, tel qu'acheté » : 307 kcal, 13,5 g de protéines, 7,23 g de lipides, 47 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "relish",
+      "food_code": "2340",
+      "kind": "attachment",
+      "rationale": "La relish sucrée, la relish de table. Écartées : la relish à hambourgeois (2351) et à hot-dog (2339), qui sont des variantes assaisonnées, et la relish canneberge-orange (1540).",
+      "provenance": "FCÉN 2026, aliment 2340 « Marinades, relish, sucrée » : 130 kcal, 0,37 g de protéines, 0,47 g de lipides, 35,06 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "ricotta",
+      "food_code": "43",
+      "kind": "attachment",
+      "rationale": "Le fromage ricotta, nommé exactement. Écartée : la version légère (44).",
+      "provenance": "FCÉN 2026, aliment 43 « Fromage ricotta » : 193 kcal, 9,83 g de protéines, 14,407 g de lipides, 6,37 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "riz_arborio",
+      "food_code": "4476",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas la variété arborio. Le riz blanc à grain court sec est la classe dont elle relève (358 kcal/100 g). Écarté : le riz glutineux (4424), qui est un autre riz collant.",
+      "provenance": "FCÉN 2026, aliment 4476 « Grains céréaliers, riz blanc, grain court, sec » : 358 kcal, 6,5 g de protéines, 0,52 g de lipides, 79,15 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "riz_basmati",
+      "food_code": "4471",
+      "kind": "substitution",
+      "rationale": "Le FCÉN 2026 ne publie pas la variété basmati. Le riz blanc à grain long ordinaire est la variété générique dont le basmati est une sélection : même grain long, même traitement, teneurs publiées à 365 kcal/100 g. Substitution déclarée, avec l'écart assumé sur l'amidon (le basmati est un peu moins riche en amidon résistant, ce qui ne change ni l'énergie ni les macros retenues).",
+      "provenance": "FCÉN 2026, aliment 4471 « Grains céréaliers, riz blanc, grain long, ordinaire, sec » : 365 kcal/100 g. Forme sèche, conformément à l'hypothèse d'appariement du projet."
+    },
+    {
+      "ingredient_id": "riz_brun_long",
+      "food_code": "4496",
+      "kind": "attachment",
+      "rationale": "Le riz brun à grain long sec, nommé exactement. Écartés : le grain moyen (4422) et les riz blancs (4471, 4472).",
+      "provenance": "FCÉN 2026, aliment 4496 « Grains céréaliers, riz brun, grain long, sec » : 367 kcal, 7,54 g de protéines, 3,2 g de lipides, 76,25 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "riz_calrose",
+      "food_code": "4474",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas la variété Calrose. Le riz blanc à grain moyen sec est la classe dont elle relève (360 kcal/100 g).",
+      "provenance": "FCÉN 2026, aliment 4474 « Grains céréaliers, riz blanc, grain moyen, sec » : 360 kcal, 6,61 g de protéines, 0,58 g de lipides, 79,34 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "riz_etuve",
+      "food_code": "4472",
+      "kind": "attachment",
+      "rationale": "Le riz blanc à grain long étuvé, sec, nommé exactement. Les autres candidats sont des riz assaisonnés en mélange.",
+      "provenance": "FCÉN 2026, aliment 4472 « Grains céréaliers, riz blanc, grain long, étuvé, sec » : 374 kcal, 7,51 g de protéines, 1,03 g de lipides, 80,89 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "riz_non_precise",
+      "food_code": "4471",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie aucun riz « non précisé ». Le riz blanc à grain long ordinaire sec est le riz générique du fichier, déjà retenu pour le basmati. Écartés : les riz assaisonnés en mélange (7448, 7696, 7701), qui sont des préparations.",
+      "provenance": "FCÉN 2026, aliment 4471 « Grains céréaliers, riz blanc, grain long, ordinaire, sec » : 365 kcal, 7,13 g de protéines, 0,66 g de lipides, 79,95 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "rotini",
+      "food_code": "4515",
+      "kind": "substitution",
+      "rationale": "Le FCÉN 2026 ne publie aucune forme de pâte sèche de semoule de blé dur sous son nom commercial : ni fusilli, ni penne, ni rotini, ni linguine, ni fettuccine, ni spaghettoni, ni orzo. Il publie l'aliment générique « Pâtes (spaghetti, macaroni), enrichi, sec », dont la forme ne change ni l'énergie ni les macronutriments — seule la géométrie diffère. Substitution déclarée, pas un appariement : le nom ne correspond pas, la composition oui.",
+      "provenance": "FCÉN 2026, aliment 4515 « Pâtes (spaghetti, macaroni), enrichi, sec » : 371 kcal, 13,04 g de protéines, 1,51 g de lipides, 74,67 g de glucides par 100 g. Forme sèche, conformément à l'hypothèse d'appariement du projet (les quantités de recette sont des quantités d'achat crues)."
+    },
+    {
+      "ingredient_id": "salsa",
+      "food_code": "1025",
+      "kind": "attachment",
+      "rationale": "La sauce salsa prête-à-servir, nommée exactement. Écartées : la salsa verde (7044), que le canon ne nomme pas, et les plats qui en contiennent.",
+      "provenance": "FCÉN 2026, aliment 1025 « Sauce, salsa, prête-à-servir » : 29 kcal, 1,52 g de protéines, 0,17 g de lipides, 6,64 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "sambal_oelek",
+      "food_code": "5354",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas le sambal oelek — aucun candidat, même par jetons. La sauce de piments forts rouges en conserve est la préparation équivalente : piments rouges broyés, vinaigre, sel, à 21 kcal/100 g. C'est aussi l'aliment retenu pour les chipotle en sauce adobo.",
+      "provenance": "FCÉN 2026, aliment 5354 « Sauce, chili, piments forts, chili, rouges, conserve » : 21 kcal, 0,9 g de protéines, 0,6 g de lipides, 3,9 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "sauce_chili",
+      "food_code": "5364",
+      "kind": "attachment",
+      "rationale": "La sauce chili en bouteille, à base de tomates — la sauce chili de table (92 kcal/100 g). Écartées : les sauces de piments forts en conserve (5354, 5355), qui sont des purées de piment, et la sriracha (7593), retenue sous son propre canon.",
+      "provenance": "FCÉN 2026, aliment 5364 « Sauce, tomate, sauce chili, bouteille, sel ajouté » : 92 kcal, 2,5 g de protéines, 0,3 g de lipides, 19,79 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "sauce_hoisin",
+      "food_code": "4729",
+      "kind": "attachment",
+      "rationale": "La sauce hoisin prête-à-servir, nommée exactement. Les autres candidats sont des sauces sans rapport, remontées par le mot « sauce ».",
+      "provenance": "FCÉN 2026, aliment 4729 « Sauce, hoisin, prête-à-servir » : 220 kcal, 3,31 g de protéines, 3,39 g de lipides, 44,08 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "sauce_piquante",
+      "food_code": "1029",
+      "kind": "attachment",
+      "rationale": "La sauce de piments forts prête-à-servir, à 11 kcal/100 g : c'est la sauce piquante générique du fichier. Le manifeste ne la trouvait pas — la recherche par jetons sur « sauce » et « piquante » remontait des sauces sans rapport. Écartée : la Tabasco (1030), retenue sous son propre canon.",
+      "provenance": "FCÉN 2026, aliment 1029 « Sauce, piments forts, prête-à-servir » : 11 kcal, 0,51 g de protéines, 0,37 g de lipides, 1,75 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "sauce_poisson",
+      "food_code": "4731",
+      "kind": "attachment",
+      "rationale": "La sauce de poisson prête-à-servir, nommée exactement. Les autres candidats sont des sardines et des sauces sans rapport, remontées par les mots « sauce » et « poisson ».",
+      "provenance": "FCÉN 2026, aliment 4731 « Sauce, poisson, prête-à-servir » : 35 kcal, 5,06 g de protéines, 0,01 g de lipides, 3,64 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "sauce_soja",
+      "food_code": "3403",
+      "kind": "attachment",
+      "rationale": "Le shoyu ordinaire (soya et blé) est la sauce soja de détail. Le manifeste ne la trouvait pas : le FCÉN l'écrit « Soya, sauce », et la recherche par jetons sur « sauce » remontait des sauces sans rapport. Écartés : le tamari (3329, sans blé) et la version réduite en sodium (3416).",
+      "provenance": "FCÉN 2026, aliment 3403 « Soya, sauce (fait avec soya et blé) shoyu, ordinaire » : 53 kcal, 8,14 g de protéines, 0,57 g de lipides, 4,93 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "sauce_tabasco",
+      "food_code": "1030",
+      "kind": "attachment",
+      "rationale": "La sauce Tabasco, nommée exactement par le fichier.",
+      "provenance": "FCÉN 2026, aliment 1030 « Sauce, piments, Tabasco, prête-à-servir » : 12 kcal, 1,29 g de protéines, 0,76 g de lipides, 0,8 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "sauce_tomate",
+      "food_code": "2465",
+      "kind": "attachment",
+      "rationale": "La sauce tomate en conserve, générique. Écartées : la version sans sel (5557), qui publie les mêmes quatre nombres mais que le canon ne qualifie pas, et les sauces aux oignons (2261) ou aux champignons (2466).",
+      "provenance": "FCÉN 2026, aliment 2465 « Produits à base de tomates, conserve, sauce » : 24 kcal, 1,2 g de protéines, 0,3 g de lipides, 5,31 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "sauce_worcestershire",
+      "food_code": "1133",
+      "kind": "attachment",
+      "rationale": "Nommée exactement par le fichier, prête-à-servir. Les quatre autres candidats sont des sauces sans rapport, remontées par le seul mot « sauce ».",
+      "provenance": "FCÉN 2026, aliment 1133 « Sauce, worcestershire, prête-à-servir » : 77 kcal, 0 g de protéines, 0 g de lipides, 19,17 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "saucisse_cocktail",
+      "food_code": "1174",
+      "kind": "attachment",
+      "rationale": "Les saucisses de Vienne (cocktail) en conserve, nommées exactement par le fichier. Écartées : les saucisses italiennes (1152) et Bratwurst (7338), qui sont des saucisses crues à cuire.",
+      "provenance": "FCÉN 2026, aliment 1174 « Saucisse, Vienne (cocktail), conserve, poulet, boeuf et porc » : 230 kcal, 10,5 g de protéines, 19,4 g de lipides, 2,6 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "saucisse_italienne",
+      "food_code": "1152",
+      "kind": "attachment",
+      "rationale": "La saucisse italienne de porc crue, nommée exactement. Écartées : la version réduite en gras (7332), celle de dinde (7334) et la Bratwurst (7338).",
+      "provenance": "FCÉN 2026, aliment 1152 « Saucisse, italienne, porc, crue » : 263 kcal, 14,85 g de protéines, 17,58 g de lipides, 10,7 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "saucisse_toulouse",
+      "food_code": "1198",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas la saucisse de Toulouse. La saucisse à déjeuner de porc crue est la saucisse de porc fraîche non assaisonnée du fichier, à 275 kcal/100 g. Écartées : l'italienne (1152), qui porte du fenouil, la Bratwurst (7338) et la Bockwurst (1140), qui portent du lait et des œufs.",
+      "provenance": "FCÉN 2026, aliment 1198 « Saucisse à déjeuner, en chapelet ou en galette, porc, crue » : 275 kcal, 13,85 g de protéines, 21,15 g de lipides, 6,56 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "saumon_filet",
+      "food_code": "3182",
+      "kind": "attachment",
+      "rationale": "Le saumon atlantique d'élevage cru, à 208 kcal/100 g : c'est le saumon vendu en filet au Québec. Écarté : le sauvage (3049, 142 kcal), qui est plus maigre et n'est pas ce que l'épicerie vend en filet frais. Le manifeste ne trouvait aucun saumon : il proposait des filets d'autruche et d'émeu sur le seul mot « filet ».",
+      "provenance": "FCÉN 2026, aliment 3182 « Poisson, saumon, atlantique, élevage, cru » : 208 kcal, 20,42 g de protéines, 13,42 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "sirop_aromatise",
+      "food_code": "5456",
+      "kind": "substitution",
+      "rationale": "Le canon ne nomme pas l'arôme; le FCÉN ne publie pas de sirop « aromatisé » générique. Le sirop de grenadine est le sirop de sucre aromatisé du fichier, à 268 kcal/100 g. Écartés : le sirop de malt (4325) et le sorgho (4327), qui sont des sirops de céréale, et le diététique (5522), qui est édulcoré.",
+      "provenance": "FCÉN 2026, aliment 5456 « Confiseries, sirop, grenadine » : 268 kcal, 0 g de protéines, 0 g de lipides, 66,91 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "sirop_erable",
+      "food_code": "4326",
+      "kind": "attachment",
+      "rationale": "Le sirop d'érable en vrac est le sirop d'épicerie. Écartés : les sirops de table à 2 % et 15 % d'érable (4328, 4329), qui sont des sirops de sucre aromatisés — le nom se ressemble, le produit non. Le préemballé (6175) ne diffère que de 2 kcal/100 g.",
+      "provenance": "FCÉN 2026, aliment 4326 « Confiseries, sirop d'érable, en vrac » : 272 kcal, 0,09226 g de protéines, 0,244 g de lipides, 67,24 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "spaghetti",
+      "food_code": "4515",
+      "kind": "attachment",
+      "rationale": "Les pâtes enrichies sèches, l'aliment que le fichier publie pour les spaghettis. Écartées : la version aux épinards (4518), la non enrichie (4522) et la blé entier (4516), que le canon ne qualifie pas.",
+      "provenance": "FCÉN 2026, aliment 4515 « Pâtes (spaghetti, macaroni), enrichi, sec » : 371 kcal, 13,04 g de protéines, 1,51 g de lipides, 74,67 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "spaghettoni",
+      "food_code": "4515",
+      "kind": "substitution",
+      "rationale": "Le FCÉN 2026 ne publie aucune forme de pâte sèche de semoule de blé dur sous son nom commercial : ni fusilli, ni penne, ni rotini, ni linguine, ni fettuccine, ni spaghettoni, ni orzo. Il publie l'aliment générique « Pâtes (spaghetti, macaroni), enrichi, sec », dont la forme ne change ni l'énergie ni les macronutriments — seule la géométrie diffère. Substitution déclarée, pas un appariement : le nom ne correspond pas, la composition oui.",
+      "provenance": "FCÉN 2026, aliment 4515 « Pâtes (spaghetti, macaroni), enrichi, sec » : 371 kcal, 13,04 g de protéines, 1,51 g de lipides, 74,67 g de glucides par 100 g. Forme sèche, conformément à l'hypothèse d'appariement du projet (les quantités de recette sont des quantités d'achat crues)."
+    },
+    {
+      "ingredient_id": "sriracha",
+      "food_code": "7593",
+      "kind": "attachment",
+      "rationale": "La sauce sriracha, nommée exactement, prête-à-servir. Les autres candidats sont des sauces sans rapport, remontées par le seul mot « sauce ».",
+      "provenance": "FCÉN 2026, aliment 7593 « Sauce, chili, forte, sriracha, prête-à-servir » : 93 kcal, 1,93 g de protéines, 0,93 g de lipides, 19,16 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "sucre_blanc",
+      "food_code": "4318",
+      "kind": "attachment",
+      "rationale": "Le sucre granulé blanc. Le manifeste plaçait devant du maïs sucré blanc (86 kcal) : le mot « blanc » est commun, l'aliment non. Écarté : le sucre à glacer (4319), qui est moulu avec de l'amidon.",
+      "provenance": "FCÉN 2026, aliment 4318 « Confiseries, sucre, granulé (blanc) » : 387 kcal, 0 g de protéines, 0 g de lipides, 99,8 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "sucre_non_precise",
+      "food_code": "4318",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie aucun sucre « non précisé ». Le sucre granulé blanc est le sucre par défaut, déjà retenu pour « sucre blanc ». Écartés : le sucre à glacer (4319) et la cassonade (4317), que le canon nommerait s'il les visait.",
+      "provenance": "FCÉN 2026, aliment 4318 « Confiseries, sucre, granulé (blanc) » : 387 kcal, 0 g de protéines, 0 g de lipides, 99,8 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "thon_conserve_eau",
+      "food_code": "3081",
+      "kind": "attachment",
+      "rationale": "Le thon pâle en conserve dans l'eau, égoutté — la conserve courante. Écarté : le thon blanc (3084, 128 kcal), qui est le germon vendu plus cher; les versions sans sel ne changent pas les quatre nombres retenus.",
+      "provenance": "FCÉN 2026, aliment 3081 « Poisson, thon, chair pale, conserve, dans l'eau, égoutté, sel ajouté » : 86 kcal, 19,44 g de protéines, 0,96 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "thon_conserve_huile",
+      "food_code": "3207",
+      "kind": "attachment",
+      "rationale": "Le thon pâle en conserve dans l'huile, égoutté. Même arbitrage que pour la conserve dans l'eau : le pâle est la conserve courante.",
+      "provenance": "FCÉN 2026, aliment 3207 « Poisson, thon, chair pale, conserve, dans l'huile, égoutté, sel ajouté » : 198 kcal, 29,13 g de protéines, 8,21 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "tofu_ferme",
+      "food_code": "3418",
+      "kind": "attachment",
+      "rationale": "Le tofu régulier mi-ferme ou ferme (préparé au sulfate de calcium), à 76 kcal/100 g. Écartés : les tofus soyeux (4911, 4913, 4914), qui sont un autre produit malgré le mot « ferme » dans leur nom.",
+      "provenance": "FCÉN 2026, aliment 3418 « Tofu, régulier, mi-ferme ou ferme (préparé avec sulfate de calcium) » : 76 kcal, 8,08 g de protéines, 4,78 g de lipides, 1,87 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "tomate_cerise",
+      "food_code": "2460",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas la tomate cerise. La tomate rouge mûre crue, moyenne annuelle, est le générique dont elle relève — et c'est l'aliment déjà retenu pour « tomate ». Écartées : les tomates verte (2255), jaune (4849) et orange (4880), qui sont d'autres variétés, pas des génériques.",
+      "provenance": "FCÉN 2026, aliment 2460 « Tomate, rouge, mûre, crue, moyenne durant toute l'année » : 18 kcal, 0,88 g de protéines, 0,2 g de lipides, 3,89 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "tomate_conserve",
+      "food_code": "2462",
+      "kind": "attachment",
+      "rationale": "Les tomates entières en conserve sont la forme générique que les recettes ouvrent; l'étuvée (2463) et la broyée (4736) sont des préparations. Rien n'était rattaché.",
+      "provenance": "FCÉN 2026, aliment 2462 « Tomate, rouge, mûre, conserve, entière » : 16 kcal, 0,79 g de protéines, 0,25 g de lipides, 3,47 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "tortilla",
+      "food_code": "4049",
+      "kind": "attachment",
+      "rationale": "La tortilla de farine nature : le canon dit « de blé », et c'est celle-là. Écartées : les tortillas de maïs (3997, 4048) et la version blé entier multigrains (7928). L'ingrédient se compte à l'unité et reste bloquant jusqu'à sa masse par unité.",
+      "provenance": "FCÉN 2026, aliment 4049 « Tortilla, prêt-à-cuire /frire, farine, nature » : 325 kcal, 8,014189846 g de protéines, 6,99 g de lipides, 52,381839449 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "tortilla_mais",
+      "food_code": "3997",
+      "kind": "attachment",
+      "rationale": "La tortilla de maïs salée. Écartées : la version sans sel (4048), qui publie les mêmes quatre nombres, et les tortillas de farine (7258, 7921). L'ingrédient se compte à l'unité et reste bloquant jusqu'à sa masse par unité.",
+      "provenance": "FCÉN 2026, aliment 3997 « Tortilla, prêt-à-cuire /frire, maïs, salé » : 218 kcal, 7,108854655 g de protéines, 2,116 g de lipides, 52,765145345 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "toum",
+      "food_code": "531",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas la sauce toum (émulsion d'ail et d'huile). La mayonnaise régulière est l'émulsion d'huile du fichier, à 680 kcal/100 g : comme le toum, elle est composée majoritairement d'huile. Écart assumé : le toum n'a pas de jaune d'œuf, ce qui déplace les protéines de moins d'un gramme par 100 g.",
+      "provenance": "FCÉN 2026, aliment 531 « Vinaigrette, mayonnaise, régulière » : 680 kcal, 0,96 g de protéines, 74,85 g de lipides, 0,57 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "veau_hache",
+      "food_code": "3561",
+      "kind": "attachment",
+      "rationale": "Le veau haché cru, nommé exactement. Les autres candidats sont des abats de veau.",
+      "provenance": "FCÉN 2026, aliment 3561 « Veau, haché, cru » : 197 kcal, 18,58 g de protéines, 13,06 g de lipides, 0 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "vin_blanc_sec",
+      "food_code": "2852",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas le caractère sec, seulement le vin de table blanc à 11,5 %. C'est le générique dont le vin sec de cuisine relève; l'écart porte sur le sucre résiduel, quelques grammes de glucides par litre. Écarté : le vin de dessert sec (2937, 153 kcal), qui est fortifié.",
+      "provenance": "FCÉN 2026, aliment 2852 « Boisson alcoolisée, vin de table, blanc (11,5% alcool par volume) » : 82 kcal, 0,07 g de protéines, 0 g de lipides, 2,6 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "vin_rouge_sec",
+      "food_code": "2850",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas le caractère sec, seulement le vin de table rouge à 11,5 %. Même arbitrage que le vin blanc. Écarté : le vinaigre de vin rouge (6195), que le manifeste plaçait premier — c'est un vinaigre.",
+      "provenance": "FCÉN 2026, aliment 2850 « Boisson alcoolisée, vin de table, rouge (11,5% alcool par volume) » : 85 kcal, 0,07 g de protéines, 0 g de lipides, 2,61 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "vinaigre_riz",
+      "food_code": "14",
+      "kind": "substitution",
+      "rationale": "Le FCÉN ne publie pas le vinaigre de riz. Le vinaigre distillé blanc est le vinaigre neutre du fichier, à 18 kcal/100 g; l'écart porte sur quelques grammes de sucre résiduel par 100 ml. Écarté : le balsamique (6196, 88 kcal), qui est sucré.",
+      "provenance": "FCÉN 2026, aliment 14 « Vinaigre, distillé (blanc) » : 18 kcal, 0 g de protéines, 0 g de lipides, 0,04 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "yogourt_grec",
+      "food_code": "7469",
+      "kind": "attachment",
+      "rationale": "Le yogourt grec nature 2 % M.G., le format d'épicerie. Écartés : le riche 8-12 % (6982, 172 kcal) et les versions aromatisées (7471, 7827), que le canon ne nomme pas.",
+      "provenance": "FCÉN 2026, aliment 7469 « Yogourt, Grec, 2% M.G., nature » : 69 kcal, 9,714 g de protéines, 2 g de lipides, 4 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "yogourt_nature",
+      "food_code": "6961",
+      "kind": "attachment",
+      "rationale": "Le yogourt nature 2-3,9 % M.G., le yogourt de table. Écartés : le grec (7469), retenu sous son propre canon, et les yogourts de soya (6987) ou de tofu (5610), qui ne sont pas laitiers.",
+      "provenance": "FCÉN 2026, aliment 6961 « Yogourt, 2-3,9% M.G., nature » : 50 kcal, 4,6 g de protéines, 1,98 g de lipides, 3,4 g de glucides par 100 g."
+    },
+    {
+      "ingredient_id": "zeste_citron",
+      "food_code": "1592",
+      "kind": "attachment",
+      "rationale": "Le zeste de citron cru, nommé exactement. Écartés : le zeste d'orange (1621) et les biscuits qui en contiennent.",
+      "provenance": "FCÉN 2026, aliment 1592 « Citron, zeste, cru » : 47 kcal, 1,5 g de protéines, 0,3 g de lipides, 16 g de glucides par 100 g."
+    }
+  ]
+}
