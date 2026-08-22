@@ -37,7 +37,7 @@ def _params(problem, **overrides):
 def test_all_assertions_pass_and_bounds_returned():
     p = make_problem(recipes=big_recipes())
     passed, bounds = validate_problem(p, p.recipes, _params(p))
-    assert len(passed) == 7  # 1..6 + 6b
+    assert len(passed) == 8  # 0 + 1..6 + 6b
     assert (bounds.exact, bounds.low, bounds.high) == (Decimal("36.4"), 37, 41)
 
 
@@ -241,7 +241,7 @@ def test_assertion_6_catches_n_repas_2_on_seed_profile_before_solver():
     exploitable (repéré en balayant n_repas de 2 à 14). Avec la
     déduplication par famille, l'assertion 6 l'attrape directement, avec un
     message lisible."""
-    problem = problem_from_seed_dir(SEED / "main", ON)
+    problem = problem_from_seed_dir(SEED / "main", ON, market_dir=SEED / "demo")
     profile = dataclasses.replace(problem.profile, meals_per_horizon=2)
     problem = dataclasses.replace(problem, profile=profile)
     pre = prefilter_recipes(
@@ -254,3 +254,37 @@ def test_assertion_6_catches_n_repas_2_on_seed_profile_before_solver():
         validate_problem(problem, pre.surviving, _params(problem))
     msg = str(exc_info.value)
     assert "R_min" in msg or "famille" in msg
+
+
+def test_the_empty_prefilter_refusal_names_the_stage_that_emptied_it():
+    """Le refus doit nommer l'étape fautive, pas réciter cinq causes possibles.
+
+    Sur le corpus réel, les 121 recettes importées tombent toutes à l'étape
+    « besoin non nul » — aucune ne porte de composante marginale, et sans
+    `enable_batch_fixed_cost` leur besoin est identiquement nul (D25). Le
+    message listait « régime, allergènes, équipement, temps de préparation ou
+    absence de prix » : la vraie cause n'y figurait pas, et personne ne pouvait
+    en déduire quoi faire.
+    """
+    p = make_problem()
+    counts = {
+        "initial": 121,
+        "allergenes": 121,
+        "regime": 121,
+        "equipement": 121,
+        "temps_preparation": 121,
+        "besoin_non_nul": 0,
+    }
+    with pytest.raises(EmptyProblemError) as error:
+        validate_problem(p, (), _params(p), prefilter_counts=counts)
+    message = str(error.value)
+    assert "besoin_non_nul" in message
+    assert "121" in message
+    assert "enable_batch_fixed_cost" in message
+
+
+def test_the_refusal_stays_generic_when_no_count_is_given():
+    p = make_problem()
+    with pytest.raises(EmptyProblemError) as error:
+        validate_problem(p, (), _params(p))
+    assert "préfiltrage" in str(error.value)

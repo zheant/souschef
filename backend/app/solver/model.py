@@ -37,6 +37,46 @@ from .port import (
 _EPS = 1e-6
 
 
+def select_stores(problem: ProblemData, config: SolverConfig) -> tuple:
+    """Magasins que le modèle est autorisé à faire visiter au panier.
+
+    Fonction pure, appelée UNE fois par résolution puis passée à la fois à
+    ``validate_problem`` et à ``_Ctx`` : la validation pré-solveur et le modèle
+    doivent juger le même ensemble, sinon la première certifie un prix que le
+    second n'a pas le droit d'aller chercher.
+
+    Magasin unique, la règle reste « le plus proche du domicile » (D11), mais
+    parmi les magasins qui peuvent **réellement approvisionner à cette date**.
+    Un magasin sans un seul prix valide n'a pas de circulaire chargée : le
+    retenir rendait le problème infaisable sans que rien ne le dise. Constaté
+    en direct — domicile à Montréal, `epicier_du_coin` à 0,7 km avec 0 prix
+    valide, Super C à 225 km avec 2 165 : le plan sortait `Infeasible` et le
+    diagnostic accusait `enable_variant_exclusion`.
+
+    Si AUCUN magasin n'a de prix, on retombe sur le plus proche tout court :
+    ce n'est pas à cette fonction de trancher, l'assertion 5 nomme déjà
+    « aucun prix valide au <date> : le catalogue de prix est périmé ».
+    """
+    if config.enable_multi_store:
+        return problem.stores
+    key = config.single_store_external_key
+    if key is not None:
+        chosen = [s for s in problem.stores if s.external_key == key]
+        if not chosen:
+            raise ValueError(f"single_store_external_key '{key}' inconnu.")
+        return tuple(chosen)
+    supplying = {price.store_id for price in problem.prices}
+    candidates = [s for s in problem.stores if s.id in supplying] or list(
+        problem.stores
+    )
+    home = (problem.profile.home_lat, problem.profile.home_lng)
+    nearest = min(
+        candidates,
+        key=lambda s: (haversine_km(*home, s.lat, s.lng), s.external_key),
+    )
+    return (nearest,)
+
+
 class _Ctx:
     """Contexte de construction : ensembles, variables, coefficients."""
 
@@ -48,6 +88,7 @@ class _Ctx:
         params: EffectiveParams,
         bounds: DemandBounds,
         scorer,
+        stores: tuple,
     ):
         self.problem = problem
         self.config = config
@@ -56,7 +97,7 @@ class _Ctx:
         self.recipes: tuple[RecipeData, ...] = prefiltered.surviving
         self.scorer = scorer
 
-        self.stores = self._select_stores()
+        self.stores = stores
         store_ids = {s.id for s in self.stores}
         self.products = tuple(
             p for p in problem.products
@@ -126,23 +167,6 @@ class _Ctx:
             for r in self.recipes
             for ri in r.ingredients
         }
-
-    def _select_stores(self):
-        if self.config.enable_multi_store:
-            return self.problem.stores
-        key = self.config.single_store_external_key
-        if key is not None:
-            chosen = [s for s in self.problem.stores if s.external_key == key]
-            if not chosen:
-                raise ValueError(f"single_store_external_key '{key}' inconnu.")
-            return tuple(chosen)
-        # Règle déterministe : le plus proche du domicile (D11).
-        home = (self.problem.profile.home_lat, self.problem.profile.home_lng)
-        nearest = min(
-            self.problem.stores,
-            key=lambda s: (haversine_km(*home, s.lat, s.lng), s.external_key),
-        )
-        return (nearest,)
 
     # -- Quantité requise de l'ingrédient i, expression PuLP -----------------
     def demand_expr(self, ingredient_id: str):
@@ -439,6 +463,32 @@ def _add_appetence_constraint(m: pulp.LpProblem, c: _Ctx) -> None:
     m += _appetence_expr_cents(c) >= u_min_cents, "appetence_min"
 
 
+def _add_min_spend_constraint(m: pulp.LpProblem, c: _Ctx) -> None:
+    """Plancher de dépense : Σ achats ≥ plancher (en cents).
+
+    Le plancher vient de `c.params`, comme U_min : c'est un paramètre
+    surchargeable du profil, et `resolve_effective_params` est la seule lecture
+    croisée profil/config autorisée.
+
+    Il porte sur la MÊME expression que le terme d'achats de l'objectif —
+    `_purchases_expr_cents` — et non sur un recalcul parallèle. Sinon le
+    plancher pourrait être satisfait dans une métrique que l'objectif ne
+    minimise pas : avec `enable_staples`, le prix vu par le solveur pour un
+    essentiel est biaisé vers le plus bas historique, et deux expressions
+    différentes se croiraient d'accord en divergeant de plusieurs dollars.
+
+    Pourquoi ce plancher n'induit PAS de gaspillage : l'objectif garde
+    l'appétence en crédit, donc parmi tous les paniers coûtant au moins le
+    plancher, le solveur retient le plus appétissant, pas le premier venu.
+    Acheter du surplus coûte sans rien rapporter. C'est exactement pourquoi
+    `validate_problem` refuse ce plancher en mode d'appétence « constraint » :
+    l'appétence quitte alors l'objectif, plus rien ne départage les façons
+    d'atteindre le montant, et le solveur peut y arriver par le surplus.
+    """
+    floor_cents = float(c.params.min_grocery_spend_cents_cad.value)
+    m += _purchases_expr_cents(c) >= floor_cents, "depense_min"
+
+
 # ---------------------------------------------------------------------------
 # Termes de l'objectif
 # ---------------------------------------------------------------------------
@@ -577,16 +627,26 @@ class PulpMenuSolver:
         config: SolverConfig,
     ) -> SolveResult:
         params = resolve_effective_params(problem.profile, config)
+        # Choisi AVANT la validation : l'assertion 4 doit se juger sur les
+        # magasins réellement utilisables, pas sur le marché entier.
+        stores = select_stores(problem, config)
         # validate_problem calcule déjà les bornes de demande avec le même
         # params résolu (R_min/α/ε) — les réutiliser telles quelles plutôt
         # que de les recalculer garantit qu'elles ne peuvent jamais diverger
         # de ce que la validation vient de vérifier.
         assertions_passed, bounds = validate_problem(
-            problem, prefiltered.surviving, params
+            problem,
+            prefiltered.surviving,
+            params,
+            stores,
+            # Les compteurs par étape servent au refus : sans eux, « aucune
+            # recette ne survit » récite cinq causes possibles sans dire
+            # laquelle a frappé.
+            prefilter_counts=prefiltered.counts_by_stage,
         )
         c = _Ctx(
             problem, prefiltered, config, params, bounds,
-            self._scorer_factory(problem),
+            self._scorer_factory(problem), stores,
         )
 
         m = pulp.LpProblem("menu_optimizer", pulp.LpMinimize)
@@ -608,6 +668,8 @@ class PulpMenuSolver:
             _add_perishable_waste(m, c)
         if params.appetence_mode == "constraint":
             _add_appetence_constraint(m, c)
+        if params.min_grocery_spend_cents_cad.value is not None:
+            _add_min_spend_constraint(m, c)
 
         objective = _purchases_expr_cents(c)
         if config.enable_multi_store:

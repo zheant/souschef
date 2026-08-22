@@ -2003,3 +2003,36 @@ correctement, et sa provenance cite les deux.
 
 **Vérifié en exécutant : 499 tests passés, 0 échec.** Couverture après revue :
 113/121, 1 058 lignes calculées, 8 bloquants.
+
+
+### D25 (suite) — Un refus qui récite cinq causes n'en nomme aucune
+
+**Constat, en ouvrant l'application.** Générer un plan avec la configuration de
+développement répond « Aucune recette ne survit au préfiltrage : régime,
+allergènes, équipement, temps de préparation ou absence de prix écartent toutes
+les recettes du catalogue. » Sur le corpus réel, **aucune de ces cinq causes
+n'est la bonne** : les 81 recettes qui entrent dans l'étape suivante tombent sur
+le besoin identiquement nul (D25), parce qu'aucune recette importée ne porte de
+composante marginale par portion et que `enable_batch_fixed_cost` est éteint par
+défaut. La cause réelle n'était pas dans la liste, et le message ne disait pas
+quoi faire.
+
+**Décision.** `prefilter_recipes` publiait déjà ses compteurs par étape
+(`counts_by_stage`, visibles dans le diagnostic) ; la validation les reçoit
+maintenant et le refus nomme **l'étape qui a vidé le catalogue**, le nombre de
+recettes qui y entraient, ce que l'étape vérifie, et — pour le besoin nul — le
+drapeau à rallumer :
+
+> Aucune recette ne survit au préfiltrage : l'étape « besoin_non_nul » a écarté
+> les 81 recettes qui y entraient — aucune recette ne porte de composante
+> marginale par portion, donc son besoin est identiquement nul sans les coûts
+> fixes de lot (D25) : rallumer `enable_batch_fixed_cost` dans `SolverConfig`
+> (onglet Paramètres) rend ces recettes modélisables.
+
+Le paramètre est optionnel et le message générique subsiste sans compteurs : les
+appelants qui ne les passent pas gardent leur comportement.
+
+**Ce que ça ne fait pas.** Le défaut de `SolverConfig.enable_batch_fixed_cost`
+reste `False`. Le basculer change l'équation de besoin de toutes les recettes et
+mérite son propre écart mesuré — D35 le disait déjà, et ce constat ne fait que
+rendre le symptôme lisible en attendant.
