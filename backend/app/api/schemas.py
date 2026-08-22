@@ -54,6 +54,10 @@ class HouseholdUpdate(BaseModel):
     #: l'efface. Deux gestes distincts, comme il faut ici : « aucun plancher »
     #: est une valeur, pas une absence de valeur.
     appetence_u_min_dollars: float | None = Field(default=None, ge=0)
+    #: Plancher de dépense d'épicerie, en cents CAD. Même sémantique de
+    #: `null` que U_min ci-dessus : omettre laisse inchangé, envoyer `null`
+    #: efface. En cents parce que c'est de l'argent (INVARIANTS, CLAUDE.md) —
+    #: l'écran affiche des dollars, la frontière n'invente pas de flottant.
     members: list[MemberOut] | None = None
 
 
@@ -189,3 +193,36 @@ class PriceCoverageOut(BaseModel):
 
     earliest: date | None
     latest: date | None
+
+
+class PriceRefreshOut(BaseModel):
+    """État du rafraîchissement de prix — une collecte détachée, pas une requête.
+
+    `log_tail` est la fin de la sortie du collecteur, pas un pourcentage :
+    l'écran montre ce que la collecte dit d'elle-même plutôt qu'une progression
+    fabriquée à côté.
+    """
+
+    state: str  # idle | running | succeeded | failed
+    banner: str | None
+    started_at: str | None
+    finished_at: str | None
+    exit_code: int | None
+    #: `False` : les prix importés sont réels mais partiels — la collecte a été
+    #: tronquée. Distinct de `state`, qui ne dit que si la base a été écrite.
+    collection_complete: bool | None
+    #: Ce que la base a reçu (produits, offres, prix), lu du rapport d'import.
+    imported: dict | None
+    #: Date de la collecte la plus récente sur disque — y compris lancée en
+    #: ligne de commande. `started_at` ne connaît que les lancements passés par
+    #: l'application, et répondrait « jamais » à qui utilise
+    #: `run_catalogues.cmd`.
+    last_capture_at: str | None
+    log_tail: list[str]
+
+
+class PriceRefreshStart(BaseModel):
+    """Bannière à collecter. Seule Super C est collectable sans humain devant
+    l'écran (Maxi exige une fenêtre de navigateur visible)."""
+
+    banner: str = "superc"

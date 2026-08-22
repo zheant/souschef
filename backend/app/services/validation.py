@@ -71,21 +71,6 @@ class CapacityError(ValidationError):
     assertion = "6b_capacite_entiere"
 
 
-class SpendFloorWithoutRewardError(ValidationError):
-    """Plancher de dépense sans rien qui récompense un menu meilleur.
-
-    Le plancher force le solveur à dépenser un montant ; l'appétence en crédit
-    dans l'objectif est ce qui l'oriente vers le panier le plus appétissant
-    parmi ceux qui l'atteignent. En mode « constraint », l'appétence quitte
-    l'objectif pour devenir une simple borne : plus rien ne départage les façons
-    de dépenser, et le chemin le moins cher vers le montant est le surplus. Le
-    ménage paierait 60 $ de gaspillage en croyant acheter mieux — refusé plutôt
-    que servi.
-    """
-
-    assertion = "0_coherence_des_parametres"
-
-
 def min_taxed_price_per_base_unit(
     problem: ProblemData,
     store_ids: frozenset[int] | None = None,
@@ -210,25 +195,6 @@ def validate_problem(
     passed: list[str] = []
     profile = problem.profile
 
-    # -- 0. Cohérence des paramètres entre eux ------------------------------
-    # Numérotée 0 : elle ne lit aucune donnée, seulement les paramètres
-    # résolus, donc elle passe avant les six assertions de la spec. Échouer ici
-    # nomme un réglage à corriger, pas un catalogue à rafraîchir.
-    if (
-        params.min_grocery_spend_cents_cad.value is not None
-        and params.appetence_mode == "constraint"
-    ):
-        raise SpendFloorWithoutRewardError(
-            "Plancher de dépense "
-            f"({params.min_grocery_spend_cents_cad.value} cents) incompatible "
-            "avec le mode d'appétence « constraint » : l'appétence n'est plus "
-            "un crédit dans l'objectif, donc rien ne départage les façons "
-            "d'atteindre ce montant et le solveur peut l'atteindre en achetant "
-            "du surplus. Retirer le plancher d'appétence (U_min) pour employer "
-            "le plancher de dépense, ou l'inverse — les deux répondent à la "
-            "même question par deux unités différentes."
-        )
-    passed.append(SpendFloorWithoutRewardError.assertion)
 
     # -- 1. Bornitude de la récupération, avec marge de sécurité ------------
     min_price = min_taxed_price_per_base_unit(problem)

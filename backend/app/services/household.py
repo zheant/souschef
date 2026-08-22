@@ -52,6 +52,7 @@ class HouseholdView:
     #: U_min — plancher d'appétence du plan, en dollars. `None` : aucun
     #: plancher, l'appétence reste un crédit dans l'objectif.
     appetence_u_min_dollars: float | None
+    #: Plancher de dépense d'épicerie, en cents CAD. `None` : aucun plancher.
     members: list[MemberView]
     #: D exact + bornes (D9) — structure documentée dans docs/spec.md.
     demand: dict

@@ -34,7 +34,8 @@ def test_diagnostic_shape():
     d = resolve_effective_params(make_profile(), SolverConfig()).as_diagnostic()
     assert set(d) == {"max_store_visits", "min_distinct_recipes",
                       "max_share_per_recipe", "demand_slack_epsilon",
-                      "appetence_u_min_dollars", "appetence_mode"}
+                      "appetence_u_min_dollars",
+                      "appetence_mode"}
     assert all({"valeur", "provenance"} == set(v) for v in d.values())
     assert d["appetence_mode"]["provenance"] == "dérivé"
 

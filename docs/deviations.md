@@ -1005,6 +1005,11 @@ pour : [...] ». Garde : `tests/test_store_selection.py`.
 
 ## D27 — Plancher de dépense d'épicerie : le budget se raisonne en dollars, pas en points d'appétence
 
+> **Retiré en D40.** Le mécanisme décrit ci-dessous n'existe plus dans le
+> produit : le ménage pose la même question par le plancher d'appétence
+> (U_min). L'entrée reste pour l'histoire de la décision, pas comme
+> description du code.
+
 **Écart.** La spec n'a qu'un levier contre le menu le moins cher : le plancher
 d'appétence (`appetence_u_min_dollars`, mode « constraint »). Il fonctionne,
 mais il répond « quel menu », pas « quel montant ». Mesuré sur `seed/main`,
@@ -2155,3 +2160,51 @@ une entité HTML dans leur nom (« Bouchées d&rsquo;aubergine parmigiana ») : 
 corpus source échappe ses titres, React échappe ce qu'on lui donne, donc
 l'entité s'affichait telle quelle. Décodée **à l'import**, là où le nom entre
 dans le seed, et non dans chaque écran qui le lit. 502 tests passés.
+
+
+## D40 — Le plancher de dépense d'épicerie est retiré
+
+**Décision de l'utilisateur**, prise en usage : le paramètre « Épicerie
+minimum » est retiré du produit. D27 l'avait introduit pour répondre à un vrai
+problème — sans plancher, le menu part vers les recettes les moins chères, parce
+que l'appétence n'est qu'un crédit dans l'objectif — mais le ménage a désormais
+le **plancher d'appétence** (U_min, préférence du ménage) pour poser la même
+question dans l'unité qui l'intéresse. Garder les deux, c'était garder deux
+réponses à une question, dont une que l'assertion 0 devait justement empêcher de
+combiner.
+
+**Ce qui part, couche par couche.** Le paramètre traversait sept couches :
+
+- `solver/config.py` : le champ `min_grocery_spend_cents_cad` ;
+- `solver/model.py` : la contrainte `depense_min` et sa fonction ;
+- `services/params.py` : la résolution profil/config du paramètre ;
+- `services/validation.py` : **l'assertion 0** (`SpendFloorWithoutRewardError`)
+  et sa classe — elle n'existait que pour interdire plancher de dépense × mode
+  d'appétence « constraint ». Sans plancher, elle n'a plus rien à vérifier, et
+  la garder aurait laissé un contrôle qui passe toujours ;
+- `services/problem_data.py`, `services/household.py`, `api/schemas.py`,
+  `api/routes.py` : le champ du profil ;
+- `frontend` : le champ du formulaire Ménage › Préférences et les deux types ;
+- `models/household.py` + migration `853a7ffc6022` : la colonne et sa contrainte
+  `min_spend_nonneg`.
+
+**La colonne est supprimée, pas laissée en place.** Une colonne que plus
+personne ne lit se fait recopier par le prochain qui la voit. Le `downgrade` de
+la migration la restaure avec sa contrainte, mais **pas les valeurs** — la
+migration le dit, et rappelle la seule valeur qui existait sur cette base (60 $)
+pour qu'un retour arrière puisse la ressaisir plutôt que la deviner.
+
+**Trois pins de tests déplacés, un fichier de tests supprimé.**
+`assertions_passed` compte désormais **7** au lieu de 8 (1..6 + 6b) dans
+`test_solver_flags.py`, `test_solver_toy.py` et `test_validation.py`.
+`tests/test_min_grocery_spend.py` (7 tests) part avec le mécanisme qu'il
+mesurait : ses cas — un plancher qui force la dépense, un plancher absurde qui
+n'achète plus que de la quantité, l'incompatibilité avec le mode « constraint » —
+n'ont plus d'objet.
+
+**Vérifié en exécutant : 495 tests passés, 0 échec** ; la migration appliquée
+contre PostgreSQL réel (la colonne n'est plus dans
+`information_schema.columns`) ; `GET /api/household` ne porte plus le champ ; un
+plan se génère (`POST /api/plan` → 200) ; et l'écran Ménage › Préférences ne
+montre plus « Épicerie minimum » tout en gardant « Plancher d'appétence »,
+enregistrement compris.

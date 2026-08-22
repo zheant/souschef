@@ -98,7 +98,6 @@ class SolverConfig(BaseModel):
     appetence_u_min_dollars: float | None = Field(default=None, ge=0)
     #: Plancher de dépense d'épicerie en cents CAD — surcharge du profil.
     #: `None` : suivre le profil.
-    min_grocery_spend_cents_cad: int | None = Field(default=None, ge=0)
 
     # Surcharges optionnelles du profil (résolues par resolve_effective_params,
     # l'unique point de préséance).

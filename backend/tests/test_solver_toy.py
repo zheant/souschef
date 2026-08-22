@@ -284,7 +284,9 @@ def test_diagnostic_is_complete(toy):
         "D_exact": "4.0", "borne_basse": "4", "borne_haute": "5",
         "total_retenu": str(sum(res.servings_by_recipe.values())),
     }
-    assert len(d.assertions_passed) == 8  # 0 + 1..6 + 6b
+    # Sept, et non huit : l'assertion 0 (cohérence plancher de dépense ×
+    # mode d'appétence) est partie avec le plancher lui-même (D40).
+    assert len(d.assertions_passed) == 7  # 1..6 + 6b
     # enable_variant_exclusion est à True par défaut (D16) : il apparaît donc
     # après enable_diversity dans les deux listes, sans qu'on l'ait demandé.
     assert d.last_enabled_flag == "enable_variant_exclusion"

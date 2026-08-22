@@ -8,7 +8,8 @@ rapport de diagnostic.
 
 Paramètres couverts : K (max_store_visits), R_min (min_distinct_recipes),
 α (max_share_per_recipe), ε (demand_slack_epsilon, D9) et U_min
-(appetence_u_min_dollars).
+(appetence_u_min_dollars). Le plancher de dépense d'épicerie en faisait partie
+jusqu'à son retrait (D40).
 
 U_min détermine aussi le **mode** d'appétence, parce que les deux ne sont pas
 indépendants : un plancher sans mode « constraint » ne contraint rien, et le
@@ -46,6 +47,7 @@ class EffectiveParams:
     max_share_per_recipe: EffectiveParam   # α
     demand_slack_epsilon: EffectiveParam   # ε (D9)
     appetence_u_min_dollars: EffectiveParam  # U_min (None = aucun plancher)
+    #: Plancher de dépense d'épicerie en cents (None = aucun plancher).
 
     @property
     def appetence_mode(self) -> str:

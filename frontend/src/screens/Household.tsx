@@ -70,11 +70,6 @@ export default function HouseholdScreen(props: {
     // plancher ». Les deux doivent rester distinguables jusqu'à la
     // sérialisation.
     u_min: h.appetence_u_min_dollars == null ? "" : String(h.appetence_u_min_dollars),
-    // Saisi en dollars, transporté en cents : l'argent ne devient jamais un
-    // flottant côté serveur (INVARIANTS, CLAUDE.md).
-    min_spend: h.min_grocery_spend_cents_cad == null
-      ? ""
-      : String(h.min_grocery_spend_cents_cad / 100),
   });
   const [members, setMembers] = useState<Member[]>(h.members);
   const [saving, setSaving] = useState(false);
@@ -116,9 +111,6 @@ export default function HouseholdScreen(props: {
         // `null` explicite retire le plancher : la route sérialise avec
         // `exclude_unset`, donc envoyer la clé à `null` l'efface réellement.
         appetence_u_min_dollars: form.u_min.trim() === "" ? null : Number(form.u_min),
-        min_grocery_spend_cents_cad: form.min_spend.trim() === ""
-          ? null
-          : Math.round(Number(form.min_spend) * 100),
         members,
       });
       props.onSaved(saved);
@@ -215,14 +207,6 @@ export default function HouseholdScreen(props: {
                   type="text" inputMode="decimal" value={form.u_min}
                   onChange={(e) => setForm({ ...form, u_min: e.target.value })}
                   placeholder="ex. 65"
-                />
-              </label>
-              <label className="field">
-                <span>Épicerie minimum ($) <em>(vide = aucun)</em></span>
-                <input
-                  type="text" inputMode="decimal" value={form.min_spend}
-                  onChange={(e) => setForm({ ...form, min_spend: e.target.value })}
-                  placeholder="ex. 60"
                 />
               </label>
             </div>

@@ -120,6 +120,7 @@ class ProfileData:
     appetite_coefficients: tuple[Decimal, ...]   # ρ_h
     #: U_min — plancher d'appétence, ou `None` (appétence en crédit).
     appetence_u_min_dollars: Decimal | None = None
+    #: Plancher de dépense d'épicerie, en cents CAD (None = aucun).
 
 
 @dataclass(frozen=True)

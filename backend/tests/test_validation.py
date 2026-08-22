@@ -37,7 +37,9 @@ def _params(problem, **overrides):
 def test_all_assertions_pass_and_bounds_returned():
     p = make_problem(recipes=big_recipes())
     passed, bounds = validate_problem(p, p.recipes, _params(p))
-    assert len(passed) == 8  # 0 + 1..6 + 6b
+    # Sept depuis D40 : l'assertion 0 est partie avec le plancher de
+    # dépense d'épicerie, dont elle vérifiait la cohérence.
+    assert len(passed) == 7  # 1..6 + 6b
     assert (bounds.exact, bounds.low, bounds.high) == (Decimal("36.4"), 37, 41)
 
 

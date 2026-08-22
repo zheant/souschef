@@ -463,32 +463,6 @@ def _add_appetence_constraint(m: pulp.LpProblem, c: _Ctx) -> None:
     m += _appetence_expr_cents(c) >= u_min_cents, "appetence_min"
 
 
-def _add_min_spend_constraint(m: pulp.LpProblem, c: _Ctx) -> None:
-    """Plancher de dépense : Σ achats ≥ plancher (en cents).
-
-    Le plancher vient de `c.params`, comme U_min : c'est un paramètre
-    surchargeable du profil, et `resolve_effective_params` est la seule lecture
-    croisée profil/config autorisée.
-
-    Il porte sur la MÊME expression que le terme d'achats de l'objectif —
-    `_purchases_expr_cents` — et non sur un recalcul parallèle. Sinon le
-    plancher pourrait être satisfait dans une métrique que l'objectif ne
-    minimise pas : avec `enable_staples`, le prix vu par le solveur pour un
-    essentiel est biaisé vers le plus bas historique, et deux expressions
-    différentes se croiraient d'accord en divergeant de plusieurs dollars.
-
-    Pourquoi ce plancher n'induit PAS de gaspillage : l'objectif garde
-    l'appétence en crédit, donc parmi tous les paniers coûtant au moins le
-    plancher, le solveur retient le plus appétissant, pas le premier venu.
-    Acheter du surplus coûte sans rien rapporter. C'est exactement pourquoi
-    `validate_problem` refuse ce plancher en mode d'appétence « constraint » :
-    l'appétence quitte alors l'objectif, plus rien ne départage les façons
-    d'atteindre le montant, et le solveur peut y arriver par le surplus.
-    """
-    floor_cents = float(c.params.min_grocery_spend_cents_cad.value)
-    m += _purchases_expr_cents(c) >= floor_cents, "depense_min"
-
-
 # ---------------------------------------------------------------------------
 # Termes de l'objectif
 # ---------------------------------------------------------------------------
@@ -668,8 +642,6 @@ class PulpMenuSolver:
             _add_perishable_waste(m, c)
         if params.appetence_mode == "constraint":
             _add_appetence_constraint(m, c)
-        if params.min_grocery_spend_cents_cad.value is not None:
-            _add_min_spend_constraint(m, c)
 
         objective = _purchases_expr_cents(c)
         if config.enable_multi_store:
