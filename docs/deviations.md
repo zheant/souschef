@@ -2401,3 +2401,62 @@ rencontrée, et elle se comble une épice à la fois.
 
 **Vérifié en exécutant : 540 tests passés**, dont 29 sur le module pur et 4 sur
 le refus d'écriture, et deux pages réelles lues de bout en bout.
+
+
+## D44 — Gérer les recettes depuis l'application : ajouter, retirer, et deux refus
+
+**Demande.** Gérer la base de recettes depuis le front-end : en ajouter, en
+retirer.
+
+**Ce qui existait.** L'écran Recettes (D39) listait et affichait; l'API ne
+proposait que la lecture. Les recettes venaient du seed, ou de l'import du
+corpus.
+
+**Livré.** `POST /api/recipes` (201), `DELETE /api/recipes/{id}` (204), et
+`GET /api/ingredients?q=` — cette dernière parce qu'une recette cite des
+ingrédients canoniques *par identifiant* et que personne ne tape
+`farine_tout_usage` de mémoire. Le formulaire vit dans l'écran Recettes, la
+suppression sur la page d'une recette.
+
+**Deux quantités par ligne, et c'est délibéré.** « Par lot » ne monte pas avec
+les portions, « par portion » si : c'est la distinction que le solveur emploie
+pour mettre une recette à l'échelle (D25 en dépend). Masquer l'une des deux
+ferait saisir un chiffre dont personne ne connaîtrait le sens.
+
+**Deux refus qui ne sont pas décoratifs.**
+
+1. **Une recette dont toutes les quantités sont nulles est refusée** (422). Elle
+   ne demande rien, et le solveur la servirait gratuitement — c'est exactement le
+   défaut que D25 a documenté et que le préfiltrage écarte depuis. La refuser à
+   l'entrée vaut mieux que la filtrer plus tard.
+2. **Une recette citée par un plan n'est pas supprimée** (409), et le refus
+   **liste les plans**. `Plan.servings` cite les recettes par identifiant, sans
+   clé étrangère, et `planning.py::_plan_view` lit `recipes[rid]` sans garde :
+   retirer la recette seule échangerait un menu contre une 500. C'est le même
+   piège que `scripts/purge_demo_recipes.py` avait déjà rencontré, et la même
+   réponse — un consentement explicite (`?drop_plans=true`), jamais un effet de
+   bord. Mesuré sur la base réelle : 52 plans citent une seule des recettes du
+   corpus.
+
+**Ce que la suppression ne fait pas, et l'écran le dit.** Une recette du seed
+supprimée ici **revient** au prochain `app.seeding.seed` : le semis est
+idempotent et ne connaît pas les suppressions. Une recette ajoutée depuis
+l'application, elle, y survit — le semis n'efface rien. C'est pourquoi chaque
+recette créée porte `tags.import_origin = "app"` : la provenance distingue ce que
+le seed reprendra de ce qu'il ignorera.
+
+**Une projection, pas deux.** `create_recipe` rend la même `RecipeSummary` que
+la recherche, via un `_summary` factorisé : deux projections du même
+enregistrement finiraient par diverger d'un champ, et l'écran afficherait deux
+vérités selon le chemin qui l'a servi.
+
+**Vérifié en exécutant : 550 tests passés**, dont 7 nouveaux sur le service et 3
+sur les routes; et le parcours piloté dans le navigateur — ajout d'un « Chili
+d'essai » avec « Lentilles brunes sèches » choisies par recherche, puis
+suppression, catalogue revenu à 121 recettes. Le refus 409 vérifié contre la base
+réelle.
+
+**Un défaut de méthode trouvé au passage.** `npx tsc -b` est **incrémental** :
+il a rendu « propre » un fichier qui portait deux déclarations du même symbole,
+parce que son cache datait d'avant. Les vérifications de type de ce chantier se
+font désormais avec `--force`.

@@ -126,6 +126,33 @@ export interface RecipeSummary {
   tags: Record<string, unknown>;
 }
 
+/** Une recette proposée depuis l'application.
+ *
+ *  Les quantités sont des **chaînes** : une quantité est une décimale exacte en
+ *  base, et un `number` JavaScript l'arrondirait en chemin — même règle que
+ *  l'argent, transporté en cents. */
+/** Un ingrédient canonique tel que le formulaire le propose. L'unité de base
+ *  voyage avec le nom : c'est elle qui dit en quoi la quantité se saisit. */
+export interface IngredientOption {
+  id: string;
+  name: string;
+  base_unit: string;
+}
+
+export interface RecipeDraft {
+  name: string;
+  original_servings: number;
+  prep_time_fixed_h: string;
+  prep_time_marginal_h: string;
+  min_batch_servings: number;
+  max_batch_servings: number;
+  ingredients: {
+    canonical_ingredient_id: string;
+    qty_fixed_per_batch_base_unit: string;
+    qty_marginal_per_serving_base_unit: string;
+  }[];
+}
+
 export interface RecipePage {
   total: number; limit: number; offset: number; items: RecipeSummary[];
 }

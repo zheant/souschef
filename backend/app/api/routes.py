@@ -372,6 +372,80 @@ def get_recipe_nutrition(
     return [row.as_dict() for row in facts]
 
 
+@router.get("/ingredients")
+def get_ingredients(
+    q: str | None = Query(default=None, description="recherche par nom"),
+    limit: int = Query(default=20, ge=1, le=100),
+    session: Session = Depends(get_session),
+):
+    """Ingrédients canoniques, pour le formulaire de recette.
+
+    Distincte de `/api/ingredients/unmapped`, qui sert la file de résolution des
+    produits : celle-ci répond « quels ingrédients existent », l'autre « quels
+    produits n'en ont pas ».
+    """
+    return [asdict(option) for option in catalog.search_ingredients(session, q, limit)]
+
+
+@router.post("/recipes", status_code=201)
+def post_recipe(
+    payload: schemas.RecipeIn,
+    session: Session = Depends(get_session),
+):
+    """Ajoute une recette au catalogue depuis l'application.
+
+    La recette porte `import_origin: "app"` : elle ne se confond pas avec une
+    recette du seed — et le seed, rejoué, ne la connaît pas. Une recette du seed
+    supprimée ici revient donc au prochain rechargement; une recette ajoutée ici
+    y survit, puisque le semis n'efface rien.
+    """
+    try:
+        return catalog.create_recipe(
+            session,
+            catalog.RecipeDraft(
+                name=payload.name,
+                original_servings=payload.original_servings,
+                prep_time_fixed_h=payload.prep_time_fixed_h,
+                prep_time_marginal_h=payload.prep_time_marginal_h,
+                min_batch_servings=payload.min_batch_servings,
+                max_batch_servings=payload.max_batch_servings,
+                ingredients=[line.model_dump() for line in payload.ingredients],
+                diet_flags=payload.diet_flags,
+                allergen_flags=payload.allergen_flags,
+                required_equipment=payload.required_equipment,
+            ),
+        )
+    except catalog.RecipeDraftInvalid as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+
+@router.delete("/recipes/{recipe_id}", status_code=204)
+def delete_recipe(
+    recipe_id: str,
+    drop_plans: bool = Query(
+        default=False,
+        description=(
+            "Retirer aussi les plans qui citent cette recette. Sans ce "
+            "consentement, une recette citée n'est pas supprimée."
+        ),
+    ),
+    session: Session = Depends(get_session),
+):
+    """Retire une recette et ses lignes.
+
+    409 quand un plan la cite : l'écran de menu lit la recette sans garde, donc
+    la supprimer seule échangerait un menu contre une erreur. Le sort du plan
+    est une décision de l'usager, pas un effet de bord.
+    """
+    try:
+        catalog.delete_recipe(session, recipe_id, drop_plans=drop_plans)
+    except catalog.RecipeNotFound as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except catalog.RecipeInUse as exc:
+        raise HTTPException(409, str(exc)) from exc
+    return None
+
+
 @router.get(
     "/recipes/{recipe_id}/ingredients",
     response_model=list[schemas.RecipeIngredientOut],

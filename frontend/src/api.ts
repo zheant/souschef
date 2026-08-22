@@ -1,7 +1,10 @@
 // Client API typé — seule porte vers le back-end.
 
 import type {
+  IngredientOption,
+  RecipeDraft,
   RecipePage,
+  RecipeSummary,
   Household, Plan, PriceCoverage, PriceRefresh,
   RecipeIngredientLine, RecipeNutrition, RecipeQuote, ReoptimizeResult,
   SolverConfigInput,
@@ -110,6 +113,22 @@ export const api = {
     if (q.trim()) query.set("q", q.trim());
     return req<RecipePage>(`/api/recipes?${query.toString()}`);
   },
+  ingredients: (q: string, limit = 12) =>
+    req<IngredientOption[]>(
+      `/api/ingredients?q=${encodeURIComponent(q)}&limit=${limit}`,
+    ),
+  createRecipe: (draft: RecipeDraft) =>
+    req<RecipeSummary>("/api/recipes", {
+      method: "POST",
+      body: JSON.stringify(draft),
+    }),
+  // `dropPlans` est un consentement, pas un défaut : sans lui, l'API refuse
+  // (409) de retirer une recette qu'un plan cite.
+  deleteRecipe: (recipeId: string, dropPlans = false) =>
+    req<void>(
+      `/api/recipes/${recipeId}?drop_plans=${dropPlans ? "true" : "false"}`,
+      { method: "DELETE" },
+    ),
   recipeIngredients: (recipeId: string) =>
     req<RecipeIngredientLine[]>(`/api/recipes/${recipeId}/ingredients`),
   recipeQuote: (

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, hours, messageOf } from "../api";
+import { RecipeForm } from "../components/RecipeForm";
 import { kcalLabel, perServing, proteinLabel } from "../nutrition";
 import { NutritionBlock } from "../components/NutritionBlock";
 import type {
@@ -41,6 +42,11 @@ export default function RecipesScreen() {
   const [perRecipe, setPerRecipe] = useState<
     Record<string, { kcal: number; protein: number } | null>
   >({});
+
+  const [adding, setAdding] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [needsPlanConsent, setNeedsPlanConsent] = useState(false);
 
   const [open, setOpen] = useState<RecipeSummary | null>(null);
   const [nutrition, setNutrition] = useState<RecipeNutrition | null>(null);
@@ -95,13 +101,55 @@ export default function RecipesScreen() {
       .catch(() => setIngredients([]));
   }
 
+  async function remove(recipe: RecipeSummary, dropPlans: boolean) {
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await api.deleteRecipe(recipe.id, dropPlans);
+      setOpen(null);
+      setNeedsPlanConsent(false);
+      // Recharger la page courante : la liste ne doit pas montrer une recette
+      // qui n'existe plus.
+      setOffset((value) => value);
+      setItems(null);
+      const page = await api.recipes(query, PAGE, offset);
+      setItems(page.items);
+      setTotal(page.total);
+    } catch (e) {
+      const message = messageOf(e);
+      setDeleteError(message);
+      // 409 : un plan cite la recette. Le message du serveur les liste, et le
+      // consentement se demande ici plutôt que d'être supposé.
+      setNeedsPlanConsent(message.includes("plan"));
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   if (open) {
     return (
       <section className="screen">
         <div className="rp-detail">
           <div className="rp-detail-header">
             <button className="rp-back-btn" onClick={() => setOpen(null)}>‹ Retour</button>
+            <button
+              className="rf-delete"
+              disabled={deleting}
+              onClick={() => remove(open, false)}
+            >
+              {deleting ? "…" : "Supprimer"}
+            </button>
           </div>
+          {deleteError && (
+            <div className="callout error" style={{ margin: "10px 16px" }}>
+              <p>{deleteError}</p>
+              {needsPlanConsent && (
+                <button className="action" onClick={() => remove(open, true)}>
+                  Supprimer la recette ET les plans qui la citent
+                </button>
+              )}
+            </div>
+          )}
           <div className="rp-detail-body">
             <div className="rp-detail-name">{open.name}</div>
             <div className="rp-detail-meta">
@@ -135,6 +183,20 @@ export default function RecipesScreen() {
   return (
     <section className="screen">
       <h2>Recettes <span className="muted">— {total} au catalogue</span></h2>
+      {adding ? (
+        <RecipeForm
+          onCancel={() => setAdding(false)}
+          onCreated={(recipe) => {
+            setAdding(false);
+            setQuery(recipe.name);
+            setOffset(0);
+          }}
+        />
+      ) : (
+        <button className="action" onClick={() => setAdding(true)}>
+          ＋ Nouvelle recette
+        </button>
+      )}
       <label className="field">
         Chercher une recette
         <input

@@ -86,6 +86,32 @@ class PlanRequest(BaseModel):
     on_date: date | None = None
 
 
+class RecipeLineIn(BaseModel):
+    """Une ligne de recette proposée depuis l'application.
+
+    Les quantités voyagent en **texte**, pas en flottant : une quantité est une
+    décimale exacte en base, et un `float` l'arrondirait sur le chemin — la même
+    règle que l'argent (INVARIANTS, CLAUDE.md).
+    """
+
+    canonical_ingredient_id: str = Field(min_length=1)
+    qty_fixed_per_batch_base_unit: str = "0"
+    qty_marginal_per_serving_base_unit: str = "0"
+
+
+class RecipeIn(BaseModel):
+    name: str = Field(min_length=1, max_length=160)
+    original_servings: int = Field(ge=1)
+    prep_time_fixed_h: str = "0"
+    prep_time_marginal_h: str = "0"
+    min_batch_servings: int = Field(ge=1)
+    max_batch_servings: int = Field(ge=1)
+    ingredients: list[RecipeLineIn] = Field(min_length=1)
+    diet_flags: list[str] = Field(default_factory=list)
+    allergen_flags: list[str] = Field(default_factory=list)
+    required_equipment: list[str] = Field(default_factory=list)
+
+
 class MenuLine(BaseModel):
     recipe_id: str
     name: str

@@ -465,3 +465,50 @@ pre.raw {
   .ws-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 .ws-cell--lead .ws-value { font-size: 1.3rem; }
+
+/* Formulaire de recette et suppression — mêmes tons que le reste de l'écran
+   Recettes : c'est le même objet qu'on ajoute, pas un module à part. */
+.rf-lines { margin-top: 0.8rem; display: grid; gap: 0.7rem; }
+.rf-line {
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--line, #dcdfd3);
+  border-radius: 0.6rem;
+  position: relative;
+}
+.rf-chosen {
+  border: none;
+  background: var(--chip, #eef3e6);
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.6rem;
+  font: inherit;
+  cursor: pointer;
+}
+.rf-options {
+  list-style: none;
+  margin: 0.3rem 0 0;
+  padding: 0;
+  border: 1px solid var(--line, #dcdfd3);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+.rf-options button {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 0.4rem 0.6rem;
+  font: inherit;
+  cursor: pointer;
+}
+.rf-options button:hover { background: var(--chip, #eef3e6); }
+.rf-delete {
+  margin-left: auto;
+  border: 1px solid #b3453a;
+  color: #b3453a;
+  background: transparent;
+  border-radius: 999px;
+  padding: 0.3rem 0.8rem;
+  font: inherit;
+  cursor: pointer;
+}
+.rp-detail-header { display: flex; align-items: center; gap: 0.6rem; }

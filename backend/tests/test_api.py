@@ -284,3 +284,59 @@ def test_invalid_solver_config_is_rejected(api_client):
     )
     assert r.status_code == 422
     assert "appetence_u_min_dollars" in r.json()["detail"]
+
+
+def test_a_recipe_is_created_and_deleted_through_the_api(api_client):
+    """Le parcours que l'écran suit : ajouter, relire, retirer."""
+    created = api_client.post(
+        "/api/recipes",
+        json={
+            "name": "Salade d'essai",
+            "original_servings": 4,
+            "prep_time_fixed_h": "0.25",
+            "prep_time_marginal_h": "0",
+            "min_batch_servings": 4,
+            "max_batch_servings": 8,
+            "ingredients": [
+                {
+                    "canonical_ingredient_id": "riz",
+                    "qty_fixed_per_batch_base_unit": "300",
+                    "qty_marginal_per_serving_base_unit": "0",
+                }
+            ],
+        },
+    )
+    assert created.status_code == 201, created.text
+    recipe_id = created.json()["id"]
+    assert created.json()["tags"]["import_origin"] == "app"
+
+    listing = api_client.get("/api/recipes", params={"q": "essai"})
+    assert [row["id"] for row in listing.json()["items"]] == [recipe_id]
+
+    removed = api_client.delete(f"/api/recipes/{recipe_id}")
+    assert removed.status_code == 204
+    assert api_client.get(f"/api/recipes/{recipe_id}/ingredients").status_code == 404
+
+
+def test_the_api_refuses_a_recipe_naming_an_unknown_ingredient(api_client):
+    response = api_client.post(
+        "/api/recipes",
+        json={
+            "name": "Recette impossible",
+            "original_servings": 2,
+            "min_batch_servings": 2,
+            "max_batch_servings": 2,
+            "ingredients": [
+                {
+                    "canonical_ingredient_id": "licorne_hachee",
+                    "qty_fixed_per_batch_base_unit": "1",
+                }
+            ],
+        },
+    )
+    assert response.status_code == 422
+    assert "licorne_hachee" in response.json()["detail"]
+
+
+def test_deleting_an_unknown_recipe_is_a_404(api_client):
+    assert api_client.delete("/api/recipes/inexistante").status_code == 404
