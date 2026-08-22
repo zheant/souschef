@@ -2078,3 +2078,45 @@ désactivable explicitement, et le README garde sa liste — il en sort seulemen
 
 **Vérifié en exécutant : 501 tests passés, 0 échec**, et un plan généré depuis
 l'API sans toucher à aucun drapeau.
+
+
+## D39 — La valeur nutritive a sa place sur chaque recette, pas seulement sur le menu
+
+**Constat d'usage.** Le bloc « Valeur nutritive par portion » n'existait que dans
+le détail d'une recette **du menu de la semaine** : trois recettes sur 121, et
+seulement après avoir généré un plan. La question « combien de calories dans
+cette recette ? » n'avait donc pas de réponse dans l'application pour les 118
+autres.
+
+**Livré.** Un quatrième onglet, **Recettes**
+(`frontend/src/screens/Recipes.tsx`) : le catalogue paginé avec sa recherche, et
+une page par recette portant la valeur nutritive par portion, ses « ± », et la
+liste des ingrédients. La route `GET /api/recipes` existait déjà, requise par la
+spec et restée sans appelant frontend jusqu'ici — sa docstring le disait, elle le
+dit maintenant autrement.
+
+**Un seul bloc, pas deux copies.** `NutritionBlock` (et ses libellés de raisons
+de blocage) sort de `Result.tsx` vers `frontend/src/components/NutritionBlock.tsx`
+et les deux écrans l'importent. Deux écrans qui affichent le même fait doivent le
+lire au même endroit — ce dépôt s'est déjà fait prendre deux fois par le motif
+inverse.
+
+**Ce que la liste n'affiche pas, et pourquoi.** Pas de kcal dans les lignes de la
+liste. `GET /api/recipe-nutrition` exige un `recipe_id` par choix : sans recette
+nommée, elle calculerait les 121 recettes en une requête non paginée
+(`api/routes.py`). Les afficher en liste demanderait une route en lot — un
+chantier à part, avec sa pagination et son cache. Ici : une recette ouverte, une
+requête.
+
+**Le rendement demandé est celui que la recette publie.** L'écran demande la
+nutrition à `original_servings`, jamais à un nombre choisi : une recette dont
+toutes les quantités sont fixes par lot refuse toute autre valeur (« ne peut
+être chiffrée que pour son rendement publié »), et c'est ce refus que l'écran
+Résultat affiche quand le plan, lui, a mis la recette à l'échelle.
+
+**Vérifié en pilotant l'application** (Playwright, msedge) : onglet Recettes →
+121 au catalogue, 20 par page ; recherche « sushi » → « Boules de sushi »
+ouverte à 161,9 kcal · 3,1 g · 5,9 g · 24,4 g ; recherche « lasagne » → « La
+meilleure lasagne à la viande maison », hors du menu de la semaine, à
+1 230,4 kcal ± 3,0 · 71,2 g ± 0,3 · 74,8 g ± 0,4 · 66,9 g ± 0,6, avec ses 20
+ingrédients. `tsc -b` propre, 16 tests d'API et de module catalogue passés.

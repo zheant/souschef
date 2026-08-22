@@ -12,7 +12,10 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from ..services import catalog, household, offer_resolution, planning, recipe_quotes
+from ..services import (
+    catalog, household, offer_resolution, planning, price_refresh,
+    recipe_nutrition_facts, recipe_quotes,
+)
 from ..services.validation import ValidationError
 from ..solver import MenuSolver, SolverConfig
 from . import schemas
@@ -39,6 +42,7 @@ def _household_out(view: household.HouseholdView) -> schemas.HouseholdOut:
         available_equipment=view.available_equipment,
         max_prep_time_per_meal_h=view.max_prep_time_per_meal_h,
         appetence_u_min_dollars=view.appetence_u_min_dollars,
+        min_grocery_spend_cents_cad=view.min_grocery_spend_cents_cad,
         members=[schemas.MemberOut(**asdict(m)) for m in view.members],
         demand=view.demand,
     )
@@ -280,10 +284,12 @@ def get_recipes(
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
 ):
-    """Recherche/pagination de recettes (docs/spec.md). Sans appelant
-    frontend à ce jour — aucune tranche pilote n'a eu besoin d'un
-    navigateur de recettes ; conservé tel quel, pas du code mort (implémente
-    un endpoint requis par la spec), juste hors périmètre du pilote."""
+    """Recherche/pagination de recettes (docs/spec.md).
+
+    Appelée par l'écran Recettes (`frontend/src/screens/Recipes.tsx`) depuis
+    D39 : c'est la liste où l'on choisit une recette pour voir sa valeur
+    nutritive. Elle est restée longtemps sans appelant frontend — aucune
+    tranche pilote n'avait eu besoin d'un navigateur de recettes."""
     page = catalog.search_recipes(
         session,
         catalog.RecipeQuery(
@@ -327,6 +333,44 @@ def get_recipe_quotes(
     return [quote.as_dict() for quote in quotes]
 
 
+@router.get("/recipe-nutrition")
+def get_recipe_nutrition(
+    # Obligatoire, contrairement à `/recipe-quotes` : sans recette nommée,
+    # l'appel calculerait les 161 recettes du catalogue en une requête non
+    # paginée. Le besoin en lot existe, mais il est hors ligne
+    # (`scripts/audit_recipe_nutrition_coverage.py`), et il tourne sans base.
+    recipe_id: str = Query(min_length=1),
+    servings: int | None = Query(default=None, ge=1),
+    session: Session = Depends(get_session),
+):
+    """Valeur nutritive par portion, ou refus nommant les ingrédients manquants.
+
+    Le module ne rend jamais un total partiel : une recette dont un seul
+    ingrédient n'est pas résolu sort avec ses quatre nombres à `null` et la
+    liste de ce qui bloque. L'écran affiche donc soit une valeur, soit la
+    raison de son absence — jamais un chiffre qu'il faudrait croire.
+    """
+    try:
+        facts = recipe_nutrition_facts.nutrition_facts(
+            session, recipe_id=recipe_id, servings=servings
+        )
+    except LookupError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except recipe_nutrition_facts.RecipeNotScalableError as exc:
+        # Même arbitrage que les devis : une recette sans composante marginale
+        # décrit un lot, pas une portion.
+        raise HTTPException(422, str(exc)) from exc
+    except (
+        recipe_nutrition_facts.NutritionRulesUnavailable,
+        recipe_nutrition_facts.NutritionDataUnavailable,
+    ) as exc:
+        # Défauts de déploiement (règlement non monté, archive FCÉN non
+        # importée), pas fautes de l'appelant : le dire plutôt que de laisser
+        # filer une trace de pile.
+        raise HTTPException(503, str(exc)) from exc
+    return [row.as_dict() for row in facts]
+
+
 @router.get(
     "/recipes/{recipe_id}/ingredients",
     response_model=list[schemas.RecipeIngredientOut],
@@ -359,6 +403,50 @@ def get_price_coverage(session: Session = Depends(get_session)):
     return schemas.PriceCoverageOut(
         earliest=coverage.earliest, latest=coverage.latest
     )
+
+
+@router.get("/price-refresh", response_model=schemas.PriceRefreshOut)
+def get_price_refresh():
+    """État de la dernière collecte lancée depuis l'application.
+
+    Pas de session : l'état ne vit pas en base. Une collecte de trente minutes
+    doit survivre aux redémarrages de l'API, donc son état est un fichier
+    (``services/price_refresh.py``), pas une ligne dans une transaction.
+    """
+    return schemas.PriceRefreshOut(**price_refresh.get_status().as_dict())
+
+
+@router.post("/price-refresh", response_model=schemas.PriceRefreshOut, status_code=202)
+def start_price_refresh(body: schemas.PriceRefreshStart):
+    """Démarre la collecte et répond 202 sans l'attendre.
+
+    202 et non 200 : rien n'est fait au retour de cette requête, un lot vient
+    d'être accepté. La collecte elle-même n'a lieu dans aucune requête HTTP —
+    l'invariant de ``ports/circular.py`` (D23) tient.
+    """
+    try:
+        return schemas.PriceRefreshOut(
+            **price_refresh.start_refresh(body.banner).as_dict()
+        )
+    except price_refresh.RefreshAlreadyRunningError as exc:
+        raise HTTPException(409, str(exc)) from exc
+    except price_refresh.UnsupportedBannerError as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+
+@router.delete("/price-refresh", response_model=schemas.PriceRefreshOut)
+def dismiss_price_refresh():
+    """Efface le verdict de la dernière mise à jour — pas son journal.
+
+    Un verdict terminal se lit comme une affirmation sur l'état courant de la
+    base, alors qu'il ne décrit qu'un lancement passé. Le faire taire est un
+    geste de l'usager, pas une expiration automatique dont le délai serait
+    arbitraire.
+    """
+    try:
+        return schemas.PriceRefreshOut(**price_refresh.dismiss().as_dict())
+    except price_refresh.RefreshAlreadyRunningError as exc:
+        raise HTTPException(409, str(exc)) from exc
 
 
 # ---------------------------------------------------------------------------

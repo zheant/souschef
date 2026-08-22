@@ -1,8 +1,10 @@
 // Client API typé — seule porte vers le back-end.
 
 import type {
-  Household, Plan, PriceCoverage,
-  RecipeIngredientLine, RecipeQuote, ReoptimizeResult, SolverConfigInput,
+  RecipePage,
+  Household, Plan, PriceCoverage, PriceRefresh,
+  RecipeIngredientLine, RecipeNutrition, RecipeQuote, ReoptimizeResult,
+  SolverConfigInput,
   StapleLine, Store,
 } from "./types";
 
@@ -65,6 +67,14 @@ export const api = {
       body: JSON.stringify(onDate ? { config, on_date: onDate } : { config }),
     }),
   priceCoverage: () => req<PriceCoverage>("/api/price-coverage"),
+  priceRefresh: () => req<PriceRefresh>("/api/price-refresh"),
+  startPriceRefresh: (banner = "superc") =>
+    req<PriceRefresh>("/api/price-refresh", {
+      method: "POST",
+      body: JSON.stringify({ banner }),
+    }),
+  dismissPriceRefresh: () =>
+    req<PriceRefresh>("/api/price-refresh", { method: "DELETE" }),
   getPlan: (id: number) => req<Plan>(`/api/plan/${id}`),
   commitPlan: (id: number) =>
     req<{ plan_id: number; status: string }>(
@@ -91,6 +101,15 @@ export const api = {
       }),
     }),
   stores: () => req<Store[]>("/api/stores"),
+  recipes: (q: string, limit: number, offset: number) => {
+    const query = new URLSearchParams({
+      limit: String(limit), offset: String(offset),
+    });
+    // Une recherche vide n'est pas une recherche : envoyer `q=` filtrait sur
+    // la chaîne vide côté route au lieu de tout rendre.
+    if (q.trim()) query.set("q", q.trim());
+    return req<RecipePage>(`/api/recipes?${query.toString()}`);
+  },
   recipeIngredients: (recipeId: string) =>
     req<RecipeIngredientLine[]>(`/api/recipes/${recipeId}/ingredients`),
   recipeQuote: (
@@ -108,6 +127,18 @@ export const api = {
     return req<RecipeQuote[]>(`/api/recipe-quotes?${query.toString()}`).then(
       (quotes) => quotes[0] ?? null,
     );
+  },
+  // Même forme que `recipeQuote` : une liste côté route, un seul élément ici,
+  // et `null` plutôt qu'un `undefined` que l'appelant déréférencerait.
+  recipeNutrition: (
+    recipeId: string, servings: number,
+  ): Promise<RecipeNutrition | null> => {
+    const query = new URLSearchParams({
+      recipe_id: recipeId, servings: String(servings),
+    });
+    return req<RecipeNutrition[]>(
+      `/api/recipe-nutrition?${query.toString()}`,
+    ).then((rows) => rows[0] ?? null);
   },
 };
 

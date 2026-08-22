@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, cents, hours, messageOf } from "../api";
 import { describeChanges } from "../changes";
+import { NutritionBlock } from "../components/NutritionBlock";
 import type {
-  Household, Plan, RecipeIngredientLine, RecipeQuote, SolverConfigInput, Store,
+  Household, Plan, RecipeIngredientLine, RecipeNutrition, RecipeQuote,
+  SolverConfigInput, Store,
 } from "../types";
 
 /** Écran 3 — Résultat (piste « circulaire du quartier », disposition « P »,
@@ -132,6 +134,12 @@ export default function ResultScreen(props: {
   const [openRecipeId, setOpenRecipeId] = useState<string | null>(null);
   const [ingredients, setIngredients] = useState<RecipeIngredientLine[] | null>(null);
   const [ingredientsError, setIngredientsError] = useState<string | null>(null);
+  const [nutrition, setNutrition] = useState<RecipeNutrition | null>(null);
+  const [nutritionError, setNutritionError] = useState<string | null>(null);
+  // Trois états, pas deux : « en chargement » et « indisponible » se
+  // ressemblent quand on ne garde qu'un `null`, et l'écran restait sur
+  // « Chargement… » pour toujours dès que la route répondait une liste vide.
+  const [nutritionLoading, setNutritionLoading] = useState(false);
   const [recipeQuotes, setRecipeQuotes] = useState<Record<string, RecipeQuote>>({});
   const [quotesError, setQuotesError] = useState<string | null>(null);
   const [quotesLoading, setQuotesLoading] = useState(false);
@@ -259,10 +267,26 @@ export default function ResultScreen(props: {
     setOpenRecipeId(recipeId);
     setIngredients(null);
     setIngredientsError(null);
+    setNutrition(null);
+    setNutritionError(null);
+    setNutritionLoading(true);
+    const servings =
+      currentPlan.menu.find((m) => m.recipe_id === recipeId)?.servings ?? 0;
     try {
       setIngredients(await api.recipeIngredients(recipeId));
     } catch (e) {
       setIngredientsError(messageOf(e));
+    }
+    // Chargée à part et après : une valeur nutritive indisponible ne doit pas
+    // effacer la liste d'ingrédients, qui est la raison première de l'écran.
+    try {
+      setNutrition(
+        servings > 0 ? await api.recipeNutrition(recipeId, servings) : null,
+      );
+    } catch (e) {
+      setNutritionError(messageOf(e));
+    } finally {
+      setNutritionLoading(false);
     }
   }
 
@@ -480,6 +504,14 @@ export default function ResultScreen(props: {
                 {quotePriceLabel(recipeQuotes[openRecipe.recipe_id], quotesLoading)}
               </div>
             )}
+            <div className="rp-detail-sec">Valeur nutritive par portion</div>
+            {nutritionError && <p className="callout error">{nutritionError}</p>}
+            {!nutritionError && nutritionLoading && <p className="muted">Chargement…</p>}
+            {!nutritionError && !nutritionLoading && !nutrition && (
+              <p className="muted">Valeur nutritive indisponible pour cette recette.</p>
+            )}
+            {nutrition && <NutritionBlock facts={nutrition} />}
+
             <div className="rp-detail-sec">Ingrédients</div>
             {ingredientsError && <p className="callout error">{ingredientsError}</p>}
             {!ingredientsError && !ingredients && <p className="muted">Chargement…</p>}

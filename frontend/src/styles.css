@@ -139,6 +139,15 @@ table.ledger { width: 100%; border-collapse: collapse; font-size: 14px; }
   background: var(--leek-soft); color: var(--leek); border-radius: 999px; padding: 2px 9px;
 }
 .muted { color: var(--ink-soft); font-size: 13px; }
+/* Action secondaire discrète à l'intérieur d'un encadré : « Masquer » un
+   verdict n'est pas une action de même poids que « Mettre à jour les prix ». */
+.dismiss {
+  background: none; border: none; padding: 0; cursor: pointer;
+  color: var(--ink-soft); font: inherit; font-size: 12.5px;
+  text-decoration: underline;
+}
+.dismiss:hover { color: var(--ink); }
+.dismiss:focus-visible { outline: 2px solid var(--leek); outline-offset: 2px; }
 .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 
 .callout { border-left: 3px solid var(--flyer); background: #fdf6e6; padding: 10px 14px; border-radius: 0 10px 10px 0; font-size: 13.5px; }
@@ -340,3 +349,73 @@ pre.raw {
 .rp-detail-ing { margin: 0; padding: 0; list-style: none; }
 .rp-detail-ing li { padding: 8px 0; border-bottom: 1px dashed var(--rp-rule); font-size: 14px; }
 .rp-detail-ing li:last-child { border-bottom: none; }
+
+/* Valeur nutritive par portion (détail recette). Quatre cellules à largeur
+   égale plutôt qu'un tableau : la ligne se lit d'un coup d'œil et tient sur un
+   téléphone. La note de borne reste sous les chiffres, jamais à côté — elle les
+   qualifie tous les quatre. */
+.rp-nutrition {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  margin-top: 4px;
+}
+.rp-nutrition-cell {
+  background: var(--rp-card, #fff); border: 1px solid var(--rp-rule);
+  border-radius: 10px; padding: 10px 6px; text-align: center;
+}
+.rp-nutrition-value {
+  font-weight: 800; font-size: 15px; font-variant-numeric: tabular-nums;
+}
+.rp-nutrition-label {
+  font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--rp-ink-soft); margin-top: 3px;
+}
+.rp-nutrition-note {
+  font-size: 11px; color: var(--rp-ink-soft); margin: 8px 0 0;
+  font-variant-numeric: tabular-nums;
+}
+.rp-nutrition-missing { font-size: 13px; }
+.rp-nutrition-missing p { margin: 0 0 8px; color: var(--rp-ink-soft); }
+.rp-nutrition-missing ul { margin: 0; padding: 0; list-style: none; }
+.rp-nutrition-missing li {
+  padding: 6px 0; border-bottom: 1px dashed var(--rp-rule);
+  display: flex; justify-content: space-between; gap: 12px;
+}
+.rp-nutrition-missing li:last-child { border-bottom: none; }
+.rp-nutrition-reason { color: var(--rp-ink-soft); font-size: 11px; text-align: right; }
+/* Borne d'un apport déclaré négligeable, sous le chiffre qu'elle qualifie —
+   jamais à côté d'un autre, jamais absente quand elle existe. */
+.rp-nutrition-bound {
+  font-size: 10px; color: var(--rp-ink-soft); font-variant-numeric: tabular-nums;
+  margin-top: 1px;
+}
+
+/* Écran Recettes — la liste du catalogue et ses lignes cliquables. Reprend les
+   tons et les rayons des cartes de menu : c'est le même objet vu autrement, pas
+   un deuxième langage visuel. */
+.rc-list { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+.rc-list li + li { margin-top: 0.4rem; }
+.rc-row {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--line, #dcdfd3);
+  border-radius: 0.7rem;
+  background: var(--card, #fff);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+.rc-row:hover { border-color: var(--accent, #4a7c1f); }
+.rc-name { font-weight: 600; }
+.rc-meta { font-size: 0.82rem; color: var(--muted, #6b7268); }
+.rc-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+}
