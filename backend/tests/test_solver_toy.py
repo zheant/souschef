@@ -47,6 +47,8 @@ import pytest
 
 from app.services.appetence import RuleBasedAppetenceScorer
 from app.services.prefilter import prefilter_recipes
+from app.services.recipe_nutrition import ProteinCoefficients
+from app.services.validation import ProteinFloorWithoutBatchFlagError
 from app.solver import PulpMenuSolver, SolverConfig
 from tests.seed_loader import problem_from_seed_dir
 
@@ -331,3 +333,91 @@ def test_flags_altering_needs_are_signaled(toy):
     assert fx["objectif_ou_contraintes_seulement"] == [
         "enable_time_cost", "enable_staples", "enable_variant_exclusion",
     ]
+
+
+def test_a_protein_floor_lifts_the_menu_toward_protein_rich_recipes(toy):
+    """Le plancher doit changer la sélection, pas seulement être calculé.
+
+    Le jouet porte trois recettes : riz nature (peu de protéines), dahl et
+    omelette (davantage). Sans plancher, le solveur prend le moins cher; avec un
+    plancher de protéines, il doit se déplacer vers les plats protéinés — et si
+    le plancher est hors d'atteinte, refuser plutôt que servir n'importe quoi.
+    """
+    problem, _pre = toy
+    coefficients = {
+        "riz_nature": ProteinCoefficients(Decimal("0"), Decimal("2")),
+        "dahl_toy": ProteinCoefficients(Decimal("0"), Decimal("20")),
+        "omelette_toy": ProteinCoefficients(Decimal("0"), Decimal("12")),
+    }
+    biased = dataclasses.replace(problem, protein_coefficients=coefficients)
+    pre = prefilter_recipes(
+        biased.recipes, biased.profile, RuleBasedAppetenceScorer(biased),
+        protein_coefficient_ids=frozenset(coefficients),
+    )
+
+    sans = PulpMenuSolver().solve(biased, pre, SolverConfig())
+    avec = PulpMenuSolver().solve(
+        biased, pre, SolverConfig(min_protein_g_per_serving=15),
+    )
+    assert sans.status == "Optimal" and avec.status == "Optimal"
+
+    def moyenne(result) -> Decimal:
+        portions = sum(result.servings_by_recipe.values())
+        total = sum(
+            coefficients[rid].marginal_g_per_serving * servings
+            for rid, servings in result.servings_by_recipe.items()
+        )
+        return total / portions
+
+    assert moyenne(sans) < Decimal("15")
+    assert moyenne(avec) >= Decimal("15")
+
+
+def test_an_unreachable_protein_floor_is_refused_not_approximated(toy):
+    """Aucun mélange des trois recettes n'atteint 25 g par portion."""
+    problem, _pre = toy
+    coefficients = {
+        "riz_nature": ProteinCoefficients(Decimal("0"), Decimal("2")),
+        "dahl_toy": ProteinCoefficients(Decimal("0"), Decimal("20")),
+        "omelette_toy": ProteinCoefficients(Decimal("0"), Decimal("12")),
+    }
+    biased = dataclasses.replace(problem, protein_coefficients=coefficients)
+    pre = prefilter_recipes(
+        biased.recipes, biased.profile, RuleBasedAppetenceScorer(biased),
+        protein_coefficient_ids=frozenset(coefficients),
+    )
+    result = PulpMenuSolver().solve(
+        biased, pre, SolverConfig(min_protein_g_per_serving=25),
+    )
+    assert result.status == "Infeasible"
+
+
+def test_a_protein_floor_needs_the_variable_that_says_a_batch_is_cooked(toy):
+    """Sans δ_r, la part de lot serait comptée une fois par portion ou jamais.
+
+    Les deux sont faux, donc le solveur refuse en nommant les drapeaux qui font
+    exister δ_r plutôt que d'approcher le plancher.
+    """
+    problem, _pre = toy
+    # Deux recettes au moins : avec une seule, R_min = 2 refuse avant que la
+    # garde du plancher ait son mot à dire.
+    coefficients = {
+        "riz_nature": ProteinCoefficients(Decimal("30"), Decimal("1")),
+        "dahl_toy": ProteinCoefficients(Decimal("40"), Decimal("2")),
+    }
+    biased = dataclasses.replace(problem, protein_coefficients=coefficients)
+    pre = prefilter_recipes(
+        biased.recipes, biased.profile, RuleBasedAppetenceScorer(biased),
+        protein_coefficient_ids=frozenset(coefficients),
+    )
+    with pytest.raises(ProteinFloorWithoutBatchFlagError) as error:
+        PulpMenuSolver().solve(
+            biased,
+            pre,
+            SolverConfig(
+                min_protein_g_per_serving=5,
+                enable_batch_fixed_cost=False,
+                enable_variant_exclusion=False,
+            ),
+        )
+    assert "enable_batch_fixed_cost" in str(error.value)

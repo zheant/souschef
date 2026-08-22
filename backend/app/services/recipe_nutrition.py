@@ -53,6 +53,8 @@ from .recipe_scaling import batch_requirements, field_of, servings_for
 from .units import IncompatibleUnitsError, MissingDensityError, convert_qty
 
 __all__ = [
+    "ProteinCoefficients",
+    "protein_coefficients",
     "CHOSEN_FOOD_ALREADY_ATTACHED",
     "AMBIGUOUS_CNF_FOOD",
     "CHOSEN_FOOD_NOT_ATTACHED",
@@ -221,6 +223,87 @@ class RecipeNutritionModule:
             )
             for recipe in recipes
         ]
+
+
+@dataclass(frozen=True)
+class ProteinCoefficients:
+    """Protéines d'une recette, décomposées en une part de lot et une part de
+    portion.
+
+    Pourquoi deux nombres et non un. Les protéines par portion d'une recette à
+    composante fixe dépendent du rendement — fixe ÷ portions + marginal — et le
+    solveur choisit justement le rendement. Un plancher écrit sur « les
+    protéines par portion » supposerait le rendement publié et deviendrait faux
+    dès que le menu s'en écarte. Décomposé, le total du menu s'écrit
+    linéairement : Σ_r (fixe_r · δ_r + marginal_r · x_r).
+
+    La décomposition est **exacte**, pas une approximation : la conversion d'une
+    quantité en grammes est linéaire (densité, masse par unité), donc les
+    protéines le sont aussi.
+    """
+
+    fixed_g_per_batch: Decimal
+    marginal_g_per_serving: Decimal
+
+
+def protein_coefficients(
+    recipe: object,
+    catalogue: Mapping[str, NutritionIngredient],
+    foods: Mapping[str, NutrientFacts],
+    rules: NutritionRuleset,
+) -> ProteinCoefficients | None:
+    """Les deux coefficients, ou ``None`` si la recette n'est pas chiffrable.
+
+    ``None`` signifie « pas de plancher applicable à cette recette », jamais
+    « zéro gramme » : un ingrédient non résolu ne se compte pas comme sans
+    protéines. L'appelant écarte la recette du lot plutôt que de la faire entrer
+    avec un chiffre qui n'est pas une mesure.
+
+    Les apports déclarés négligeables comptent pour zéro dans les deux parts, et
+    leur borne n'entre pas : le plancher exige donc au moins ``P_min`` de
+    protéines **mesurées**, ce qui est le bon sens de l'erreur.
+    """
+    servings = servings_for(recipe, None)
+    per_serving = {
+        ingredient_id: _line(
+            ingredient_id, per_batch / servings, catalogue, foods, rules
+        )
+        for ingredient_id, per_batch in batch_requirements(recipe, servings)
+    }
+    if any(line.resolution == GAP for line in per_serving.values()):
+        return None
+
+    fixed_total = Decimal("0")
+    marginal_total = Decimal("0")
+    for row in field_of(recipe, "ingredients"):
+        ingredient_id = str(field_of(row, "canonical_ingredient_id"))
+        fixed = Decimal(str(field_of(row, "qty_fixed_per_batch_base_unit")))
+        marginal = Decimal(str(field_of(row, "qty_marginal_per_serving_base_unit")))
+        if fixed < 0 or marginal < 0:
+            # `batch_requirements` borne le total à zéro; une part négative prise
+            # séparément produirait des protéines négatives. C'est un défaut de
+            # donnée, pas un cas à modéliser.
+            return None
+        line = per_serving[ingredient_id]
+        # Un apport déclaré négligeable, ou une quantité nulle, ne contribue
+        # rien — et n'a pas d'aliment à interroger.
+        if line.resolution != COMPUTED:
+            continue
+        # Protéines par unité de base, prises sur la teneur **non arrondie** :
+        # les lignes publiées sont arrondies au dixième pour que l'écran
+        # additionne juste, et dériver un coefficient de ce dixième multipliait
+        # l'arrondi par la taille du lot (2 % d'écart mesuré sur 200 g).
+        ingredient = catalogue[ingredient_id]
+        grams_per_base_unit, _confidence, _blocked = _grams_per_serving(
+            ingredient, Decimal("1")
+        )
+        food = foods.get(line.food_code or "")
+        if grams_per_base_unit is None or food is None:
+            return None
+        per_base_unit = food.protein_g_per_100g * grams_per_base_unit / _HUNDRED
+        fixed_total += per_base_unit * fixed
+        marginal_total += per_base_unit * marginal
+    return ProteinCoefficients(fixed_total, marginal_total)
 
 
 def _facts_for(

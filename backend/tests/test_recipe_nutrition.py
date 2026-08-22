@@ -29,6 +29,7 @@ from app.services.recipe_nutrition import (
     NutritionIngredient,
     RecipeNutritionModule,
     UNKNOWN_INGREDIENT,
+    protein_coefficients,
 )
 from app.services.recipe_scaling import RecipeNotScalableError
 
@@ -498,3 +499,88 @@ def test_a_malformed_food_choice_is_never_absorbed_by_a_negligible_claim():
     assert result.status == "incomplete"
     assert result.missing == (("sel_table", CHOSEN_FOOD_NOT_ATTACHED),)
     assert result.lines[0].resolution == GAP
+
+
+def test_protein_splits_into_a_batch_part_and_a_per_serving_part():
+    """Le plancher de protéines doit être linéaire, donc décomposé.
+
+    Les protéines par portion d'une recette à composante fixe dépendent du
+    rendement (fixe ÷ portions + marginal) : les traiter comme une constante
+    dans une contrainte du solveur, qui choisit justement le rendement, serait
+    faux dès qu'il s'écarte du rendement publié. Deux coefficients — grammes par
+    lot et grammes par portion — sont exacts et linéaires, parce que la
+    conversion en grammes l'est.
+    """
+    coefficients = protein_coefficients(
+        recipe(servings=4, lines=(("mais", "200", "10"),)),
+        {"mais": ingredient()},
+        {"2388": facts(protein="3.27")},
+        NO_RULES,
+    )
+    # 3,27 g de protéines pour 100 g : 200 g par lot → 6,54 g; 10 g par
+    # portion → 0,327 g.
+    assert coefficients is not None
+    assert coefficients.fixed_g_per_batch == Decimal("6.54")
+    assert coefficients.marginal_g_per_serving == Decimal("0.327")
+    # Et la somme retrouve ce que le module publie par portion à 4 portions :
+    # 6,54 / 4 + 0,327 = 1,962 → 2,0 g arrondi au dixième.
+    published = one(
+        [recipe(servings=4, lines=(("mais", "200", "10"),))],
+        [ingredient()],
+        [facts(protein="3.27")],
+    )
+    assert published.protein_g_per_serving == Decimal("2.0")
+
+
+def test_a_recipe_with_an_unresolved_ingredient_has_no_protein_coefficients():
+    """Pas de coefficients, donc pas de plancher applicable : la recette sort du
+    lot plutôt que d'entrer avec un zéro qui n'est pas une mesure."""
+    assert protein_coefficients(
+        recipe(lines=(("mais", "100", "0"), ("bouillon_poulet", "500", "0"))),
+        {"mais": ingredient(), "bouillon_poulet": ingredient(
+            "bouillon_poulet", "ml", "bouillons", food_codes=()
+        )},
+        {"2388": facts()},
+        NO_RULES,
+    ) is None
+
+
+def test_a_negligible_declaration_contributes_zero_to_both_coefficients():
+    """Un apport déclaré négligeable compte pour zéro, ici comme ailleurs.
+
+    La borne, elle, ne rentre pas dans le plancher : l'omettre rend le plancher
+    prudent (on exige au moins P_min de protéines *mesurées*), et c'est le bon
+    sens de l'erreur.
+    """
+    rules = parse_nutrition_rules(
+        {
+            "rule_version": "test",
+            "source_version": "2026",
+            "negligible_contributions": [
+                {
+                    "ingredient_id": "sel_table",
+                    "base_unit": "g",
+                    "kcal_per_100g": "0",
+                    "protein_g_per_100g": "0",
+                    "fat_g_per_100g": "0",
+                    "carbohydrate_g_per_100g": "0",
+                    "max_qty_per_serving_base_unit": "15",
+                    "grams_per_base_unit_ceiling": "1",
+                    "basis": "Le sel ne porte aucune énergie.",
+                    "provenance": "FCÉN 2026, aliment 214.",
+                }
+            ],
+        }
+    )
+    coefficients = protein_coefficients(
+        recipe(servings=2, lines=(("mais", "100", "0"), ("sel_table", "4", "0"))),
+        {
+            "mais": ingredient(),
+            "sel_table": ingredient("sel_table", family_id="epices", food_codes=()),
+        },
+        {"2388": facts(protein="3.27")},
+        rules,
+    )
+    assert coefficients is not None
+    assert coefficients.fixed_g_per_batch == Decimal("3.27")
+    assert coefficients.marginal_g_per_serving == Decimal("0")

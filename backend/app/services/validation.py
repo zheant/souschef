@@ -67,6 +67,21 @@ class DiversityInfeasibleError(ValidationError):
     assertion = "6_compatibilite_diversite"
 
 
+class ProteinFloorWithoutBatchFlagError(ValidationError):
+    """Plancher de protéines sans la variable qui dit qu'un lot est cuisiné.
+
+    Les protéines d'une part fixe ne se répètent pas à chaque portion : 500 g de
+    lentilles dans une casserole comptent une fois, que la casserole fasse
+    quatre portions ou douze. δ_r porte cette information, et il n'existe que si
+    les coûts fixes de lot, la diversité ou l'exclusion des variantes sont
+    actifs. Sans lui, le plancher compterait ces protéines une fois par portion
+    ou pas du tout — un plancher faux dans les deux sens, refusé plutôt que
+    servi.
+    """
+
+    assertion = "0_plancher_proteines_modelisable"
+
+
 class CapacityError(ValidationError):
     assertion = "6b_capacite_entiere"
 

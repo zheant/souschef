@@ -28,7 +28,11 @@ from ..services.params import EffectiveParams, resolve_effective_params
 from ..services.prefilter import PrefilterResult
 from ..services.problem_data import ProblemData, ProductData, RecipeData
 from ..services.travel import TravelCosts, compute_travel_costs, haversine_km
-from ..services.validation import min_taxed_price_per_base_unit, validate_problem
+from ..services.validation import (
+    ProteinFloorWithoutBatchFlagError,
+    min_taxed_price_per_base_unit,
+    validate_problem,
+)
 from .config import SolverConfig
 from .port import (
     Diagnostic, MenuSolver, ObjectiveTerms, PurchaseLine, SolveResult,
@@ -463,6 +467,64 @@ def _add_appetence_constraint(m: pulp.LpProblem, c: _Ctx) -> None:
     m += _appetence_expr_cents(c) >= u_min_cents, "appetence_min"
 
 
+def _add_protein_floor(m: pulp.LpProblem, c: _Ctx) -> None:
+    """Σ_r (fixe_r · δ_r + marginal_r · x_r) ≥ P_min · Σ_r x_r.
+
+    La moyenne de protéines du menu, écrite sans division. Le plancher porte sur
+    **la moyenne pondérée par portion**, pas sur chaque plat : c'est la semaine
+    qui doit être protéinée, et un plat léger reste servable s'il est compensé.
+    Multiplier des deux côtés par Σ x_r rend la contrainte linéaire — une
+    moyenne écrite en fraction ne l'est pas.
+
+    Pourquoi la part fixe passe par δ_r. Les protéines d'un lot ne se répètent
+    pas à chaque portion : 500 g de lentilles dans une casserole comptent une
+    fois, que la casserole fasse quatre portions ou douze. δ_r porte exactement
+    « ce lot est cuisiné », et il existe dès que les coûts fixes de lot, la
+    diversité ou l'exclusion des variantes sont actifs — donc toujours, en
+    configuration livrée (D38, D16). Sans δ_r, le plancher est refusé plutôt
+    qu'approché : `validate_problem` le dit.
+
+    Les recettes sans coefficients ne sont pas ici : le préfiltrage les a
+    écartées (`services/prefilter.py`). Les faire entrer avec un zéro
+    reviendrait à compter une recette non chiffrée comme une recette sans
+    protéines.
+    """
+    floor = Decimal(str(c.params.min_protein_g_per_serving.value))
+    coefficients = c.problem.protein_coefficients
+    batched = [
+        r.id for r in c.recipes
+        if r.id in coefficients
+        and coefficients[r.id].fixed_g_per_batch != 0
+    ]
+    if batched and not c.needs_delta:
+        # δ_r n'existe pas dans ce modèle, et sans lui la part de lot devrait
+        # être soit ignorée (le plancher compterait moins de protéines qu'il
+        # n'y en a), soit répétée à chaque portion (davantage). Les deux sont
+        # faux : on refuse, en nommant le drapeau qui fait exister δ_r.
+        raise ProteinFloorWithoutBatchFlagError(
+            "Plancher de protéines demandé alors que δ_r n'existe pas dans ce "
+            f"modèle : {len(batched)} recette(s) portent des protéines par lot "
+            "(un lot de lentilles compte une fois, pas à chaque portion), et "
+            "seul enable_batch_fixed_cost, enable_diversity ou "
+            "enable_variant_exclusion fait exister la variable qui le dit. "
+            "Rallumer l'un des trois, ou retirer le plancher."
+        )
+    total = pulp.lpSum(
+        [
+            float(coefficients[r.id].fixed_g_per_batch) * c.delta[r.id]
+            for r in c.recipes
+            if r.id in coefficients
+        ]
+        + [
+            float(coefficients[r.id].marginal_g_per_serving) * c.x[r.id]
+            for r in c.recipes
+            if r.id in coefficients
+        ]
+    )
+    servings = pulp.lpSum([c.x[r.id] for r in c.recipes])
+    m += total >= float(floor) * servings, "proteines_min"
+
+
 # ---------------------------------------------------------------------------
 # Termes de l'objectif
 # ---------------------------------------------------------------------------
@@ -642,6 +704,8 @@ class PulpMenuSolver:
             _add_perishable_waste(m, c)
         if params.appetence_mode == "constraint":
             _add_appetence_constraint(m, c)
+        if params.min_protein_g_per_serving.value is not None:
+            _add_protein_floor(m, c)
 
         objective = _purchases_expr_cents(c)
         if config.enable_multi_store:

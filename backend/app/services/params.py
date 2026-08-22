@@ -47,6 +47,9 @@ class EffectiveParams:
     max_share_per_recipe: EffectiveParam   # α
     demand_slack_epsilon: EffectiveParam   # ε (D9)
     appetence_u_min_dollars: EffectiveParam  # U_min (None = aucun plancher)
+    #: Plancher de protéines, en grammes par portion, sur la moyenne du
+    #: menu (None = aucun plancher).
+    min_protein_g_per_serving: EffectiveParam
     #: Plancher de dépense d'épicerie en cents (None = aucun plancher).
 
     @property
@@ -96,6 +99,12 @@ def resolve_effective_params(
             profile.demand_slack_epsilon,
         ),
         appetence_u_min_dollars=_resolve_u_min(profile, config),
+        min_protein_g_per_serving=_pick(
+            Decimal(str(config.min_protein_g_per_serving))
+            if config.min_protein_g_per_serving is not None
+            else None,
+            profile.min_protein_g_per_serving,
+        ),
     )
 
 

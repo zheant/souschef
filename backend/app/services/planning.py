@@ -28,6 +28,8 @@ pénalité de répétition du scoring d'appétence.
 
 from __future__ import annotations
 
+import dataclasses
+
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
@@ -40,7 +42,9 @@ from ..models.base import utcnow
 from ..services.appetence import RuleBasedAppetenceScorer
 from ..services.prefilter import prefilter_recipes
 from ..services.needs import ingredient_needs
+from ..services.params import resolve_effective_params
 from ..services.problem_data import load_problem_data
+from ..services.recipe_nutrition_facts import protein_coefficients_by_recipe
 from ..services.validation import min_taxed_price_per_base_unit
 from ..solver.config import SolverConfig
 from ..solver.port import MenuSolver, SolveResult
@@ -161,7 +165,8 @@ def generate_plan(
     solver: MenuSolver,
 ) -> PlanView:
     problem = load_problem_data(session, profile_id, on_date)
-    pre = _run_prefilter(session, profile_id, problem)
+    problem = _with_protein_coefficients(session, problem, config)
+    pre = _run_prefilter(session, profile_id, problem, config)
     result = solver.solve(problem, pre, config)
     plan = _persist_plan(session, profile_id, on_date, config, problem, result)
     return _plan_view(session, plan)
@@ -202,6 +207,11 @@ def reoptimize_plan(
         )
 
     problem = load_problem_data(session, profile_id, previous.on_date)
+    # `config` et non `reopt_config` : le verrouillage de portions ajouté plus
+    # bas ne change pas le plancher de protéines, et les coefficients doivent
+    # être là avant le préfiltrage, qui s'en sert pour écarter les recettes non
+    # chiffrables.
+    problem = _with_protein_coefficients(session, problem, config)
     # Exclure une recette exclut aussi ses variantes d'échelle sœurs (D16) :
     # remplacer un plat ne doit pas simplement resservir l'autre format du
     # même plat — l'exclusion mutuelle de variantes au solveur ne protège
@@ -215,7 +225,7 @@ def reoptimize_plan(
     }
 
     pre = _run_prefilter(
-        session, profile_id, problem,
+        session, profile_id, problem, config,
         force_keep_ids=locked_recipe_ids, exclude_ids=full_excluded_ids,
     )
     # Erreur explicite AVANT le solveur (jamais un statut Infeasible muet) :
@@ -319,10 +329,32 @@ def _load_owned_plan(session: Session, profile_id: str, plan_id: int) -> Plan:
     return plan
 
 
+def _with_protein_coefficients(
+    session: Session, problem, config: SolverConfig
+):
+    """Charge les coefficients de protéines, et seulement si on les réclame.
+
+    Les lire coûte une lecture des teneurs fédérales et du canon : sans
+    plancher demandé, personne ne les regarderait. C'est ici que ça se décide,
+    parce que c'est le seul endroit qui voit à la fois le problème chargé et la
+    configuration du solveur.
+    """
+    params = resolve_effective_params(problem.profile, config)
+    if params.min_protein_g_per_serving.value is None:
+        return problem
+    return dataclasses.replace(
+        problem,
+        protein_coefficients=protein_coefficients_by_recipe(
+            session, problem.recipes
+        ),
+    )
+
+
 def _run_prefilter(
     session: Session,
     profile_id: str,
     problem,
+    config: SolverConfig,
     force_keep_ids: frozenset[str] = frozenset(),
     exclude_ids: frozenset[str] = frozenset(),
 ):
@@ -335,9 +367,19 @@ def _run_prefilter(
     # ou non (les deux tombaient sinon sur la même MissingPriceError non
     # gérée par l'API).
     priced_ids = frozenset(min_taxed_price_per_base_unit(problem))
+    # `enable_batch_fixed_cost` voyage jusqu'ici parce qu'il change ce qu'une
+    # recette DEMANDE, pas seulement ce qu'elle coûte : sans lui, une recette
+    # dont toutes les quantités sont fixes par lot a un besoin nul et le
+    # solveur la sert gratuitement (services/prefilter.py).
     return prefilter_recipes(
         problem.recipes, problem.profile, scorer, priced_ids,
         force_keep_ids=force_keep_ids, exclude_ids=exclude_ids,
+        batch_fixed_cost_enabled=config.enable_batch_fixed_cost,
+        protein_coefficient_ids=(
+            frozenset(problem.protein_coefficients)
+            if problem.protein_coefficients
+            else None
+        ),
     )
 
 

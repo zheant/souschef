@@ -70,6 +70,9 @@ export default function HouseholdScreen(props: {
     // plancher ». Les deux doivent rester distinguables jusqu'à la
     // sérialisation.
     u_min: h.appetence_u_min_dollars == null ? "" : String(h.appetence_u_min_dollars),
+    min_protein: h.min_protein_g_per_serving == null
+      ? ""
+      : String(h.min_protein_g_per_serving),
   });
   const [members, setMembers] = useState<Member[]>(h.members);
   const [saving, setSaving] = useState(false);
@@ -111,6 +114,12 @@ export default function HouseholdScreen(props: {
         // `null` explicite retire le plancher : la route sérialise avec
         // `exclude_unset`, donc envoyer la clé à `null` l'efface réellement.
         appetence_u_min_dollars: form.u_min.trim() === "" ? null : Number(form.u_min),
+        // Même convention que le plancher d'appétence : vide envoie `null`,
+        // ce qui retire réellement le plancher (la route sérialise avec
+        // `exclude_unset`).
+        min_protein_g_per_serving: form.min_protein.trim() === ""
+          ? null
+          : Number(form.min_protein),
         members,
       });
       props.onSaved(saved);
@@ -207,6 +216,17 @@ export default function HouseholdScreen(props: {
                   type="text" inputMode="decimal" value={form.u_min}
                   onChange={(e) => setForm({ ...form, u_min: e.target.value })}
                   placeholder="ex. 65"
+                />
+              </label>
+              <label className="field">
+                <span>
+                  Protéines minimum (g par portion, en moyenne){" "}
+                  <em>(vide = aucun)</em>
+                </span>
+                <input
+                  type="text" inputMode="decimal" value={form.min_protein}
+                  onChange={(e) => setForm({ ...form, min_protein: e.target.value })}
+                  placeholder="ex. 25"
                 />
               </label>
             </div>

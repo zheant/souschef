@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import json
 from decimal import Decimal
+from typing import Iterable
 from functools import lru_cache
 from pathlib import Path
 
@@ -56,10 +57,12 @@ from .nutrition_rules import (
 from .recipe_nutrition import (
     NutrientFacts,
     NutritionIngredient,
+    ProteinCoefficients,
     RecipeNutritionFacts,
     RecipeNutritionModule,
+    protein_coefficients,
 )
-from .recipe_scaling import RecipeNotScalableError, servings_for
+from .recipe_scaling import RecipeNotScalableError, field_of, servings_for
 
 __all__ = [
     "NutritionDataUnavailable",
@@ -146,6 +149,33 @@ def nutrition_facts(
             recipes, ingredients, foods, rules, servings=resolved
         )
     )
+
+
+def protein_coefficients_by_recipe(
+    session: Session, recipes: Iterable[object],
+) -> dict[str, ProteinCoefficients]:
+    """Coefficients de protéines des recettes chiffrables, par identifiant.
+
+    Une recette absente du résultat n'est **pas** une recette sans protéines :
+    c'est une recette dont un ingrédient n'est pas résolu. L'appelant l'écarte
+    du plancher plutôt que de la faire entrer avec un zéro.
+
+    Les recettes sont passées par l'appelant plutôt que relues ici : le solveur
+    travaille sur les recettes préfiltrées, et recharger le catalogue entier
+    pour n'en garder qu'une partie ferait payer 121 recettes pour en chiffrer
+    quarante.
+    """
+    rules = _load_rules()
+    ingredients = _ingredients(session, rules)
+    foods = _foods(session, ingredients, rules)
+    catalogue = {row.ingredient_id: row for row in ingredients}
+    table = {row.food_code: row for row in foods}
+    found: dict[str, ProteinCoefficients] = {}
+    for recipe in recipes:
+        coefficients = protein_coefficients(recipe, catalogue, table, rules)
+        if coefficients is not None:
+            found[str(field_of(recipe, "id"))] = coefficients
+    return found
 
 
 def _ingredients(

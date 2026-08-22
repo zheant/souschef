@@ -40,6 +40,10 @@ class HouseholdProfile(TimestampMixin, Base):
             "appetence_u_min_dollars IS NULL OR appetence_u_min_dollars >= 0",
             name="u_min_nonneg",
         ),
+        CheckConstraint(
+            "min_protein_g_per_serving IS NULL OR min_protein_g_per_serving >= 0",
+            name="min_protein_nonneg",
+        ),
         {"schema": SCHEMA},
     )
 
@@ -82,18 +86,19 @@ class HouseholdProfile(TimestampMixin, Base):
     appetence_u_min_dollars: Mapped[Decimal | None] = mapped_column(
         Numeric(8, 2), nullable=True
     )
-    #: Plancher de dépense d'épicerie, en cents CAD. `None` : aucun plancher.
+    #: Plancher de protéines : grammes par portion, en **moyenne sur le menu**,
+    #: et non par plat — c'est la semaine qui doit être protéinée, et un plat
+    #: léger reste servable s'il est compensé. `None` : aucun plancher, et non
+    #: zéro, qui serait une contrainte satisfaite d'avance que le solveur
+    #: construirait pour rien.
     #:
-    #: Le plancher d'appétence ci-dessus répond « quel menu », pas « quel
-    #: montant » : 70 points d'appétence valaient 62,77 $ la semaine du
-    #: 13 août, et rien ne garantit le même montant la semaine suivante. Un
-    #: ménage qui veut employer son budget raisonne en dollars, pas en points.
-    #:
-    #: Ce plancher n'a de sens QUE si quelque chose récompense un menu meilleur
-    #: — sinon le solveur atteint le montant par le chemin le moins cher, qui
-    #: est le surplus, et achète du gaspillage. L'appétence doit donc rester
-    #: dans l'objectif : `services/validation.py` refuse explicitement la
-    #: combinaison plancher de dépense + mode d'appétence « constraint ».
+    #: Le pendant du plancher d'appétence, dans l'unité que le ménage surveille :
+    #: l'appétence dit « quel menu me plaît », les protéines disent « de quoi il
+    #: est fait ». Surchargeable par SolverConfig, résolu par
+    #: `services/params.py` comme K, R_min, α, ε et U_min.
+    min_protein_g_per_serving: Mapped[Decimal | None] = mapped_column(
+        Numeric(8, 2), nullable=True
+    )
 
     members: Mapped[list["HouseholdMember"]] = relationship(
         back_populates="profile", cascade="all, delete-orphan"

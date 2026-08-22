@@ -96,6 +96,9 @@ class SolverConfig(BaseModel):
     appetence_mode: Literal["objective", "constraint"] | None = None
     #: U_min en dollars, requis si appetence_mode = "constraint".
     appetence_u_min_dollars: float | None = Field(default=None, ge=0)
+    #: Plancher de protéines (g par portion, en moyenne sur le menu).
+    #: Surcharge la préférence du ménage; `None` la laisse s'appliquer.
+    min_protein_g_per_serving: float | None = Field(default=None, ge=0)
     #: Plancher de dépense d'épicerie en cents CAD — surcharge du profil.
     #: `None` : suivre le profil.
 

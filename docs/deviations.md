@@ -2208,3 +2208,63 @@ contre PostgreSQL réel (la colonne n'est plus dans
 plan se génère (`POST /api/plan` → 200) ; et l'écran Ménage › Préférences ne
 montre plus « Épicerie minimum » tout en gardant « Plancher d'appétence »,
 enregistrement compris.
+
+
+## D41 — Plancher de protéines : une moyenne du menu, écrite linéairement
+
+**Demande du ménage** : un critère minimum de protéines, pour que le menu tire
+vers les recettes protéinées. Le pendant du plancher d'appétence, dans l'unité
+que le ménage surveille — l'appétence dit « quel menu me plaît », les protéines
+disent « de quoi il est fait ».
+
+**Une moyenne, pas un minimum par plat.** C'est la semaine qui doit être
+protéinée : un plat léger reste servable s'il est compensé. Le plancher porte
+donc sur la moyenne **pondérée par portion** du menu.
+
+**Le problème à résoudre était la linéarité.** Les protéines par portion d'une
+recette à composante fixe valent `fixe ÷ portions + marginal`, et le solveur
+choisit justement les portions : un plancher écrit sur « les protéines par
+portion » supposerait le rendement publié et deviendrait faux dès que le menu
+s'en écarte. La contrainte est donc écrite sur deux coefficients par recette —
+grammes par lot, grammes par portion — et la moyenne, multipliée des deux côtés
+par Σ x_r pour disparaître en tant que fraction :
+
+    Σ_r (fixe_r · δ_r + marginal_r · x_r)  ≥  P_min · Σ_r x_r
+
+La décomposition est **exacte**, pas une approximation : la conversion d'une
+quantité en grammes (densité, masse par unité) est linéaire, donc les protéines
+le sont aussi. `services/recipe_nutrition.py::protein_coefficients` la calcule
+sur les teneurs **non arrondies** — dériver le coefficient de la valeur publiée,
+arrondie au dixième, multipliait l'arrondi par la taille du lot (2 % d'écart
+mesuré sur un lot de 200 g).
+
+**Pourquoi δ_r, et le refus quand il n'existe pas.** Les protéines d'une part
+fixe ne se répètent pas à chaque portion : 500 g de lentilles dans une casserole
+comptent une fois, que la casserole fasse quatre portions ou douze. δ_r porte
+exactement « ce lot est cuisiné », et il n'existe que si les coûts fixes de lot,
+la diversité ou l'exclusion des variantes sont actifs — donc toujours en
+configuration livrée (D38, D16). Sans lui, la part de lot serait comptée une fois
+par portion ou pas du tout, deux erreurs de sens opposé :
+`ProteinFloorWithoutBatchFlagError` refuse, en nommant les drapeaux à rallumer.
+
+**Une recette non chiffrable sort du lot, elle n'entre pas à zéro.** Le
+préfiltrage gagne une étape (`proteines_chiffrables`) quand le plancher est
+actif : une recette dont un ingrédient n'est pas résolu n'a pas sa place dans une
+moyenne, et la faire entrer avec un zéro compterait « non mesuré » comme « sans
+protéines », tirant la moyenne vers le bas au nom d'une donnée absente. Les
+apports déclarés négligeables, eux, comptent bien pour zéro — et leur borne
+n'entre pas, ce qui rend le plancher prudent : il exige au moins `P_min` de
+protéines **mesurées**.
+
+**Chargement paresseux.** Les coefficients ne sont lus que si un plancher les
+réclame (`services/planning.py::_with_protein_coefficients`) : les calculer coûte
+une lecture des teneurs fédérales et du canon, et sans plancher personne ne les
+regarderait.
+
+**Vérifié en exécutant.** Sur le jouet, le plancher **déplace la sélection** : à
+15 g par portion, la moyenne du menu passe sous le plancher sans lui et le
+respecte avec; à 25 g, hors d'atteinte des trois recettes, le solveur sort
+`Infeasible` plutôt qu'un menu approché. La garde δ_r refuse quand les trois
+drapeaux sont éteints. 501 tests passés, migration `8ec98af31b5e` appliquée
+contre PostgreSQL réel, et le champ « Protéines minimum (g par portion, en
+moyenne) » vit dans Ménage › Préférences, à côté du plancher d'appétence.
