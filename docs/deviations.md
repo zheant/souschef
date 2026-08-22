@@ -2336,3 +2336,68 @@ sans mesure aurait laissé croire réglable.
 **Vérifié en exécutant : 506 tests passés**, migration `9f482abb2232` appliquée
 contre PostgreSQL réel, et le champ « Plats distincts au plus » vit dans
 Ménage › Préférences avec les deux planchers.
+
+
+## D43 — Importer une recette depuis une URL : la page propose, l'humain confirme
+
+**Demande.** Coller une URL, en tirer les ingrédients, en faire une recette de la
+base.
+
+**Ce que les pages publient vraiment, mesuré sur deux sites du corpus.**
+bonpourtoi.ca publie un JSON-LD `schema.org/Recipe` complet : nom, rendement,
+temps, et les lignes d'ingrédients avec leurs mesures.
+ricardocuisine.com ne publie qu'un noeud `WebSite` — les lignes existent dans la
+mise en page, pas dans une donnée déclarée. Le module lit donc le JSON-LD, et
+**refuse en nommant la raison** (`no_structured_recipe`) quand il n'y en a pas :
+lire la mise en page serait deviner, et un deuxième chemin est nécessaire pour
+ces pages.
+
+**La mesure métrique gagne, et toutes les mesures sont gardées.** Les pages
+québécoises écrivent « 2 c. à soupe (30 ml (30 g)) » : une mesure d'ustensile,
+puis une ou deux mesures métriques. Le parseur garde **tout** ce que la ligne
+publie et laisse l'appelant choisir celle dont la dimension correspond à l'unité
+de base du canon. Effet mesuré : choisir le millilitre avant de connaître
+l'ingrédient forçait ensuite une densité curée pour du beurre pesé au gramme,
+alors que la page donnait les grammes.
+
+**Trois défauts trouvés en lisant deux pages réelles, pas en relisant le code.**
+
+1. **La virgule décimale coupait le libellé.** « Lait 3,25 %, 750 ml » donnait le
+   libellé « lait 3 », résolu vers `lait_non_precise` — un ingrédient voisin,
+   assez proche pour n'alerter personne, assez faux pour changer la valeur
+   nutritive. La coupe se fait à la dernière virgule *suivie d'une quantité*, et
+   jamais entre deux chiffres.
+2. **Le pluriel empêchait la reconnaissance.** Le canon écrit « clou de
+   girofle », la page « clous de girofle entiers ». Les deux côtés se comparent
+   désormais au singulier, symétriquement.
+3. **La dimension seule refusait trop.** « ½ c. à thé de paprika » est
+   convertible si le fichier de curation porte la densité. La cascade de
+   conversion est donc celle de l'importateur de recettes — même ordre, **même
+   fichier**, pas une seconde table de facteurs.
+
+Effet des trois : 28 lignes sur 33 lisibles à 32 sur 33 pour une lasagne réelle.
+
+**La commande propose, elle n'importe rien.** `scripts/import_recipe_from_url.py`
+écrit une file de revue par recette. Chaque ligne porte sa quantité, son unité,
+l'ingrédient canonique visé, les mesures publiées, et ses **blocages nommés** :
+aucune quantité lisible, aucun alias ne nomme l'ingrédient, quantité non
+convertible faute d'équivalence curée. `--apply` refuse tant qu'une ligne n'est
+pas confirmée à la main, refuse une ligne bloquée même confirmée, et refuse une
+page sans rendement publié — mettre à l'échelle sans point de départ fausserait
+toutes les quantités par portion.
+
+**Pourquoi la confirmation reste humaine, malgré un taux élevé.** Une résolution
+peut être fausse en ayant l'air juste : « tomates italiennes entières, 796 ml »
+se résout vers la tomate *fraîche* alors que 796 ml désigne une conserve. Aucune
+règle de chaîne ne voit cette différence; une personne, oui. C'est la même règle
+que pour l'appariement canonique → FCÉN (D32) : proposer, jamais rattacher sur
+une ressemblance.
+
+**Ce qui reste, et se voit dans les blocages.** Sur les ailes de poulet Buffalo,
+7 lignes sur 13 passent sans blocage. Les 6 autres sont des épices mesurées en
+millilitres que le canon pèse au gramme, et dont `cook_recipe_curation.json` ne
+porte pas la densité. C'est la même lacune que le chantier nutritionnel a déjà
+rencontrée, et elle se comble une épice à la fois.
+
+**Vérifié en exécutant : 540 tests passés**, dont 29 sur le module pur et 4 sur
+le refus d'écriture, et deux pages réelles lues de bout en bout.
