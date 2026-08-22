@@ -59,7 +59,16 @@ class SolverConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     enable_multi_store: bool = False
-    enable_batch_fixed_cost: bool = False
+    #: **Allumé par défaut, contrairement aux autres drapeaux.** Il ne décrit
+    #: pas un raffinement optionnel mais ce qu'une recette *demande* : sans lui,
+    #: une recette dont toutes les quantités sont fixes par lot a un besoin
+    #: identiquement nul, et le préfiltrage l'écarte (D25). Les 121 recettes
+    #: importées sont **toutes** dans ce cas : éteint, le catalogue réel se vide
+    #: entièrement et l'application ne sait rien planifier (D35 l'avait mesuré
+    #: et laissé, D38 le tranche). Mesuré avant bascule : sur `seed/toy`, allumé
+    #: ou éteint donne le même menu et le même objectif au cent près; sur la
+    #: base réelle, éteint ne rend aucun plan et allumé rend un optimum.
+    enable_batch_fixed_cost: bool = True
     enable_salvage: bool = False
     #: Sixième terme d'objectif (D19, docs/deviations.md) : pénalise le
     #: surplus d'un ingrédient périssable, symétrique de enable_salvage qui
@@ -87,6 +96,9 @@ class SolverConfig(BaseModel):
     appetence_mode: Literal["objective", "constraint"] | None = None
     #: U_min en dollars, requis si appetence_mode = "constraint".
     appetence_u_min_dollars: float | None = Field(default=None, ge=0)
+    #: Plancher de dépense d'épicerie en cents CAD — surcharge du profil.
+    #: `None` : suivre le profil.
+    min_grocery_spend_cents_cad: int | None = Field(default=None, ge=0)
 
     # Surcharges optionnelles du profil (résolues par resolve_effective_params,
     # l'unique point de préséance).

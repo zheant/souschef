@@ -211,8 +211,10 @@ def test_perishable_penalty_shifts_recipe_selection(toy):
     périssabilité 1,0 (dataclasses.replace, seul ingrédient jouet dont le
     surplus de paquet est significatif — 1 douzaine achetée quel que soit le
     besoin réel). Sans le drapeau, le mélange retenu laisse 10 œufs de
-    surplus (omelette_toy=1) ; avec, le solveur bascule vers omelette_toy=3
-    (le maximum que permet max_batch_servings) pour absorber le surplus —
+    surplus (omelette_toy=1) ; avec, le solveur bascule vers omelette_toy=2
+    pour absorber le surplus — deux et non trois depuis que
+    `enable_batch_fixed_cost` est allumé par défaut (D38) : la troisième
+    portion porte alors un coût fixe de lot qui annule le gain —
     preuve que la pénalité change réellement la sélection, pas seulement
     qu'elle est calculée sans effet. Calibration de RATIO documentée dans
     D19 : un ratio ≤ 0,8 (par analogie avec le plafond de σ_i) n'a AUCUN
@@ -239,7 +241,7 @@ def test_perishable_penalty_shifts_recipe_selection(toy):
         biased, pre, SolverConfig(**kwargs, enable_perishable_penalty=True)
     )
     assert on.status == "Optimal"
-    assert on.servings_by_recipe.get("omelette_toy", 0) == 3
+    assert on.servings_by_recipe.get("omelette_toy", 0) == 2
     assert on.diagnostic.objective_terms.gaspillage_cents > Decimal("0.00")
 
     # Jamais de biais de prix (contrairement aux essentiels/staples) : le
@@ -282,12 +284,15 @@ def test_diagnostic_is_complete(toy):
         "D_exact": "4.0", "borne_basse": "4", "borne_haute": "5",
         "total_retenu": str(sum(res.servings_by_recipe.values())),
     }
-    assert len(d.assertions_passed) == 7
+    assert len(d.assertions_passed) == 8  # 0 + 1..6 + 6b
     # enable_variant_exclusion est à True par défaut (D16) : il apparaît donc
     # après enable_diversity dans les deux listes, sans qu'on l'ait demandé.
     assert d.last_enabled_flag == "enable_variant_exclusion"
+    # `enable_batch_fixed_cost` est allumé par défaut depuis D38 : il figure
+    # donc dans les drapeaux qui altèrent les besoins, alors que ce pin le
+    # voyait vide du temps où tous les drapeaux étaient éteints.
     assert d.flag_effects == {
-        "alterent_les_besoins_en_ingredients": [],
+        "alterent_les_besoins_en_ingredients": ["enable_batch_fixed_cost"],
         "objectif_ou_contraintes_seulement": [
             "enable_diversity", "enable_variant_exclusion",
         ],

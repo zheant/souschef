@@ -2036,3 +2036,45 @@ appelants qui ne les passent pas gardent leur comportement.
 reste `False`. Le basculer change l'équation de besoin de toutes les recettes et
 mérite son propre écart mesuré — D35 le disait déjà, et ce constat ne fait que
 rendre le symptôme lisible en attendant.
+
+
+## D38 — `enable_batch_fixed_cost` est allumé par défaut
+
+**Ce que D35 avait mesuré et laissé.** Le défaut de développement met tous les
+drapeaux du `SolverConfig` à `false`, et le README explique qu'on les rallume un
+à un. Mais `enable_batch_fixed_cost` n'est pas un raffinement : il change ce
+qu'une recette **demande**. Éteint, une recette dont toutes les quantités sont
+fixes par lot a un besoin identiquement nul et le préfiltrage l'écarte (D25).
+Les 121 recettes importées sont **toutes** dans ce cas : le catalogue réel se
+vide entièrement, et l'application ne sait rien planifier. D35 l'avait constaté
+(« 0 recette survivante ») et laissé au chantier suivant. C'est celui-ci.
+
+**Mesuré avant de basculer, pas après.**
+
+| corpus | drapeau éteint | drapeau allumé |
+| --- | --- | --- |
+| `seed/toy` (3 recettes) | Optimal, 5 portions, objectif −3,34 $ | **identique au cent près** |
+| base réelle (121 recettes importées, prix Super C) | *aucun plan* — 81 recettes écartées à l'étape « besoin non nul » | Optimal, 3 plats |
+
+Autrement dit : là où le drapeau ne change rien, il ne change rien; là où il
+change quelque chose, c'est la différence entre un plan et pas de plan.
+
+**Décision.** `SolverConfig.enable_batch_fixed_cost = True`. Le drapeau reste
+désactivable explicitement, et le README garde sa liste — il en sort seulement.
+
+**Trois pins de tests déplacés, et pourquoi.** Aucun ne signalait un défaut :
+
+1. `test_diagnostic_is_complete` voyait
+   `alterent_les_besoins_en_ingredients: []` — la liste contient désormais
+   `enable_batch_fixed_cost`, ce qui est exactement ce que ce champ doit dire.
+2. `test_perishable_penalty_shifts_recipe_selection` attendait
+   `omelette_toy = 3` avec la pénalité de gaspillage; c'est 2 maintenant, parce
+   que la troisième portion porte un coût fixe de lot qui annule le gain. La
+   bascule que le test mesure — 1 → 2 — tient toujours.
+3. `test_min_grocery_spend` éteint désormais le drapeau **explicitement** : ce
+   fichier mesure le plancher de dépense, un mécanisme à la fois, et le laisser
+   entrer déplaçait ses chiffres sans rien dire du plancher (l'écart d'appétence
+   passait de 1 % à 5,5 %).
+
+**Vérifié en exécutant : 501 tests passés, 0 échec**, et un plan généré depuis
+l'API sans toucher à aucun drapeau.
