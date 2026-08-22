@@ -10,6 +10,7 @@ aucune valeur inconnue n'est remplacée par zéro.
 from __future__ import annotations
 
 import argparse
+import html
 import json
 import re
 import unicodedata
@@ -243,6 +244,13 @@ def _convert_recipe(
         fixed = ingredient.get("qty_fixed_per_batch_base_unit")
         marginal = ingredient.get("qty_marginal_per_serving_base_unit")
         needs_resolution = explicitly_mapped or fixed is None or marginal is None
+        # Un override de quantité est une décision humaine écrite : il gagne,
+        # même quand la projection amont a l'air complète. Sans cela, il ne
+        # s'appliquait qu'aux lignes déjà cassées d'une autre façon — « 1 paquet
+        # (454 g) de pâte à won-ton » arrivait en 454 enveloppes et l'override
+        # écrit pour le corriger ne servait à rien.
+        if identity in curation.get("quantity_overrides", {}):
+            needs_resolution = True
         # La projection amont recopie parfois le compte d'articles de la ligne
         # source (« 1 aubergine ») dans un champ exprimé en grammes : la
         # recette demande alors 1 g d'aubergine, ce qu'aucune étape ultérieure
@@ -267,7 +275,13 @@ def _convert_recipe(
                 canonical_catalog,
                 curation,
             )
-            marginal = "0" if fixed is not None else None
+            # La résolution ne rend qu'une quantité par lot. Écraser la part
+            # marginale à zéro était sans effet tant que la résolution ne
+            # touchait que des lignes incomplètes; depuis qu'un override y
+            # entre aussi, une recette qui montait par portion cesserait de le
+            # faire. La part marginale déjà projetée est donc conservée.
+            if marginal is None:
+                marginal = "0" if fixed is not None else None
             if fixed is None and _should_omit_unquantified(raw):
                 omissions.append(
                     _omission_row(identity, raw, "unquantified_non_solver_item")
@@ -314,7 +328,13 @@ def _convert_recipe(
 
     return {
         "id": _recipe_id(source, source_url, source_recipe.get("title")),
-        "name": projection.get("name") or source_recipe.get("title") or "",
+        # Le corpus source porte des titres échappés en HTML
+        # (« Bouchées d&rsquo;aubergine ») : l'interface les afficherait tels
+        # quels, React échappant ce qu'on lui donne. Le nom se décode ici,
+        # là où il entre dans le seed, et non dans chaque écran qui le lit.
+        "name": html.unescape(
+            projection.get("name") or source_recipe.get("title") or ""
+        ),
         "original_servings": original_servings,
         "prep_time_fixed_h": _number_text(projection.get("prep_time_fixed_h")),
         "prep_time_marginal_h": _number_text(
@@ -419,7 +439,16 @@ def _resolve_quantity(
     identity = raw.get("ingredient_identity_id")
     override = curation.get("quantity_overrides", {}).get(identity)
     if override is not None:
-        return _decimal_text(Decimal(str(override["quantity"]))), override["basis"], True
+        # `estimated` par défaut : la plupart des overrides sont des
+        # estimations déclarées. Un override dérivé d'une mesure fédérale peut
+        # dire `"estimated": false` — le classer en estimation ferait figurer
+        # une masse vérifiée dans la liste des estimations, qui existe pour les
+        # séparer.
+        return (
+            _decimal_text(Decimal(str(override["quantity"]))),
+            override["basis"],
+            bool(override.get("estimated", True)),
+        )
 
     canonical = canonical_catalog.get(canonical_id) or {}
     base_unit = canonical.get("base_unit")

@@ -28,13 +28,58 @@ from ..services.params import EffectiveParams, resolve_effective_params
 from ..services.prefilter import PrefilterResult
 from ..services.problem_data import ProblemData, ProductData, RecipeData
 from ..services.travel import TravelCosts, compute_travel_costs, haversine_km
-from ..services.validation import min_taxed_price_per_base_unit, validate_problem
+from ..services.validation import (
+    ProteinFloorWithoutBatchFlagError,
+    RecipeCapWithoutDeltaError,
+    min_taxed_price_per_base_unit,
+    validate_problem,
+)
 from .config import SolverConfig
 from .port import (
     Diagnostic, MenuSolver, ObjectiveTerms, PurchaseLine, SolveResult,
 )
 
 _EPS = 1e-6
+
+
+def select_stores(problem: ProblemData, config: SolverConfig) -> tuple:
+    """Magasins que le modèle est autorisé à faire visiter au panier.
+
+    Fonction pure, appelée UNE fois par résolution puis passée à la fois à
+    ``validate_problem`` et à ``_Ctx`` : la validation pré-solveur et le modèle
+    doivent juger le même ensemble, sinon la première certifie un prix que le
+    second n'a pas le droit d'aller chercher.
+
+    Magasin unique, la règle reste « le plus proche du domicile » (D11), mais
+    parmi les magasins qui peuvent **réellement approvisionner à cette date**.
+    Un magasin sans un seul prix valide n'a pas de circulaire chargée : le
+    retenir rendait le problème infaisable sans que rien ne le dise. Constaté
+    en direct — domicile à Montréal, `epicier_du_coin` à 0,7 km avec 0 prix
+    valide, Super C à 225 km avec 2 165 : le plan sortait `Infeasible` et le
+    diagnostic accusait `enable_variant_exclusion`.
+
+    Si AUCUN magasin n'a de prix, on retombe sur le plus proche tout court :
+    ce n'est pas à cette fonction de trancher, l'assertion 5 nomme déjà
+    « aucun prix valide au <date> : le catalogue de prix est périmé ».
+    """
+    if config.enable_multi_store:
+        return problem.stores
+    key = config.single_store_external_key
+    if key is not None:
+        chosen = [s for s in problem.stores if s.external_key == key]
+        if not chosen:
+            raise ValueError(f"single_store_external_key '{key}' inconnu.")
+        return tuple(chosen)
+    supplying = {price.store_id for price in problem.prices}
+    candidates = [s for s in problem.stores if s.id in supplying] or list(
+        problem.stores
+    )
+    home = (problem.profile.home_lat, problem.profile.home_lng)
+    nearest = min(
+        candidates,
+        key=lambda s: (haversine_km(*home, s.lat, s.lng), s.external_key),
+    )
+    return (nearest,)
 
 
 class _Ctx:
@@ -48,6 +93,7 @@ class _Ctx:
         params: EffectiveParams,
         bounds: DemandBounds,
         scorer,
+        stores: tuple,
     ):
         self.problem = problem
         self.config = config
@@ -56,7 +102,7 @@ class _Ctx:
         self.recipes: tuple[RecipeData, ...] = prefiltered.surviving
         self.scorer = scorer
 
-        self.stores = self._select_stores()
+        self.stores = stores
         store_ids = {s.id for s in self.stores}
         self.products = tuple(
             p for p in problem.products
@@ -126,23 +172,6 @@ class _Ctx:
             for r in self.recipes
             for ri in r.ingredients
         }
-
-    def _select_stores(self):
-        if self.config.enable_multi_store:
-            return self.problem.stores
-        key = self.config.single_store_external_key
-        if key is not None:
-            chosen = [s for s in self.problem.stores if s.external_key == key]
-            if not chosen:
-                raise ValueError(f"single_store_external_key '{key}' inconnu.")
-            return tuple(chosen)
-        # Règle déterministe : le plus proche du domicile (D11).
-        home = (self.problem.profile.home_lat, self.problem.profile.home_lng)
-        nearest = min(
-            self.problem.stores,
-            key=lambda s: (haversine_km(*home, s.lat, s.lng), s.external_key),
-        )
-        return (nearest,)
 
     # -- Quantité requise de l'ingrédient i, expression PuLP -----------------
     def demand_expr(self, ingredient_id: str):
@@ -312,6 +341,32 @@ def _add_diversity(m: pulp.LpProblem, c: _Ctx) -> None:
         m += c.x[r.id] <= cap, f"part_max_{r.id}"
 
 
+def _add_recipe_cap(m: pulp.LpProblem, c: _Ctx) -> None:
+    """Σδ_r ≤ R_max : au plus R_max plats distincts au menu.
+
+    Le pendant de R_min, mais il ne dépend **pas** du drapeau de diversité :
+    R_min sert à forcer la variété quand on l'étudie, R_max à borner ce qu'un
+    ménage accepte de cuisiner dans une semaine. Les deux se lisent sur
+    `c.params`, jamais sur `c.config` — `resolve_effective_params` est la seule
+    lecture croisée profil/configuration.
+
+    δ_r est requis : c'est lui qui dit « ce plat est au menu ». Il existe dès que
+    les coûts fixes de lot, la diversité ou l'exclusion des variantes sont actifs
+    — donc toujours en configuration livrée. Sans lui, le plafond serait
+    silencieusement absent, ce qui est pire qu'un refus.
+    """
+    r_max = int(c.params.max_distinct_recipes.value)
+    if not c.needs_delta:
+        raise RecipeCapWithoutDeltaError(
+            f"Plafond de {r_max} plats distincts demandé alors que δ_r n'existe "
+            "pas dans ce modèle : seul enable_batch_fixed_cost, "
+            "enable_diversity ou enable_variant_exclusion fait exister la "
+            "variable qui dit qu'un plat est au menu. Rallumer l'un des trois, "
+            "ou retirer le plafond."
+        )
+    m += pulp.lpSum(c.delta.values()) <= r_max, "diversite_r_max"
+
+
 def _add_variant_exclusion(m: pulp.LpProblem, c: _Ctx) -> None:
     """Σ_{r ∈ famille} δ_r ≤ 1, pour chaque famille de plat comptant plus
     d'une variante parmi les recettes survivantes (D16, docs/deviations.md).
@@ -427,9 +482,74 @@ def _add_symmetry_breaking(m: pulp.LpProblem, c: _Ctx) -> None:
 
 
 def _add_appetence_constraint(m: pulp.LpProblem, c: _Ctx) -> None:
-    """Mode « constraint » : Σ u_rk·x_rk ≥ U_min (en cents)."""
-    u_min_cents = float(Decimal(str(c.config.appetence_u_min_dollars)) * 100)
+    """Mode « constraint » : Σ u_rk·x_rk ≥ U_min (en cents).
+
+    U_min vient de `c.params`, pas de `c.config` : le plancher est un
+    paramètre surchargeable du profil, et l'invariant du projet veut que
+    `resolve_effective_params` soit la seule lecture croisée profil/config.
+    """
+    u_min_cents = float(
+        Decimal(str(c.params.appetence_u_min_dollars.value)) * 100
+    )
     m += _appetence_expr_cents(c) >= u_min_cents, "appetence_min"
+
+
+def _add_protein_floor(m: pulp.LpProblem, c: _Ctx) -> None:
+    """Σ_r (fixe_r · δ_r + marginal_r · x_r) ≥ P_min · Σ_r x_r.
+
+    La moyenne de protéines du menu, écrite sans division. Le plancher porte sur
+    **la moyenne pondérée par portion**, pas sur chaque plat : c'est la semaine
+    qui doit être protéinée, et un plat léger reste servable s'il est compensé.
+    Multiplier des deux côtés par Σ x_r rend la contrainte linéaire — une
+    moyenne écrite en fraction ne l'est pas.
+
+    Pourquoi la part fixe passe par δ_r. Les protéines d'un lot ne se répètent
+    pas à chaque portion : 500 g de lentilles dans une casserole comptent une
+    fois, que la casserole fasse quatre portions ou douze. δ_r porte exactement
+    « ce lot est cuisiné », et il existe dès que les coûts fixes de lot, la
+    diversité ou l'exclusion des variantes sont actifs — donc toujours, en
+    configuration livrée (D38, D16). Sans δ_r, le plancher est refusé plutôt
+    qu'approché : `validate_problem` le dit.
+
+    Les recettes sans coefficients ne sont pas ici : le préfiltrage les a
+    écartées (`services/prefilter.py`). Les faire entrer avec un zéro
+    reviendrait à compter une recette non chiffrée comme une recette sans
+    protéines.
+    """
+    floor = Decimal(str(c.params.min_protein_g_per_serving.value))
+    coefficients = c.problem.protein_coefficients
+    batched = [
+        r.id for r in c.recipes
+        if r.id in coefficients
+        and coefficients[r.id].fixed_g_per_batch != 0
+    ]
+    if batched and not c.needs_delta:
+        # δ_r n'existe pas dans ce modèle, et sans lui la part de lot devrait
+        # être soit ignorée (le plancher compterait moins de protéines qu'il
+        # n'y en a), soit répétée à chaque portion (davantage). Les deux sont
+        # faux : on refuse, en nommant le drapeau qui fait exister δ_r.
+        raise ProteinFloorWithoutBatchFlagError(
+            "Plancher de protéines demandé alors que δ_r n'existe pas dans ce "
+            f"modèle : {len(batched)} recette(s) portent des protéines par lot "
+            "(un lot de lentilles compte une fois, pas à chaque portion), et "
+            "seul enable_batch_fixed_cost, enable_diversity ou "
+            "enable_variant_exclusion fait exister la variable qui le dit. "
+            "Rallumer l'un des trois, ou retirer le plancher."
+        )
+    total = pulp.lpSum(
+        [
+            float(coefficients[r.id].fixed_g_per_batch) * c.delta[r.id]
+            for r in c.recipes
+            if r.id in coefficients
+        ]
+        + [
+            float(coefficients[r.id].marginal_g_per_serving) * c.x[r.id]
+            for r in c.recipes
+            if r.id in coefficients
+        ]
+    )
+    servings = pulp.lpSum([c.x[r.id] for r in c.recipes])
+    m += total >= float(floor) * servings, "proteines_min"
 
 
 # ---------------------------------------------------------------------------
@@ -570,16 +690,26 @@ class PulpMenuSolver:
         config: SolverConfig,
     ) -> SolveResult:
         params = resolve_effective_params(problem.profile, config)
+        # Choisi AVANT la validation : l'assertion 4 doit se juger sur les
+        # magasins réellement utilisables, pas sur le marché entier.
+        stores = select_stores(problem, config)
         # validate_problem calcule déjà les bornes de demande avec le même
         # params résolu (R_min/α/ε) — les réutiliser telles quelles plutôt
         # que de les recalculer garantit qu'elles ne peuvent jamais diverger
         # de ce que la validation vient de vérifier.
         assertions_passed, bounds = validate_problem(
-            problem, prefiltered.surviving, params
+            problem,
+            prefiltered.surviving,
+            params,
+            stores,
+            # Les compteurs par étape servent au refus : sans eux, « aucune
+            # recette ne survit » récite cinq causes possibles sans dire
+            # laquelle a frappé.
+            prefilter_counts=prefiltered.counts_by_stage,
         )
         c = _Ctx(
             problem, prefiltered, config, params, bounds,
-            self._scorer_factory(problem),
+            self._scorer_factory(problem), stores,
         )
 
         m = pulp.LpProblem("menu_optimizer", pulp.LpMinimize)
@@ -599,8 +729,12 @@ class PulpMenuSolver:
             _add_surplus(m, c)
         if config.enable_perishable_penalty:
             _add_perishable_waste(m, c)
-        if config.appetence_mode == "constraint":
+        if params.appetence_mode == "constraint":
             _add_appetence_constraint(m, c)
+        if params.max_distinct_recipes.value is not None:
+            _add_recipe_cap(m, c)
+        if params.min_protein_g_per_serving.value is not None:
+            _add_protein_floor(m, c)
 
         objective = _purchases_expr_cents(c)
         if config.enable_multi_store:
@@ -611,7 +745,7 @@ class PulpMenuSolver:
             objective -= _salvage_expr_cents(c)
         if config.enable_perishable_penalty:
             objective += _perishable_waste_expr_cents(c)
-        if config.appetence_mode == "objective":
+        if params.appetence_mode == "objective":
             objective -= _appetence_expr_cents(c)
         m += objective
 
@@ -791,7 +925,7 @@ class PulpMenuSolver:
             Decimal(0),
         )
         appetence = Decimal(0)
-        if cfg.appetence_mode == "objective":
+        if c.params.appetence_mode == "objective":
             for r in c.recipes:
                 remaining = servings.get(r.id, 0)
                 for seg in c.scorer.utility_segments(r):

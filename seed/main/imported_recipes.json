@@ -223,7 +223,7 @@
   },
   {
     "id": "bon_pour_toi_bouchees_daubergine_parmigiana",
-    "name": "Bouchées d&rsquo;aubergine parmigiana",
+    "name": "Bouchées d’aubergine parmigiana",
     "original_servings": 6,
     "prep_time_fixed_h": "0.333333",
     "prep_time_marginal_h": "0",
@@ -359,7 +359,7 @@
   },
   {
     "id": "bon_pour_toi_bouchees_doeufs_au_bacon",
-    "name": "Bouchées d&rsquo;oeufs au bacon",
+    "name": "Bouchées d’oeufs au bacon",
     "original_servings": 7,
     "prep_time_fixed_h": "0.166667",
     "prep_time_marginal_h": "0",
@@ -993,7 +993,7 @@
   },
   {
     "id": "bon_pour_toi_caviar_de_cowboy_comme_chez_trader_joes",
-    "name": "Caviar de Cowboy (comme chez Trader Joe&rsquo;s)",
+    "name": "Caviar de Cowboy (comme chez Trader Joe’s)",
     "original_servings": 12,
     "prep_time_fixed_h": "0.333333",
     "prep_time_marginal_h": "0",
@@ -1259,7 +1259,7 @@
   },
   {
     "id": "bon_pour_toi_frites_davocats",
-    "name": "Frites d&rsquo;avocats",
+    "name": "Frites d’avocats",
     "original_servings": 6,
     "prep_time_fixed_h": "0.166667",
     "prep_time_marginal_h": "0",
@@ -3488,7 +3488,7 @@
       },
       {
         "canonical_ingredient_id": "roquette",
-        "qty_fixed_per_batch_base_unit": "2000",
+        "qty_fixed_per_batch_base_unit": "169",
         "qty_marginal_per_serving_base_unit": "0",
         "substitutable": false
       },
@@ -4001,11 +4001,6 @@
           "basis": "masse explicite sur la conserve"
         },
         {
-          "ingredient_identity_id": "IDENTITY_F2FACD9FB7923F2CDFAC586D",
-          "ingredient_line": "Pain au levain, 4 belles grosses tranches   (4 belles grosses tranches  )",
-          "basis": "declared estimate 550 g/piece"
-        },
-        {
           "ingredient_identity_id": "IDENTITY_B60E6E7384CC748BD00653D0",
           "ingredient_line": "Fromage cheddar fort, 4 tranches   (4 tranches  )",
           "basis": "declared estimate 20 g/slice"
@@ -4085,7 +4080,7 @@
       },
       {
         "canonical_ingredient_id": "pain_levain",
-        "qty_fixed_per_batch_base_unit": "2200",
+        "qty_fixed_per_batch_base_unit": "384",
         "qty_marginal_per_serving_base_unit": "0",
         "substitutable": false
       },
@@ -7238,7 +7233,7 @@
     "ingredients": [
       {
         "canonical_ingredient_id": "pate_wonton",
-        "qty_fixed_per_batch_base_unit": "454",
+        "qty_fixed_per_batch_base_unit": "57",
         "qty_marginal_per_serving_base_unit": "0",
         "substitutable": false
       },

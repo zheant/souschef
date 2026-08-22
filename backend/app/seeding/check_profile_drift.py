@@ -51,7 +51,7 @@ def check(
 
     Liste vide : aucune dérive (ou profil absent des deux côtés)."""
     seed_profile = json.loads(
-        (Path(seed_dir) / "household.json").read_text()
+        (Path(seed_dir) / "household.json").read_text(encoding="utf-8")
     )["profile"]
 
     with session_factory() as session:

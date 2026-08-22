@@ -216,9 +216,13 @@ INGREDIENTS = [
     ("lait_2", "produits_laitiers", "Lait 2 %", "2% milk", "volume", None, ()),
     ("lait_1", "produits_laitiers", "Lait 1 %", "1% milk", "volume", None, ()),
     ("lait_ecreme", "produits_laitiers", "Lait écrémé", "Skim milk", "volume", None, ()),
-    ("babeurre", "produits_laitiers", "Babeurre", "Buttermilk", "volume", None, ()),
+    # FCÉN 2026, aliment 5487 « Babeurre, liquide, 2% M.G. » : 250 ml =
+    # 258.876 g, soit 1.036 g/ml.
+    ("babeurre", "produits_laitiers", "Babeurre", "Buttermilk", "volume", 1.036, ()),
     ("creme_35", "produits_laitiers", "Crème 35 %", "35% cream", "volume", 0.98, ("crème à fouetter",)),
-    ("creme_15", "produits_laitiers", "Crème 15 %", "15% cream", "volume", None, ("crème à cuisson",)),
+    # FCÉN 2026, aliment 151 « Crème de table (champêtre), 15% M.G. » : 250
+    # ml = 253.593 g, soit 1.014 g/ml.
+    ("creme_15", "produits_laitiers", "Crème 15 %", "15% cream", "volume", 1.014, ("crème à cuisson",)),
     ("creme_sure", "produits_laitiers", "Crème sure", "Sour cream", "mass", None, ("crème aigre",)),
     ("yogourt_nature", "produits_laitiers", "Yogourt nature", "Plain yogurt", "mass", None, ("yaourt nature",)),
     ("yogourt_grec", "produits_laitiers", "Yogourt grec nature", "Plain Greek yogurt", "mass", None, ()),
@@ -236,9 +240,16 @@ INGREDIENTS = [
     ("halloumi", "fromages", "Halloumi", "Halloumi cheese", "mass", None, ()),
 
     # Huiles, bouillons, tomates, sauces et conserves
+    # FCÉN 2026, aliment 422 « Huile végétale, olive » : 250 ml = 228.233 g,
+    # soit 0.913 g/ml. Le seed garde le 0,91 écrit à la main avant l'import du
+    # FCÉN : 0,4 % d'écart ne vaut pas de déplacer les prix de 58 recettes.
     ("huile_olive", "huiles", "Huile d’olive", "Olive oil", "volume", 0.91, ()),
-    ("huile_canola", "huiles", "Huile de canola", "Canola oil", "volume", None, ("huile de colza",)),
-    ("huile_vegetale", "huiles", "Huile végétale", "Vegetable oil", "volume", None, ()),
+    # FCÉN 2026, aliment 451 « Huile végétale, canola (colza) » : 250 ml =
+    # 230.347 g, soit 0.921 g/ml.
+    ("huile_canola", "huiles", "Huile de canola", "Canola oil", "volume", 0.921, ("huile de colza",)),
+    # FCÉN 2026, aliment 451 « Huile végétale, canola (colza) » : 250 ml =
+    # 230.347 g, soit 0.921 g/ml.
+    ("huile_vegetale", "huiles", "Huile végétale", "Vegetable oil", "volume", 0.921, ()),
     ("huile_sesame", "huiles", "Huile de sésame", "Sesame oil", "volume", None, ()),
     ("huile_coco", "huiles", "Huile de noix de coco", "Coconut oil", "mass", None, ()),
     ("margarine", "huiles", "Margarine", "Margarine", "mass", None, ()),
@@ -250,19 +261,45 @@ INGREDIENTS = [
     ("tomate_broyee", "tomates", "Tomates broyées", "Crushed tomatoes", "mass", None, ()),
     ("puree_tomate", "tomates", "Purée de tomates", "Tomato puree", "mass", None, ()),
     ("pate_tomate", "tomates", "Pâte de tomates", "Tomato paste", "mass", None, ()),
-    ("sauce_tomate", "tomates", "Sauce tomate", "Tomato sauce", "volume", None, ()),
+    # FCÉN 2026, aliment 2465 « Produits à base de tomates, conserve, sauce »
+    # : 250 ml = 258.876 g, soit 1.036 g/ml.
+    ("sauce_tomate", "tomates", "Sauce tomate", "Tomato sauce", "volume", 1.036, ()),
     ("sauce_soja", "sauces", "Sauce soja", "Soy sauce", "volume", 1.10, ("sauce soya",)),
-    ("vinaigre_blanc", "sauces", "Vinaigre blanc", "White vinegar", "volume", None, ()),
-    ("vinaigre_cidre", "sauces", "Vinaigre de cidre", "Apple cider vinegar", "volume", None, ()),
-    ("vinaigre_balsamique", "sauces", "Vinaigre balsamique", "Balsamic vinegar", "volume", None, ()),
-    ("vinaigre_riz", "sauces", "Vinaigre de riz", "Rice vinegar", "volume", None, ()),
-    ("moutarde_dijon", "sauces", "Moutarde de Dijon", "Dijon mustard", "volume", None, ()),
-    ("mayonnaise", "sauces", "Mayonnaise", "Mayonnaise", "volume", None, ()),
-    ("ketchup", "sauces", "Ketchup", "Ketchup", "volume", None, ()),
-    ("sauce_worcestershire", "sauces", "Sauce Worcestershire", "Worcestershire sauce", "volume", None, ()),
-    ("sauce_poisson", "sauces", "Sauce de poisson", "Fish sauce", "volume", None, ()),
-    ("sauce_piquante", "sauces", "Sauce piquante", "Hot sauce", "volume", None, ()),
-    ("lait_coco_conserve", "conserves", "Lait de coco en conserve", "Canned coconut milk", "volume", None, ()),
+    # FCÉN 2026, aliment 14 « Vinaigre, distillé (blanc) » : 125 ml = 126.796
+    # g, soit 1.014 g/ml.
+    ("vinaigre_blanc", "sauces", "Vinaigre blanc", "White vinegar", "volume", 1.014, ()),
+    # FCÉN 2026, aliment 13 « Vinaigre, cidre » : 125 ml = 126.789 g, soit
+    # 1.014 g/ml.
+    ("vinaigre_cidre", "sauces", "Vinaigre de cidre", "Apple cider vinegar", "volume", 1.014, ()),
+    # FCÉN 2026, aliment 6196 « Vinaigre, balsamique » : 250 ml = 269.442 g,
+    # soit 1.078 g/ml.
+    ("vinaigre_balsamique", "sauces", "Vinaigre balsamique", "Balsamic vinegar", "volume", 1.078, ()),
+    # FCÉN 2026, aliment 14 « Vinaigre, distillé (blanc) » : 125 ml = 126.796
+    # g, soit 1.014 g/ml.
+    ("vinaigre_riz", "sauces", "Vinaigre de riz", "Rice vinegar", "volume", 1.014, ()),
+    # FCÉN 2026, aliment 1135 « Sauce, moutarde, brune, prête-à-servir » : 250
+    # ml = 260 g, soit 1.040 g/ml. Aliment retenu par substitution déclarée —
+    # le FCÉN ne publie pas la dijon; voir config/nutrition-rules.json.
+    ("moutarde_dijon", "sauces", "Moutarde de Dijon", "Dijon mustard", "volume", 1.040, ()),
+    # FCÉN 2026, aliment 531 « Vinaigrette, mayonnaise, régulière » : 250 ml
+    # = 232.46 g, soit 0.930 g/ml.
+    ("mayonnaise", "sauces", "Mayonnaise", "Mayonnaise", "volume", 0.930, ()),
+    # FCÉN 2026, aliment 2494 « Tomates, ketchup (catsup) » : 250 ml =
+    # 253.593 g, soit 1.014 g/ml.
+    ("ketchup", "sauces", "Ketchup", "Ketchup", "volume", 1.014, ()),
+    # FCÉN 2026, aliment 1133 « Sauce, worcestershire, prête-à-servir » : 250
+    # ml = 290.575 g, soit 1.162 g/ml.
+    ("sauce_worcestershire", "sauces", "Sauce Worcestershire", "Worcestershire sauce", "volume", 1.162, ()),
+    # FCÉN 2026, aliment 4731 « Sauce, poisson, prête-à-servir » : 250 ml =
+    # 304.05 g, soit 1.216 g/ml.
+    ("sauce_poisson", "sauces", "Sauce de poisson", "Fish sauce", "volume", 1.216, ()),
+    # FCÉN 2026, aliment 1029 « Sauce, piments forts, prête-à-servir » : 250
+    # ml = 239.796 g, soit 0.959 g/ml.
+    ("sauce_piquante", "sauces", "Sauce piquante", "Hot sauce", "volume", 0.959, ()),
+    # FCÉN 2026, aliment 2565 « Noix de coco, lait (liquide de la noix râpée
+    # et eau), conserve » : 125 ml = 119.4 g, soit 0.955 g/ml. Petits volumes
+    # cités mais non décisifs (étiquette arrondie) : 15 ml = 15.203 g.
+    ("lait_coco_conserve", "conserves", "Lait de coco en conserve", "Canned coconut milk", "volume", 0.955, ()),
     ("mais_conserve", "conserves", "Maïs en conserve", "Canned corn", "mass", None, ()),
     ("olive_noire", "conserves", "Olives noires", "Black olives", "mass", None, ()),
     ("olive_verte", "conserves", "Olives vertes", "Green olives", "mass", None, ()),
@@ -293,9 +330,15 @@ INGREDIENTS = [
     ("sucre_blanc", "sucres", "Sucre blanc", "White sugar", "mass", None, ("sucre granulé",)),
     ("cassonade", "sucres", "Cassonade", "Brown sugar", "mass", None, ()),
     ("sucre_glace", "sucres", "Sucre à glacer", "Icing sugar", "mass", None, ("sucre glace",)),
-    ("sirop_erable", "sucres", "Sirop d’érable", "Maple syrup", "volume", None, ()),
-    ("miel", "sucres", "Miel", "Honey", "volume", None, ()),
-    ("melasse", "sucres", "Mélasse", "Molasses", "volume", None, ()),
+    # FCÉN 2026, aliment 4326 « Confiseries, sirop d'érable, en vrac » : 250
+    # ml = 332.857 g, soit 1.331 g/ml.
+    ("sirop_erable", "sucres", "Sirop d’érable", "Maple syrup", "volume", 1.331, ()),
+    # FCÉN 2026, aliment 4294 « Confiseries, miel, filtre ou extrait » : 100
+    # ml = 143.243 g, soit 1.432 g/ml.
+    ("miel", "sucres", "Miel", "Honey", "volume", 1.432, ()),
+    # FCÉN 2026, aliment 4299 « Confiseries, mélasse de fantaisie » : 250 ml
+    # = 356.086 g, soit 1.424 g/ml.
+    ("melasse", "sucres", "Mélasse", "Molasses", "volume", 1.424, ()),
     ("levure_chimique", "patisserie", "Poudre à pâte", "Baking powder", "mass", None, ("levure chimique",)),
     ("bicarbonate_soude", "patisserie", "Bicarbonate de soude", "Baking soda", "mass", None, ()),
     ("levure_seche_active", "patisserie", "Levure sèche active", "Active dry yeast", "mass", None, ()),
@@ -324,9 +367,16 @@ INGREDIENTS = [
     ("tortilla", "pains", "Tortilla de blé", "Flour tortilla", "count", None, ()),
     ("tortilla_mais", "pains", "Tortilla de maïs", "Corn tortilla", "count", None, ()),
     ("chapelure", "pains", "Chapelure", "Breadcrumbs", "mass", None, ()),
-    ("vin_blanc_sec", "boissons", "Vin blanc sec", "Dry white wine", "volume", None, ()),
-    ("vin_rouge_sec", "boissons", "Vin rouge sec", "Dry red wine", "volume", None, ()),
-    ("biere_blonde", "boissons", "Bière blonde", "Lager beer", "volume", None, ()),
+    # FCÉN 2026, aliment 2852 « Boisson alcoolisée, vin de table, blanc
+    # (11,5% alcool par volume) » : 150 ml = 149.138 g, soit 0.994 g/ml.
+    ("vin_blanc_sec", "boissons", "Vin blanc sec", "Dry white wine", "volume", 0.994, ()),
+    # FCÉN 2026, aliment 2850 « Boisson alcoolisée, vin de table, rouge
+    # (11,5% alcool par volume) » : 150 ml = 149.138 g, soit 0.994 g/ml.
+    ("vin_rouge_sec", "boissons", "Vin rouge sec", "Dry red wine", "volume", 0.994, ()),
+    # FCÉN 2026, aliment 2943 « Boisson alcoolisée, bière, ordinaire (5%
+    # alcool par volume) » : 1 cannette / boite de conserve (355 ml) =
+    # 356.561 g, soit 1.004 g/ml.
+    ("biere_blonde", "boissons", "Bière blonde", "Lager beer", "volume", 1.004, ()),
     ("jus_orange", "boissons", "Jus d’orange", "Orange juice", "volume", None, ()),
     ("jus_citron", "boissons", "Jus de citron", "Lemon juice", "volume", None, ()),
 
@@ -336,10 +386,14 @@ INGREDIENTS = [
     ("levure_alimentaire", "proteines_vegetales", "Levure alimentaire", "Nutritional yeast", "mass", None, ()),
     ("poudre_ail", "epices", "Poudre d’ail", "Garlic powder", "mass", None, ()),
     ("poudre_oignon", "epices", "Poudre d’oignon", "Onion powder", "mass", None, ()),
-    ("lait_soya", "boissons", "Boisson de soya", "Soy milk", "volume", None, ("lait de soya",)),
+    # FCÉN 2026, aliment 5241 « Boisson à base de plantes, soya, nature, non-
+    # enrichie, réfrigérée » : 250 ml = 260.4 g, soit 1.042 g/ml.
+    ("lait_soya", "boissons", "Boisson de soya", "Soy milk", "volume", 1.042, ("lait de soya",)),
     ("eau", "boissons", "Eau", "Water", "volume", 1.00, ()),
     ("fumee_liquide", "sauces", "Fumée liquide", "Liquid smoke", "volume", None, ()),
-    ("sriracha", "sauces", "Sauce sriracha", "Sriracha", "volume", None, ()),
+    # FCÉN 2026, aliment 7593 « Sauce, chili, forte, sriracha, prête-à-servir
+    # » : 100 ml = 132.653 g, soit 1.327 g/ml.
+    ("sriracha", "sauces", "Sauce sriracha", "Sriracha", "volume", 1.327, ()),
     ("harissa", "sauces", "Harissa", "Harissa sauce", "volume", None, ()),
     ("fromage_grains", "fromages", "Fromage en grains", "Cheese curds", "mass", None, ()),
     ("pesto_basilic", "sauces", "Pesto au basilic", "Basil pesto", "volume", None, ("pesto",)),
@@ -358,7 +412,9 @@ INGREDIENTS = [
     ("fecule_tapioca", "farines", "Fécule de tapioca", "Tapioca starch", "mass", None, ()),
     ("beurre_vegetalien", "huiles", "Beurre végétalien", "Vegan butter", "mass", None, ()),
     ("poivre_noir_grains", "epices", "Grains de poivre noir", "Black peppercorns", "mass", None, ()),
-    ("sauce_hoisin", "sauces", "Sauce hoisin", "Hoisin sauce", "volume", None, ()),
+    # FCÉN 2026, aliment 4729 « Sauce, hoisin, prête-à-servir » : 250 ml =
+    # 270.27 g, soit 1.081 g/ml.
+    ("sauce_hoisin", "sauces", "Sauce hoisin", "Hoisin sauce", "volume", 1.081, ()),
     ("feuille_riz", "pains", "Feuille de riz", "Rice paper", "count", None, ()),
     ("champignon_enoki", "legumes", "Champignon enoki", "Enoki mushroom", "mass", None, ()),
     ("bouillon_miso_vegetalien", "bouillons", "Bouillon miso végétalien", "Vegan miso broth", "volume", None, ()),
@@ -384,10 +440,18 @@ INGREDIENTS = [
     ("nouille_ramen_instantanee", "pates", "Nouilles ramen instantanées", "Instant ramen noodles", "mass", None, ()),
     ("algue_nori", "conserves", "Algue nori", "Nori", "count", None, ()),
     ("vin_shaoxing", "boissons", "Vin de cuisine Shaoxing", "Shaoxing cooking wine", "volume", None, ()),
-    ("moutarde_ancienne", "sauces", "Moutarde à l’ancienne", "Whole-grain mustard", "volume", None, ()),
-    ("sambal_oelek", "sauces", "Sambal oelek", "Sambal oelek", "volume", None, ()),
-    ("vinaigre_vin_rouge", "sauces", "Vinaigre de vin rouge", "Red wine vinegar", "volume", None, ()),
-    ("huile_sesame_grillee", "huiles", "Huile de sésame grillé", "Toasted sesame oil", "volume", None, ()),
+    # FCÉN 2026, aliment 1135 « Sauce, moutarde, brune, prête-à-servir » :
+    # 250 ml = 260 g, soit 1.040 g/ml.
+    ("moutarde_ancienne", "sauces", "Moutarde à l’ancienne", "Whole-grain mustard", "volume", 1.040, ()),
+    # FCÉN 2026, aliment 5354 « Sauce, chili, piments forts, chili, rouges,
+    # conserve » : 250 ml = 253.378 g, soit 1.014 g/ml.
+    ("sambal_oelek", "sauces", "Sambal oelek", "Sambal oelek", "volume", 1.014, ()),
+    # FCÉN 2026, aliment 6195 « Vinaigre, vin rouge » : 250 ml = 252.536 g,
+    # soit 1.010 g/ml.
+    ("vinaigre_vin_rouge", "sauces", "Vinaigre de vin rouge", "Red wine vinegar", "volume", 1.010, ()),
+    # FCÉN 2026, aliment 424 « Huile végétale, sésame » : 250 ml = 230.347 g,
+    # soit 0.921 g/ml.
+    ("huile_sesame_grillee", "huiles", "Huile de sésame grillé", "Toasted sesame oil", "volume", 0.921, ()),
     ("baguette", "pains", "Baguette", "Baguette", "count", None, ()),
     ("pain_croute", "pains", "Pain croûté", "Crusty bread", "count", None, ()),
     ("noix_coco_rapee", "noix_graines", "Noix de coco râpée", "Grated coconut", "mass", None, ()),
@@ -407,13 +471,19 @@ INGREDIENTS = [
 INGREDIENTS.extend([
     ("beurre_non_precise", "huiles", "Beurre non précisé", "Unspecified butter", "mass", None, ("beurre",)),
     ("sucre_non_precise", "sucres", "Sucre non précisé", "Unspecified sugar", "mass", None, ("sucre",)),
-    ("lait_non_precise", "produits_laitiers", "Lait non précisé", "Unspecified dairy milk", "volume", None, ("lait",)),
-    ("huile_non_precisee", "huiles", "Huile non précisée", "Unspecified cooking oil", "volume", None, ("huile", "huile pour la cuisson")),
+    # FCÉN 2026, aliment 113 « Lait, liquide, entier, homogénéisé,
+    # pasteurisé, 3.25% M.G. » : 250 ml = 257.819 g, soit 1.031 g/ml.
+    ("lait_non_precise", "produits_laitiers", "Lait non précisé", "Unspecified dairy milk", "volume", 1.031, ("lait",)),
+    # FCÉN 2026, aliment 451 « Huile végétale, canola (colza) » : 250 ml =
+    # 230.347 g, soit 0.921 g/ml.
+    ("huile_non_precisee", "huiles", "Huile non précisée", "Unspecified cooking oil", "volume", 0.921, ("huile", "huile pour la cuisson")),
     ("poivre_non_precise", "epices", "Poivre non précisé", "Unspecified pepper seasoning", "mass", None, ("poivre", "poivre moulu")),
     ("persil_frais_non_precise", "herbes", "Persil frais non précisé", "Unspecified fresh parsley", "mass", None, ("persil frais", "persil ciselé", "feuilles de persil ciselées")),
     ("cumin_non_precise", "epices", "Cumin non précisé", "Unspecified cumin", "mass", None, ("cumin",)),
     ("basilic_non_precise", "herbes", "Basilic non précisé", "Unspecified basil", "mass", None, ("basilic",)),
-    ("moutarde_non_precisee", "sauces", "Moutarde non précisée", "Unspecified prepared mustard", "volume", None, ("moutarde", "moutarde préparée")),
+    # FCÉN 2026, aliment 4970 « Sauce, moutarde, jaune, prête-à-servir » :
+    # 100 ml = 105.25 g, soit 1.053 g/ml.
+    ("moutarde_non_precisee", "sauces", "Moutarde non précisée", "Unspecified prepared mustard", "volume", 1.053, ("moutarde", "moutarde préparée")),
     ("cannelle_non_precisee", "epices", "Cannelle non précisée", "Unspecified cinnamon", "mass", None, ("cannelle",)),
     ("poulet_non_precise", "volaille", "Poulet non précisé", "Unspecified chicken", "mass", None, ("poulet", "poulet cuit")),
     ("riz_non_precise", "riz", "Riz non précisé", "Unspecified rice", "mass", None, ("riz",)),
@@ -430,7 +500,9 @@ INGREDIENTS.extend([
     ("farine_grillee", "farines", "Farine grillée", "Toasted flour", "mass", None, ("farine grillée pâle",)),
     ("levure_instantanee", "patisserie", "Levure instantanée", "Instant yeast", "mass", None, ()),
     ("moutarde_seche", "epices", "Moutarde sèche", "Dry mustard", "mass", None, ("moutarde en poudre",)),
-    ("moutarde_jaune", "sauces", "Moutarde jaune", "Yellow mustard", "volume", None, ()),
+    # FCÉN 2026, aliment 4970 « Sauce, moutarde, jaune, prête-à-servir » :
+    # 100 ml = 105.25 g, soit 1.053 g/ml.
+    ("moutarde_jaune", "sauces", "Moutarde jaune", "Yellow mustard", "volume", 1.053, ()),
     ("tomate_cerise", "fruits", "Tomates cerises", "Cherry tomatoes", "mass", None, ("tomate cerise",)),
     ("skyr_vanille", "produits_laitiers", "Skyr à la vanille", "Vanilla skyr", "mass", None, ()),
     ("cereales_riz_souffle", "cereales", "Céréales de riz soufflé", "Puffed rice cereal", "mass", None, ("céréales de riz croquant",)),
@@ -439,7 +511,9 @@ INGREDIENTS.extend([
     ("pate_brisee", "patisserie", "Pâte brisée", "Shortcrust pastry", "mass", None, ("abaisses de pâte brisée",)),
     ("aile_poulet", "volaille", "Ailes de poulet", "Chicken wings", "mass", None, ()),
     ("aneth_seche", "epices", "Aneth séché", "Dried dill", "mass", None, ()),
-    ("aromatisant_eau", "boissons", "Aromatisant liquide pour eau", "Liquid water enhancer", "volume", None, ("aromatisant liquide pour l’eau",)),
+    # FCÉN 2026, aliment 5522 « Confiseries, sirop, diététique » : 250 ml =
+    # 253.593 g, soit 1.014 g/ml.
+    ("aromatisant_eau", "boissons", "Aromatisant liquide pour eau", "Liquid water enhancer", "volume", 1.014, ("aromatisant liquide pour l’eau",)),
     ("baie_genievre", "epices", "Baies de genièvre", "Juniper berries", "mass", None, ()),
     ("pain_levain", "pains", "Pain au levain", "Sourdough bread", "mass", None, ()),
     ("bonbon", "patisserie", "Bonbons", "Candy", "mass", None, ("bonbons au choix",)),
@@ -454,7 +528,9 @@ INGREDIENTS.extend([
     ("champignon_seche", "legumes", "Champignons séchés", "Dried mushrooms", "mass", None, ()),
     ("chocolat_blanc", "patisserie", "Chocolat blanc", "White chocolate", "mass", None, ()),
     ("chataigne_eau", "conserves", "Châtaignes d’eau", "Water chestnuts", "mass", None, ()),
-    ("cidre_pomme", "boissons", "Cidre de pomme", "Apple cider", "volume", None, ("cidre",)),
+    # FCÉN 2026, aliment 7617 « Boisson alcoolisée, cidre » : 1 bouteille
+    # (341ml) = 341.153 g, soit 1.000 g/ml.
+    ("cidre_pomme", "boissons", "Cidre de pomme", "Apple cider", "volume", 1.000, ("cidre",)),
     ("colorant_alimentaire", "patisserie", "Colorant alimentaire", "Food coloring", "volume", None, ()),
     ("lentille_conserve", "legumineuses", "Lentilles en conserve", "Canned lentils", "mass", None, ("conserve de lentilles",)),
     ("bocconcini", "fromages", "Bocconcinis", "Bocconcini", "mass", None, ("minibocconcinis",)),
@@ -482,7 +558,9 @@ INGREDIENTS.extend([
     ("fromage_velveeta", "fromages", "Fromage fondu de type Velveeta", "Velveeta-style processed cheese", "mass", None, ("fromage Velveeta",)),
     ("feve_germee", "legumes", "Fèves germées", "Bean sprouts", "mass", None, ()),
     ("gomme_xanthane", "patisserie", "Gomme de xanthane", "Xanthan gum", "mass", None, ()),
-    ("lait_evapore", "produits_laitiers", "Lait évaporé", "Evaporated milk", "volume", None, ()),
+    # FCÉN 2026, aliment 140 « Lait, concentré, entier, conserve, non dilué,
+    # 7,8% M.G. » : 250 ml = 266.272 g, soit 1.065 g/ml.
+    ("lait_evapore", "produits_laitiers", "Lait évaporé", "Evaporated milk", "volume", 1.065, ()),
     ("linguine", "pates", "Linguines", "Linguine", "mass", None, ()),
     ("liqueur_orange", "boissons", "Liqueur à l’orange", "Orange liqueur", "volume", None, ()),
     ("olive_kalamata", "conserves", "Olives Kalamata", "Kalamata olives", "mass", None, ()),
@@ -498,14 +576,24 @@ INGREDIENTS.extend([
     ("pate_cari_vert_thai", "sauces", "Pâte de cari vert thaï", "Thai green curry paste", "mass", None, ()),
     ("pate_wonton", "pates", "Pâte à wonton", "Wonton wrappers", "count", None, ("pâte à won-ton",)),
     ("ravioli_fromage", "pates", "Raviolis au fromage", "Cheese ravioli", "mass", None, ()),
-    ("relish", "sauces", "Relish", "Relish", "volume", None, ()),
+    # FCÉN 2026, aliment 2340 « Marinades, relish, sucrée » : 250 ml =
+    # 258.876 g, soit 1.036 g/ml.
+    ("relish", "sauces", "Relish", "Relish", "volume", 1.036, ()),
     ("rhum_brun", "boissons", "Rhum brun", "Dark rum", "volume", None, ()),
     ("riz_calrose", "riz", "Riz Calrose", "Calrose rice", "mass", None, ()),
     ("rotini", "pates", "Rotinis", "Rotini", "mass", None, ()),
-    ("salsa", "sauces", "Salsa", "Salsa", "volume", None, ()),
-    ("sauce_chili", "sauces", "Sauce chili", "Chili sauce", "volume", None, ()),
-    ("sauce_tabasco", "sauces", "Sauce Tabasco", "Tabasco sauce", "volume", None, ("tabasco",)),
-    ("toum", "sauces", "Sauce toum", "Toum garlic sauce", "volume", None, ("sauce libanaise à l’ail",)),
+    # FCÉN 2026, aliment 1025 « Sauce, salsa, prête-à-servir » : 250 ml =
+    # 273.67 g, soit 1.095 g/ml.
+    ("salsa", "sauces", "Salsa", "Salsa", "volume", 1.095, ()),
+    # FCÉN 2026, aliment 5364 « Sauce, tomate, sauce chili, bouteille, sel
+    # ajouté » : 250 ml = 288.462 g, soit 1.154 g/ml.
+    ("sauce_chili", "sauces", "Sauce chili", "Chili sauce", "volume", 1.154, ()),
+    # FCÉN 2026, aliment 1030 « Sauce, piments, Tabasco, prête-à-servir » :
+    # 250 ml = 239.796 g, soit 0.959 g/ml.
+    ("sauce_tabasco", "sauces", "Sauce Tabasco", "Tabasco sauce", "volume", 0.959, ("tabasco",)),
+    # FCÉN 2026, aliment 531 « Vinaigrette, mayonnaise, régulière » : 250 ml
+    # = 232.46 g, soit 0.930 g/ml.
+    ("toum", "sauces", "Sauce toum", "Toum garlic sauce", "volume", 0.930, ("sauce libanaise à l’ail",)),
     ("saucisse_cocktail", "porc", "Saucisses cocktail", "Cocktail sausages", "mass", None, ()),
     ("saucisse_toulouse", "porc", "Saucisses de Toulouse", "Toulouse sausages", "mass", None, ()),
     ("spaghettoni", "pates", "Spaghettonis", "Spaghettoni", "mass", None, ()),

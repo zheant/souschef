@@ -145,3 +145,107 @@ def test_production_curation_imports_every_non_dessert_recipe():
     assert len(excluded) == 36
     assert report["unknown_canonical_ids"] == []
     assert all(recipe_import._is_complete(recipe) for recipe in imported)
+
+
+def test_a_quantity_override_wins_even_when_the_projection_looks_complete():
+    """Une décision humaine ne peut pas être court-circuitée par l'amont.
+
+    Les overrides n'étaient consultés que si la projection amont était
+    incomplète, ou si un compte avait visiblement été recopié dans un champ
+    mesuré — un test qui ne se déclenche pas quand le canonique se compte à
+    l'unité. « 1 paquet (454 g) de pâte à won-ton » arrivait donc en 454
+    *enveloppes*, et l'override écrit pour le corriger ne servait à rien.
+    """
+    recipe = _source_recipe(quantity="454", canonical="pate_wonton")
+    recipe["souschef_projection"]["ingredients"][0][
+        "ingredient_identity_id"
+    ] = "IDENTITY_TEST"
+    recipe["ingredients"] = [
+        {
+            "ingredient_identity_id": "IDENTITY_TEST",
+            "canonical_ingredient_id": "pate_wonton",
+            "normalized_ingredient_label": "pâte à won-ton",
+            "parsed_numeric_quantity": "1",
+            "normalized_quantity": "454",
+            "normalized_unit": "can",
+        }
+    ]
+    imported, review, excluded, _report = recipe_import.convert_corpus(
+        {"recipes": [recipe], "summary": {"selected": 1}},
+        {"pate_wonton"},
+        canonical_catalog={
+            "pate_wonton": {"id": "pate_wonton", "base_unit": "unit"}
+        },
+        curation={
+            "quantity_overrides": {
+                "IDENTITY_TEST": {
+                    "quantity": 57,
+                    "basis": "paquet de 454 g à 8 g l'enveloppe",
+                }
+            }
+        },
+    )
+
+    assert review == [] and excluded == []
+    assert imported[0]["ingredients"][0]["qty_fixed_per_batch_base_unit"] == "57"
+
+
+def test_an_override_keeps_the_marginal_part_the_projection_declared():
+    """Résoudre une quantité par lot ne doit pas effacer la part par portion.
+
+    L'écrasement à zéro était sans conséquence tant que la résolution ne
+    touchait que des lignes incomplètes. Depuis qu'un override y entre aussi,
+    une recette qui montait par portion cesserait de le faire.
+    """
+    recipe = _source_recipe(quantity="454", canonical="pate_wonton")
+    line = recipe["souschef_projection"]["ingredients"][0]
+    line["ingredient_identity_id"] = "IDENTITY_TEST"
+    line["qty_marginal_per_serving_base_unit"] = "3"
+    recipe["ingredients"] = [
+        {
+            "ingredient_identity_id": "IDENTITY_TEST",
+            "canonical_ingredient_id": "pate_wonton",
+            "normalized_ingredient_label": "pâte à won-ton",
+            "parsed_numeric_quantity": "1",
+            "normalized_quantity": "454",
+            "normalized_unit": "can",
+        }
+    ]
+    imported, _review, _excluded, _report = recipe_import.convert_corpus(
+        {"recipes": [recipe], "summary": {"selected": 1}},
+        {"pate_wonton"},
+        canonical_catalog={"pate_wonton": {"id": "pate_wonton", "base_unit": "unit"}},
+        curation={
+            "quantity_overrides": {
+                "IDENTITY_TEST": {
+                    "quantity": 57,
+                    "basis": "paquet de 454 g à 8 g l'enveloppe",
+                    "estimated": False,
+                }
+            }
+        },
+    )
+
+    line = imported[0]["ingredients"][0]
+    assert line["qty_fixed_per_batch_base_unit"] == "57"
+    assert line["qty_marginal_per_serving_base_unit"] == "3"
+    # Un override dérivé d'une mesure fédérale n'est pas une estimation.
+    assert imported[0]["tags"].get("quantity_estimates") in (None, [])
+
+
+def test_an_html_entity_in_the_source_title_is_decoded():
+    """« Bouchées d&rsquo;aubergine » s'affiche tel quel dans l'interface.
+
+    Le corpus source porte des titres échappés en HTML. React échappe ce qu'on
+    lui donne, donc l'entité se lit à l'écran — quatre recettes sur 121 étaient
+    dans ce cas, et l'écran Recettes les a rendues visibles. Le nom se décode à
+    l'import : c'est là qu'il entre dans le seed.
+    """
+    recipe = _source_recipe()
+    recipe["title"] = "Bouchées d&rsquo;aubergine parmigiana"
+    recipe["souschef_projection"]["name"] = "Bouchées d&rsquo;aubergine parmigiana"
+    imported, _review, _excluded, _report = recipe_import.convert_corpus(
+        {"recipes": [recipe], "summary": {"selected": 1}},
+        {"carotte"},
+    )
+    assert imported[0]["name"] == "Bouchées d’aubergine parmigiana"

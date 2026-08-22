@@ -1,7 +1,8 @@
 """Réduction du problème avant construction du modèle (docs/spec.md).
 
 1. Filtres durs : allergènes, régime, équipement manquant, temps de
-   préparation excessif, ingrédient sans aucun produit prixé ;
+   préparation excessif, besoin identiquement nul sous les drapeaux actifs,
+   ingrédient sans aucun produit prixé ;
 2. Troncature : conservation des 150 meilleures recettes par u_r.
 
 Avec |R| ≈ 1000, cette étape vaut plus qu'un meilleur solveur. Les comptes
@@ -54,6 +55,8 @@ def prefilter_recipes(
     truncation_keep: int = TRUNCATION_KEEP,
     force_keep_ids: frozenset[str] = frozenset(),
     exclude_ids: frozenset[str] = frozenset(),
+    batch_fixed_cost_enabled: bool = True,
+    protein_coefficient_ids: frozenset[str] | None = None,
 ) -> PrefilterResult:
     """``force_keep_ids``/``exclude_ids`` : verrouillage/remplacement de
     recette (pilote, docs/product-pilot.md). ``exclude_ids`` est retiré
@@ -77,7 +80,23 @@ def prefilter_recipes(
     bloquer plus tard sans distinguer un ingrédient qu'on veut acheter d'un
     ingrédient confirmé déjà possédé (``confirmed_available_ids``), les deux
     tombant sinon sur la même erreur non gérée. ``None`` désactive ce filtre
-    (tests qui ne modélisent pas de prix)."""
+    (tests qui ne modélisent pas de prix).
+
+    ``batch_fixed_cost_enabled`` : état du drapeau ``enable_batch_fixed_cost``
+    du solveur, c'est-à-dire le seul drapeau qui altère l'équation de besoin
+    (``solver/model.py::FLAGS_ALTERING_NEEDS``). Drapeau désactivé, la
+    composante fixe par lot est retirée des besoins : une recette dont TOUTES
+    les quantités vivent dans cette composante ne demande alors plus aucun
+    ingrédient, et le solveur la sert **gratuitement** — en pratique il en
+    remplit tout le menu, puisque rien ne coûte moins que zéro. Les 121
+    recettes importées sont exactement dans ce cas (une recette scrapée décrit
+    un lot, pas une portion) : le défaut n'est donc pas théorique, c'est le
+    menu entier. Le module de prix refuse déjà ces recettes plutôt que
+    d'inventer une mise à l'échelle
+    (``recipe_costing.py::RecipeNotScalableError``) ; le préfiltrage leur
+    applique la même honnêteté au lieu de les facturer 0,00 $. Ce n'est pas un
+    filtre de préférence : une recette dont le besoin est identiquement nul est
+    mal modélisée sous ce drapeau, pas gratuite."""
     counts = {"initial": len(recipes)}
 
     allergens = set(profile.allergen_flags)
@@ -100,6 +119,24 @@ def prefilter_recipes(
             + Decimal(r.min_batch_servings) * r.prep_time_marginal_h) <= tmax
     ]
     counts["temps_preparation"] = len(step)
+
+    if not batch_fixed_cost_enabled:
+        step = [
+            r
+            for r in step
+            if any(
+                ri.qty_marginal_per_serving_base_unit > 0 for ri in r.ingredients
+            )
+        ]
+        counts["besoin_non_nul"] = len(step)
+
+    if protein_coefficient_ids is not None:
+        # Plancher de protéines actif : une recette dont les protéines ne sont
+        # pas chiffrables n'a pas sa place dans une moyenne. La faire entrer
+        # avec un zéro compterait « non mesuré » comme « sans protéines », et
+        # tirerait la moyenne vers le bas au nom d'une donnée absente.
+        step = [r for r in step if r.id in protein_coefficient_ids]
+        counts["proteines_chiffrables"] = len(step)
 
     if priced_ingredient_ids is not None:
         step = [

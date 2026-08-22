@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api } from "../api";
+import { api, messageOf } from "../api";
 
 /** Sous-section « Essentiels » de l'écran Ménage (pilote,
  *  docs/product-pilot.md) — remplace le garde-manger à quantité suivie :
@@ -23,7 +23,7 @@ export function StaplesPanel() {
     const rows = await api.staples();
     setItems(rows.map((r) => ({ id: r.canonical_ingredient_id, name: r.name })));
   }
-  useEffect(() => { refresh().catch((e) => setError(String(e))); }, []);
+  useEffect(() => { refresh().catch((e) => setError(messageOf(e))); }, []);
 
   async function save(ids: string[]) {
     setError(null); setStatus(null);
@@ -32,7 +32,7 @@ export function StaplesPanel() {
       await refresh();
       setStatus("Essentiels enregistrés.");
       setNewId("");
-    } catch (e) { setError(String(e)); }
+    } catch (e) { setError(messageOf(e)); }
   }
 
   return (

@@ -139,6 +139,15 @@ table.ledger { width: 100%; border-collapse: collapse; font-size: 14px; }
   background: var(--leek-soft); color: var(--leek); border-radius: 999px; padding: 2px 9px;
 }
 .muted { color: var(--ink-soft); font-size: 13px; }
+/* Action secondaire discrète à l'intérieur d'un encadré : « Masquer » un
+   verdict n'est pas une action de même poids que « Mettre à jour les prix ». */
+.dismiss {
+  background: none; border: none; padding: 0; cursor: pointer;
+  color: var(--ink-soft); font: inherit; font-size: 12.5px;
+  text-decoration: underline;
+}
+.dismiss:hover { color: var(--ink); }
+.dismiss:focus-visible { outline: 2px solid var(--leek); outline-offset: 2px; }
 .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 
 .callout { border-left: 3px solid var(--flyer); background: #fdf6e6; padding: 10px 14px; border-radius: 0 10px 10px 0; font-size: 13.5px; }
@@ -264,6 +273,10 @@ pre.raw {
   font-size: 11.5px; font-weight: 700;
 }
 .rp-recipe-price { margin-left: auto; font-weight: 800; color: var(--rp-ink); font-size: 13px; }
+/* Prix partiel ou absent : dit sans crier. Un devis incomplet reste une
+   information utile, pas une erreur — il ne doit ni se lire comme un prix
+   ferme, ni prendre la place d'une alerte. */
+.rp-recipe-price--partial { font-weight: 600; color: var(--rp-muted, #6b7280); font-size: 12px; }
 
 /* Boutons flottants toujours visibles (maquette « Agrumes frais ») —
    plus de glissement à révéler, cohérent avec le reste de l'app qui
@@ -336,3 +349,119 @@ pre.raw {
 .rp-detail-ing { margin: 0; padding: 0; list-style: none; }
 .rp-detail-ing li { padding: 8px 0; border-bottom: 1px dashed var(--rp-rule); font-size: 14px; }
 .rp-detail-ing li:last-child { border-bottom: none; }
+
+/* Valeur nutritive par portion (détail recette). Quatre cellules à largeur
+   égale plutôt qu'un tableau : la ligne se lit d'un coup d'œil et tient sur un
+   téléphone. La note de borne reste sous les chiffres, jamais à côté — elle les
+   qualifie tous les quatre. */
+.rp-nutrition {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  margin-top: 4px;
+}
+.rp-nutrition-cell {
+  background: var(--rp-card, #fff); border: 1px solid var(--rp-rule);
+  border-radius: 10px; padding: 10px 6px; text-align: center;
+}
+.rp-nutrition-value {
+  font-weight: 800; font-size: 15px; font-variant-numeric: tabular-nums;
+}
+.rp-nutrition-label {
+  font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--rp-ink-soft); margin-top: 3px;
+}
+.rp-nutrition-note {
+  font-size: 11px; color: var(--rp-ink-soft); margin: 8px 0 0;
+  font-variant-numeric: tabular-nums;
+}
+.rp-nutrition-missing { font-size: 13px; }
+.rp-nutrition-missing p { margin: 0 0 8px; color: var(--rp-ink-soft); }
+.rp-nutrition-missing ul { margin: 0; padding: 0; list-style: none; }
+.rp-nutrition-missing li {
+  padding: 6px 0; border-bottom: 1px dashed var(--rp-rule);
+  display: flex; justify-content: space-between; gap: 12px;
+}
+.rp-nutrition-missing li:last-child { border-bottom: none; }
+.rp-nutrition-reason { color: var(--rp-ink-soft); font-size: 11px; text-align: right; }
+/* Borne d'un apport déclaré négligeable, sous le chiffre qu'elle qualifie —
+   jamais à côté d'un autre, jamais absente quand elle existe. */
+.rp-nutrition-bound {
+  font-size: 10px; color: var(--rp-ink-soft); font-variant-numeric: tabular-nums;
+  margin-top: 1px;
+}
+
+/* Écran Recettes — la liste du catalogue et ses lignes cliquables. Reprend les
+   tons et les rayons des cartes de menu : c'est le même objet vu autrement, pas
+   un deuxième langage visuel. */
+.rc-list { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+.rc-list li + li { margin-top: 0.4rem; }
+.rc-row {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--line, #dcdfd3);
+  border-radius: 0.7rem;
+  background: var(--card, #fff);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+.rc-row:hover { border-color: var(--accent, #4a7c1f); }
+.rc-name { font-weight: 600; }
+.rc-meta { font-size: 0.82rem; color: var(--muted, #6b7268); }
+.rc-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+}
+
+/* Résumé de la semaine — quatre nombres au-dessus du plan. Volontairement plat
+   et sans couleur d'accent : c'est un rappel, pas un tableau de bord. */
+.ws-card {
+  margin: 14px 0 10px;
+  padding: 0.85rem 1rem 0.7rem;
+  border: 1px solid var(--line, #dcdfd3);
+  border-radius: 0.8rem;
+  background: var(--card, #fff);
+}
+.ws-title {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted, #6b7268);
+  margin-bottom: 0.55rem;
+}
+.ws-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+@media (max-width: 560px) {
+  .ws-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.ws-cell { min-width: 0; }
+.ws-value { font-weight: 700; font-size: 1.05rem; }
+.ws-label { font-size: 0.74rem; color: var(--muted, #6b7268); }
+.ws-note {
+  margin: 0.6rem 0 0;
+  font-size: 0.74rem;
+  color: var(--muted, #6b7268);
+}
+.rc-kcal { font-weight: 600; }
+.rc-kcal-missing { font-style: italic; }
+
+/* Les protéines mènent le résumé : la cellule de tête porte le nombre un cran
+   plus grand, sans couleur d'accent — c'est une hiérarchie, pas une alarme. */
+.ws-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+@media (max-width: 720px) {
+  .ws-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+  .ws-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.ws-cell--lead .ws-value { font-size: 1.3rem; }

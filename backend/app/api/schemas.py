@@ -28,6 +28,9 @@ class HouseholdOut(BaseModel):
     taste_preferences: dict
     available_equipment: list[str]
     max_prep_time_per_meal_h: float
+    appetence_u_min_dollars: float | None
+    min_protein_g_per_serving: float | None
+    max_distinct_recipes: int | None
     members: list[MemberOut]
     demand: dict  # D exact + bornes (D9)
 
@@ -48,6 +51,17 @@ class HouseholdUpdate(BaseModel):
     taste_preferences: dict | None = None
     available_equipment: list[str] | None = None
     max_prep_time_per_meal_h: float | None = Field(default=None, gt=0)
+    #: U_min. `null` explicite retire le plancher — la route sérialise avec
+    #: `exclude_unset`, donc l'omettre le laisse inchangé et l'envoyer à `null`
+    #: l'efface. Deux gestes distincts, comme il faut ici : « aucun plancher »
+    #: est une valeur, pas une absence de valeur.
+    appetence_u_min_dollars: float | None = Field(default=None, ge=0)
+    min_protein_g_per_serving: float | None = Field(default=None, ge=0)
+    max_distinct_recipes: int | None = Field(default=None, ge=1)
+    #: Plancher de dépense d'épicerie, en cents CAD. Même sémantique de
+    #: `null` que U_min ci-dessus : omettre laisse inchangé, envoyer `null`
+    #: efface. En cents parce que c'est de l'argent (INVARIANTS, CLAUDE.md) —
+    #: l'écran affiche des dollars, la frontière n'invente pas de flottant.
     members: list[MemberOut] | None = None
 
 
@@ -176,3 +190,43 @@ class MapRequest(BaseModel):
                 "Fournir exactement un de product_id ou new_product."
             )
         return self
+
+
+class PriceCoverageOut(BaseModel):
+    """Fenêtre couverte par les prix chargés — `null` si la base est vide."""
+
+    earliest: date | None
+    latest: date | None
+
+
+class PriceRefreshOut(BaseModel):
+    """État du rafraîchissement de prix — une collecte détachée, pas une requête.
+
+    `log_tail` est la fin de la sortie du collecteur, pas un pourcentage :
+    l'écran montre ce que la collecte dit d'elle-même plutôt qu'une progression
+    fabriquée à côté.
+    """
+
+    state: str  # idle | running | succeeded | failed
+    banner: str | None
+    started_at: str | None
+    finished_at: str | None
+    exit_code: int | None
+    #: `False` : les prix importés sont réels mais partiels — la collecte a été
+    #: tronquée. Distinct de `state`, qui ne dit que si la base a été écrite.
+    collection_complete: bool | None
+    #: Ce que la base a reçu (produits, offres, prix), lu du rapport d'import.
+    imported: dict | None
+    #: Date de la collecte la plus récente sur disque — y compris lancée en
+    #: ligne de commande. `started_at` ne connaît que les lancements passés par
+    #: l'application, et répondrait « jamais » à qui utilise
+    #: `run_catalogues.cmd`.
+    last_capture_at: str | None
+    log_tail: list[str]
+
+
+class PriceRefreshStart(BaseModel):
+    """Bannière à collecter. Seule Super C est collectable sans humain devant
+    l'écran (Maxi exige une fenêtre de navigateur visible)."""
+
+    banner: str = "superc"

@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { api } from "./api";
+import { api, messageOf } from "./api";
 import type { Household, Plan, SolverConfigInput, Store } from "./types";
 import DiagnosticScreen from "./screens/Diagnostic";
 import HouseholdScreen from "./screens/Household";
 import PlanningScreen from "./screens/Planning";
+import RecipesScreen from "./screens/Recipes";
 import "./styles.css";
 
 // Trois onglets (pilote, docs/product-pilot.md) — fusion de ce qui était
@@ -29,8 +30,15 @@ const GEAR_ICON = (
     <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
   </svg>
 );
+const BOOK_ICON = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 4h7a3 3 0 013 3v13a2.5 2.5 0 00-2.5-2.5H4z" />
+    <path d="M20 4h-3a3 3 0 00-3 3v13a2.5 2.5 0 012.5-2.5H20z" />
+  </svg>
+);
 const TABS = [
   { key: "Planification", icon: CALENDAR_ICON },
+  { key: "Recettes", icon: BOOK_ICON },
   { key: "Ménage", icon: HOUSE_ICON },
   { key: "Paramètres", icon: GEAR_ICON },
 ] as const;
@@ -38,8 +46,11 @@ type Tab = (typeof TABS)[number]["key"];
 
 // Défaut de développement (spec) : tout à false, un magasin, appétence en
 // objectif — on rallume un mécanisme à la fois depuis l'onglet Paramètres.
+// `appetence_mode` est volontairement absent : `undefined` signifie « suivre
+// le profil », donc le plancher d'appétence réglé dans Ménage › Préférences
+// s'applique. L'envoyer à "objective" par défaut l'écartait à chaque plan.
 const DEV_DEFAULT: SolverConfigInput = {
-  appetence_mode: "objective", solver_time_limit_s: 120, mip_gap: 0.005,
+  solver_time_limit_s: 120, mip_gap: 0.005,
 };
 
 export default function App() {
@@ -53,7 +64,7 @@ export default function App() {
   useEffect(() => {
     Promise.all([api.household(), api.stores()])
       .then(([h, s]) => { setHousehold(h); setStores(s); })
-      .catch((e) => setError(String(e)));
+      .catch((e) => setError(messageOf(e)));
   }, []);
 
   async function refreshPlan(planId: number) {
@@ -75,6 +86,7 @@ export default function App() {
           onPlan={setPlan} onCommitted={refreshPlan}
         />
       )}
+      {household && tab === "Recettes" && <RecipesScreen />}
       {household && tab === "Ménage" && (
         <HouseholdScreen household={household} onSaved={setHousehold} />
       )}

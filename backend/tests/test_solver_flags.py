@@ -38,9 +38,10 @@ def test_each_flag_alone_is_solvable(toy, flag):
 
 
 def test_main_seed_all_flags_on():
-    """Intégration : le jeu principal, tous mécanismes actifs. D = 36,4 →
-    Σx ∈ [37, 41] ; K = 2 arrêts ; R_min = 4 ; α = 0,3."""
-    problem = problem_from_seed_dir(SEED / "main", ON)
+    """Intégration : le catalogue principal sur le marché de démonstration
+    (D34), tous mécanismes actifs. D = 36,4 → Σx ∈ [37, 41] ; K = 2 arrêts ;
+    R_min = 4 ; α = 0,3."""
+    problem = problem_from_seed_dir(SEED / "main", ON, market_dir=SEED / "demo")
     pre = prefilter_recipes(
         problem.recipes,
         problem.profile,
@@ -68,7 +69,9 @@ def test_main_seed_all_flags_on():
     # L'import Cook ajoute une recette entièrement couverte par le catalogue
     # tarifé; elle rejoint donc les candidates avant la limite du préfiltre.
     assert d.prefilter_counts["troncature"] == 41
-    assert len(d.assertions_passed) == 7
+    # Sept, et non huit : l'assertion 0 (cohérence plancher de dépense ×
+    # mode d'appétence) est partie avec le plancher lui-même (D40).
+    assert len(d.assertions_passed) == 8  # 1..6 + 6b + 6c
     # Les portions produites sont couvertes par les achats :
     # les couvertures saturées listées existent bien dans le problème.
     for iid in d.saturated_constraints["couvertures_ingredients"]:

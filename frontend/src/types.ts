@@ -10,6 +10,10 @@ export interface Household {
   diet_flags: string[]; allergen_flags: string[];
   taste_preferences: { liked_tags?: string[]; disliked_tags?: string[] };
   available_equipment: string[]; max_prep_time_per_meal_h: number;
+  //: Plancher d'appétence du plan, en dollars. `null` : aucun plancher.
+  appetence_u_min_dollars: number | null;
+  min_protein_g_per_serving: number | null;
+  max_distinct_recipes: number | null;
   members: Member[];
   demand: { D_exact: string; borne_basse: number; borne_haute: number };
 }
@@ -25,8 +29,11 @@ export interface SolverConfigInput {
   enable_salvage?: boolean; enable_perishable_penalty?: boolean;
   enable_time_cost?: boolean;
   enable_staples?: boolean; enable_diversity?: boolean;
+  //: `undefined` — le défaut — suit le plancher du profil.
   appetence_mode?: "objective" | "constraint";
   appetence_u_min_dollars?: number | null;
+  min_protein_g_per_serving?: number | null;
+  max_distinct_recipes?: number | null;
   max_store_visits?: number | null; min_distinct_recipes?: number | null;
   max_share_per_recipe?: number | null; demand_slack_epsilon?: number | null;
   solver_time_limit_s?: number; mip_gap?: number;
@@ -106,11 +113,77 @@ export interface Store {
 }
 
 // Détail recette (pilote, docs/product-pilot.md).
+/** Une recette du catalogue, telle que `GET /api/recipes` la pagine. Le
+ *  navigateur de recettes (écran Recettes) n'a besoin que de l'identité et du
+ *  rendement publié : la valeur nutritive se demande recette par recette, à
+ *  l'ouverture, pour ne pas calculer 121 recettes par page affichée. */
+export interface RecipeSummary {
+  id: string;
+  name: string;
+  original_servings: number;
+  prep_time_fixed_h: string;
+  prep_time_marginal_h: string;
+  tags: Record<string, unknown>;
+}
+
+export interface RecipePage {
+  total: number; limit: number; offset: number; items: RecipeSummary[];
+}
+
 export interface RecipeIngredientLine {
   canonical_ingredient_id: string; name: string;
 }
 
 export type Confidence = "exact" | "audited_conversion" | "estimated" | "incomplete";
+
+/** Valeur nutritive par portion, telle que le module la calcule.
+ *
+ *  Les quatre nombres sont `null` **ensemble** dès qu'une ligne d'ingrédient
+ *  n'est pas résolue : le module ne présente jamais un total partiel comme un
+ *  total. `missing` dit alors quoi curer, et `lines` porte la preuve
+ *  ingrédient par ingrédient.
+ *
+ *  Les quatre `*_error_bound_per_serving` sont la somme des bornes des apports
+ *  déclarés négligeables (sel, bouillon, épices en petite quantité) : l'écran
+ *  les affiche en « ± », il ne les absorbe pas. Borner la seule énergie
+ *  laissait publier « 0,0 g de lipides » comme un fait mesuré, alors qu'une
+ *  épice omise emporte jusqu'à un gramme de gras. */
+export interface RecipeNutrition {
+  recipe_id: string; recipe_name: string; servings: number;
+  status: "complete" | "incomplete";
+  kcal_per_serving: string | number | null;
+  protein_g_per_serving: string | number | null;
+  fat_g_per_serving: string | number | null;
+  carbohydrate_g_per_serving: string | number | null;
+  kcal_error_bound_per_serving: string | number | null;
+  protein_g_error_bound_per_serving: string | number | null;
+  fat_g_error_bound_per_serving: string | number | null;
+  carbohydrate_g_error_bound_per_serving: string | number | null;
+  confidence: Confidence;
+  rule_version: string;
+  lines: RecipeNutritionLine[];
+  missing: { canonical_ingredient_id: string; reason: string }[];
+}
+
+export interface RecipeNutritionLine {
+  ingredient_id: string;
+  qty_per_serving: string | number;
+  base_unit: string;
+  grams_per_serving: string | number | null;
+  resolution: "computed" | "negligible" | "gap" | "no_quantity_required";
+  reason: string | null;
+  food_code: string | null;
+  kcal: string | number | null;
+  protein_g: string | number | null;
+  fat_g: string | number | null;
+  carbohydrate_g: string | number | null;
+  kcal_error_bound: string | number;
+  protein_g_error_bound: string | number;
+  fat_g_error_bound: string | number;
+  carbohydrate_g_error_bound: string | number;
+  confidence: Confidence;
+  detail: string | null;
+}
 
 export interface RecipeQuote {
   recipe_id: string; recipe_name: string; servings: number;
@@ -130,4 +203,29 @@ export interface RecipeQuote {
   valid_from: string | null; valid_to: string | null;
   validity_reason: string | null;
   incomplete_ingredients: string[];
+}
+
+/** Fenêtre de dates réellement couverte par les prix chargés. */
+export interface PriceCoverage {
+  earliest: string | null;
+  latest: string | null;
+}
+
+/** État d'une collecte de prix lancée depuis l'application.
+ *
+ *  `log_tail` est la fin de la sortie du collecteur — la progression réelle,
+ *  pas un pourcentage fabriqué par l'écran. */
+export interface PriceRefresh {
+  state: "idle" | "running" | "succeeded" | "failed";
+  banner: string | null;
+  started_at: string | null;
+  finished_at: string | null;
+  exit_code: number | null;
+  /** `false` : prix importés mais capture tronquée — partiels, pas faux. */
+  collection_complete: boolean | null;
+  /** Compteurs rendus par l'import : products_upserted, prices_upserted… */
+  imported: Record<string, number> | null;
+  /** Dernière collecte trouvée sur disque, ligne de commande comprise. */
+  last_capture_at: string | null;
+  log_tail: string[];
 }

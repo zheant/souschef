@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { api } from "../api";
+import { api, messageOf } from "../api";
 import type { Household, Member } from "../types";
 import { StaplesPanel } from "./Staples";
 
@@ -65,6 +65,15 @@ export default function HouseholdScreen(props: {
     allergen_flags: h.allergen_flags.join(", "),
     liked: (h.taste_preferences.liked_tags ?? []).join(", "),
     disliked: (h.taste_preferences.disliked_tags ?? []).join(", "),
+    // Chaîne, pas nombre : `set()` convertit tout champ numérique avec
+    // `Number()`, et `Number("")` vaut 0 — un plancher de 0 $, pas « aucun
+    // plancher ». Les deux doivent rester distinguables jusqu'à la
+    // sérialisation.
+    u_min: h.appetence_u_min_dollars == null ? "" : String(h.appetence_u_min_dollars),
+    min_protein: h.min_protein_g_per_serving == null
+      ? ""
+      : String(h.min_protein_g_per_serving),
+    r_max: h.max_distinct_recipes == null ? "" : String(h.max_distinct_recipes),
   });
   const [members, setMembers] = useState<Member[]>(h.members);
   const [saving, setSaving] = useState(false);
@@ -103,10 +112,22 @@ export default function HouseholdScreen(props: {
         diet_flags: csv(form.diet_flags),
         allergen_flags: csv(form.allergen_flags),
         taste_preferences: { liked_tags: csv(form.liked), disliked_tags: csv(form.disliked) },
+        // `null` explicite retire le plancher : la route sérialise avec
+        // `exclude_unset`, donc envoyer la clé à `null` l'efface réellement.
+        appetence_u_min_dollars: form.u_min.trim() === "" ? null : Number(form.u_min),
+        // Même convention que le plancher d'appétence : vide envoie `null`,
+        // ce qui retire réellement le plancher (la route sérialise avec
+        // `exclude_unset`).
+        min_protein_g_per_serving: form.min_protein.trim() === ""
+          ? null
+          : Number(form.min_protein),
+        max_distinct_recipes: form.r_max.trim() === ""
+          ? null
+          : Math.round(Number(form.r_max)),
         members,
       });
       props.onSaved(saved);
-    } catch (e) { setError(String(e)); } finally { setSaving(false); }
+    } catch (e) { setError(messageOf(e)); } finally { setSaving(false); }
   }
 
   return (
@@ -193,7 +214,52 @@ export default function HouseholdScreen(props: {
                 <input value={form.liked} onChange={set("liked")} placeholder="tex-mex, asiatique" /></label>
               <label className="field"><span>Cuisines évitées</span>
                 <input value={form.disliked} onChange={set("disliked")} /></label>
+              <label className="field">
+                <span>Plancher d'appétence ($) <em>(vide = aucun)</em></span>
+                <input
+                  type="text" inputMode="decimal" value={form.u_min}
+                  onChange={(e) => setForm({ ...form, u_min: e.target.value })}
+                  placeholder="ex. 65"
+                />
+              </label>
+              <label className="field">
+                <span>
+                  Protéines minimum (g par portion, en moyenne){" "}
+                  <em>(vide = aucun)</em>
+                </span>
+                <input
+                  type="text" inputMode="decimal" value={form.min_protein}
+                  onChange={(e) => setForm({ ...form, min_protein: e.target.value })}
+                  placeholder="ex. 25"
+                />
+              </label>
+              <label className="field">
+                <span>
+                  Plats distincts au plus <em>(vide = aucun plafond)</em>
+                </span>
+                <input
+                  type="text" inputMode="numeric" value={form.r_max}
+                  onChange={(e) => setForm({ ...form, r_max: e.target.value })}
+                  placeholder="ex. 5"
+                />
+              </label>
             </div>
+            <p className="muted" style={{ marginTop: 4 }}>
+              Sans plancher, le menu part vers les recettes les moins chères :
+              l'appétence n'est qu'un crédit dans l'objectif, donc tout plat
+              bon marché l'emporte. Un plancher inverse la question — minimiser
+              le coût <em>sous</em> une appétence exigée. Plus il monte, plus le
+              menu suit vos goûts et plus l'épicerie coûte.
+            </p>
+            <p className="muted" style={{ marginTop: 4 }}>
+              Les deux planchers répondent à la même question en deux unités.
+              L'appétence dit « quel menu », l'épicerie minimum dit « quel
+              montant » — et c'est le second qui se raisonne en budget, la
+              correspondance entre les deux changeant à chaque circulaire.
+              Ils ne s'emploient pas ensemble : avec une appétence exigée, plus
+              rien ne départage les façons d'atteindre le montant et le solveur
+              pourrait l'atteindre en surplus. Remplir un seul des deux.
+            </p>
 
             <details style={{ marginTop: 16 }}>
               <summary className="muted" style={{ cursor: "pointer" }}>Paramètres avancés</summary>

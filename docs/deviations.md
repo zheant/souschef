@@ -860,3 +860,1544 @@ collecteur n'emploie aucun module de furtivité ni contournement.
 **Reprise.** Une exécution utilise un dossier `run-*` propre. Le manifeste
 `_complete.json` est écrit atomiquement seulement après la dernière page; la
 reprise explicite sélectionne uniquement une exécution complète de la semaine.
+
+## D24 — Le catalogue capturé s'importe sans rescraper, et une seule fabrique construit les adaptateurs
+
+**Écart.** Deux points de la spec sont précisés ici, tous deux découverts en
+branchant réellement le catalogue Super C sur le planificateur.
+
+**1. L'import et la collecte sont deux gestes distincts.** `spec.md` décrit un
+chemin unique port → `staging` → normalisation, ce qui reste vrai, mais la
+seule façon de l'emprunter était `run_weekly_catalogues.py`, qui *capture puis*
+importe. Une capture déjà sur disque ne pouvait donc pas atteindre
+`market.product` sans relancer une collecte complète — Edge visible pour Maxi,
+une requête toutes les dix secondes pour Super C. Conséquence mesurée : les
+captures de la semaine étaient chiffrées par `quote_recipes.py` (2 165 produits,
+129 recettes sur 161 avec un devis complet) sans jamais entrer en base, où le
+solveur continuait de planifier sur les 83 produits de démonstration du seed.
+Le filtre dur de préfiltrage « ingrédient sans aucun produit prixé » ne
+laissait alors passer que **41 recettes sur 161, dont 40 étaient les recettes
+de démonstration elles-mêmes** : l'application ne pouvait proposer que des
+plats de démonstration, quelle que soit la richesse du catalogue de recettes
+importées. `scripts/import_captured_catalogue.py` fournit le geste manquant.
+Aucune écriture sans `--apply`.
+
+**2. Un seul constructeur d'adaptateur.** Quatre appelants — collecte, devis,
+audit de couverture, import Maxi — construisaient chacun leur adaptateur avec
+sa propre copie des règles à passer. La correction précédente (voir `CLAUDE.md`,
+revue de l'artefact de devis) avait aligné deux de ces copies et posé un test
+qui *les comparait entre elles* ; la troisième et la quatrième restaient muettes,
+et `scripts/import_maxi_catalogue.py` écrivait en base sans aucune des trois
+règles de curation. `app.ingestion.catalogue_sources.CatalogueSources` est
+désormais le seul constructeur, `tests/test_weekly_runner_wiring.py` interdit à
+tout script d'en construire un directement, et `import_maxi_catalogue.py` est
+retiré (couvert par `--banner maxi`). La période de circulaire jeudi-mercredi,
+qui existait aussi en deux exemplaires, vit au même endroit.
+
+**Ce que l'import a révélé, et qui n'est pas refermé.**
+
+- **σ est une donnée de référence curée, bornée par un prix hebdomadaire.**
+  L'assertion 1 exige σ_i ≤ 0,8·min prix taxé/unité, réévaluée à chaque
+  résolution. σ du seed est dérivé des prix de *démonstration* : dès le premier
+  import réel, σ(gousse_ail) = 5,28 ¢/gousse contre un plafond de 1,60 ¢, et
+  **plus aucun plan ne pouvait être généré**. Les deux valeurs fautives
+  (`gousse_ail`, `feuille_laurier`) sont recalibrées par la même formule sur le
+  prix réellement observé (`scripts/generate_seed.py::REAL_PRICE_FLOOR_CENTS`).
+  Le plancher de l'ail est cependant un **prix promotionnel** (48 ¢ les trois
+  têtes, régulier 99 ¢) : une promotion plus profonde refera échouer
+  l'assertion. Recalibrer σ à l'import ferait dépendre une donnée curée du
+  marché hebdomadaire — décision produit, non prise ici.
+- **Le domicile du profil et la bannière capturée ne sont pas dans la même
+  ville.** Le profil de démonstration habite Montréal ; les seules bannières
+  réellement capturées sont Maxi 7552 et Super C 640, à Québec. Magasin unique
+  et règle « le plus proche du domicile » (D11) sélectionnaient donc un magasin
+  de démonstration aux prix périmés, et le plan sortait `Infeasible` sans que
+  rien ne nomme la cause. **Corrigé — voir D26** ; il reste que le domicile du
+  profil ne décrit pas un vrai foyer, ce qui n'est corrigeable que par
+  l'utilisateur (onglet Ménage).
+- **Le catalogue branché ne suffit pas à changer le menu.** Les 121 recettes
+  importées deviennent éligibles, mais elles portent `cuisines`/`categories`
+  (pluriel, listes) là où `services/appetence.py` lit `cuisine`/`saison`
+  (singulier) : elles restent toutes à l'appétence de base 1,30 $ quand une
+  recette de démonstration atteint 2,15 $. Combiné au fait que le coût domine
+  un crédit d'appétence plafonné à 2,65 $/portion, le solveur continue de
+  choisir les plats les moins chers. Mesuré après import, magasin Super C
+  imposé et `enable_batch_fixed_cost` actif : menu composé de chili aux
+  lentilles, galettes de lentilles, riz frit et sauté de tofu, à 1,00 $/portion.
+
+## D25 — Une recette dont le besoin est identiquement nul est écartée, jamais servie gratuitement
+
+**Écart.** `enable_batch_fixed_cost` est le seul drapeau qui altère l'équation
+de besoin (`solver/model.py::FLAGS_ALTERING_NEEDS`) : désactivé, il retire la
+composante fixe par lot des besoins. La spec traite ce drapeau comme un
+mécanisme de coût que l'on active progressivement. Or les 121 recettes
+importées ont **toutes** leurs quantités dans cette composante — une recette
+scrapée décrit un lot, pas une portion. Drapeau éteint, leur besoin est donc
+identiquement nul : le solveur les sert **gratuitement**, et comme rien ne
+coûte moins que zéro, il en remplit tout le menu. Vérifié en direct après
+l'import : menu de trempette ranch, popcorn, frites d'avocats et boulettes
+teriyaki, tous les termes de l'objectif à 0,00 $, liste d'épicerie vide.
+
+**Décision.** Le préfiltrage écarte une recette dont toutes les quantités
+marginales sont nulles quand `enable_batch_fixed_cost` est éteint, et l'inscrit
+au rapport de diagnostic sous l'étape `besoin_non_nul`. Ce n'est pas un filtre
+de préférence : sous ce drapeau, une telle recette est mal modélisée, pas
+gratuite. Le module de prix tenait déjà exactement cette position
+(`recipe_costing.py::RecipeNotScalableError` — « les rescaler proportionnellement
+inventerait une donnée que la source ne publie pas »). Le préfiltrage cesse
+d'être plus laxiste que l'affichage du prix.
+
+**Conséquence à assumer.** Avec le défaut de configuration actuel du front-end
+(`DEV_DEFAULT`, tous les drapeaux à `False`), ce filtre ramène le problème aux
+40 recettes de démonstration : les recettes importées ne sont atteignables
+qu'avec `enable_batch_fixed_cost` actif. Le défaut du front-end est un défaut de
+développement, pas un défaut de produit.
+
+## D26 — Le magasin retenu doit pouvoir approvisionner, et l'assertion 4 se juge sur lui
+
+**Écart.** Deux règles de la spec se contredisaient en silence dès qu'un vrai
+catalogue est arrivé à côté du catalogue de démonstration.
+
+D11 fixe, en magasin unique, « le plus proche du domicile ». L'assertion 4
+vérifie que chaque ingrédient requis a « un produit avec prix valide ». Mais
+elle balayait **tous** les magasins pendant que le modèle n'autorisait des
+achats que dans **un**. Les deux passaient donc, et le problème était pourtant
+infaisable.
+
+Constaté en direct sur l'application, domicile de démonstration à Montréal,
+catalogue Super C importé :
+
+| magasin | distance | prix valides au 19 août |
+|---|---:|---:|
+| `epicier_du_coin` | 0,7 km | **0** |
+| `marche_central` | 2,1 km | 0 |
+| `superc_640` | 225,1 km | **2 165** |
+
+La règle retenait `epicier_du_coin`, aucun achat n'était possible, et
+l'utilisateur recevait : « Infaisable (Infeasible). IIS indisponible avec CBC ;
+toutes les assertions pré-solveur sont passées — l'infaisabilité vient de
+l'interaction des contraintes actives, **en dernier lieu du drapeau
+`enable_variant_exclusion`** ». Le drapeau accusé n'avait aucun rapport : c'est
+simplement le dernier de la liste, faute de mieux à nommer.
+
+**Décision, en deux moitiés.**
+
+1. `solver/model.py::select_stores` — extraite en fonction pure, appelée une
+   fois par résolution et passée à la fois à `validate_problem` et à `_Ctx`
+   (les deux doivent juger le même ensemble). La règle D11 n'est pas remplacée,
+   elle est **restreinte aux magasins qui ont au moins un prix valide à la date
+   du plan** : un magasin sans circulaire chargée n'est pas un candidat. À prix
+   égal de disponibilité, le plus proche gagne toujours — le choix du magasin
+   reste géographique, l'arbitrage de prix appartient au solveur. Si aucun
+   magasin n'a de prix, on retombe sur le plus proche et l'assertion 5 nomme le
+   catalogue périmé.
+2. `min_taxed_price_per_base_unit` accepte un `store_ids` optionnel, et
+   l'assertion 4 s'y restreint. Le message nomme désormais le magasin et la
+   date. L'assertion 1 et le préfiltrage gardent le balayage global : borner σ
+   par le prix le plus bas du marché est la borne la plus stricte, et le
+   préfiltrage est une réduction grossière qui tourne avant toute sélection.
+
+**Effet mesuré.** Configuration par défaut de l'application, aucun drapeau,
+19 août : `Infeasible` → **`Optimal`**, magasin `superc_640`, 25,32 $. Un
+magasin imposé sans prix ne rend plus une infaisabilité muette mais un 422 :
+« Aucun produit avec prix valide au 2026-08-19 au magasin epicier_du_coin
+pour : [...] ». Garde : `tests/test_store_selection.py`.
+
+## D27 — Plancher de dépense d'épicerie : le budget se raisonne en dollars, pas en points d'appétence
+
+> **Retiré en D40.** Le mécanisme décrit ci-dessous n'existe plus dans le
+> produit : le ménage pose la même question par le plancher d'appétence
+> (U_min). L'entrée reste pour l'histoire de la décision, pas comme
+> description du code.
+
+**Écart.** La spec n'a qu'un levier contre le menu le moins cher : le plancher
+d'appétence (`appetence_u_min_dollars`, mode « constraint »). Il fonctionne,
+mais il répond « quel menu », pas « quel montant ». Mesuré sur `seed/main`,
+semaine du 13 août 2026 :
+
+| U_min | panier | menu |
+|---:|---:|---|
+| 50 | 32,07 $ | riz frit, crêpes, chili aux lentilles, galettes, omelette |
+| 70 | 62,77 $ | tacos au bœuf, tacos au tofu, chili con carne, dahl… 10 plats |
+| 90 | infaisable | plafond d'appétence du catalogue |
+
+Un ménage qui veut employer son budget parle en dollars. La correspondance
+points → dollars, elle, change à chaque circulaire : 70 valaient 62,77 $ cette
+semaine-là et rien ne le garantit la suivante.
+
+**Décision.** `min_grocery_spend_cents_cad` rejoint les paramètres
+surchargeables du profil (K, R_min, α, ε, U_min), résolu par
+`services/params.py` comme les autres. La contrainte
+`solver/model.py::_add_min_spend_constraint` porte sur **la même expression**
+que le terme d'achats de l'objectif — pas un recalcul parallèle : avec
+`enable_staples`, le prix vu par le solveur pour un essentiel est biaisé vers le
+plus bas historique, et deux expressions distinctes se croiraient d'accord en
+divergeant de plusieurs dollars.
+
+**Assertion 0 — la garde qui rend le mécanisme honnête.** Un plancher de
+dépense n'achète un meilleur menu que si quelque chose récompense un meilleur
+menu. L'appétence en crédit dans l'objectif joue ce rôle : parmi tous les
+paniers atteignant le montant, le solveur retient le plus appétissant. En mode
+« constraint », l'appétence quitte l'objectif pour devenir une borne — plus rien
+ne départage les façons de dépenser, et le chemin le moins cher vers le montant
+devient le surplus. `validate_problem` refuse donc explicitement la combinaison
+plancher de dépense + mode « constraint » (`SpendFloorWithoutRewardError`).
+Numérotée 0 parce qu'elle ne lit aucune donnée, seulement les paramètres
+résolus : elle passe avant les six assertions de la spec, et son échec nomme un
+réglage à corriger plutôt qu'un catalogue à rafraîchir.
+
+**Limite mesurée, pas supposée.** J'attendais qu'un plancher démesuré soit
+infaisable. Il ne l'est pas : rien ne borne la quantité achetée par le haut (la
+couverture est approvisionnement ≥ besoin), donc le solveur atteint n'importe
+quel montant en achetant plus. Ce qui sature, c'est l'appétence. Part de la
+quantité achetée qui n'est pas consommée par le menu, `seed/main`, même semaine :
+
+| plancher | achats | appétence | quantité non consommée |
+|---:|---:|---:|---:|
+| aucun | 35,06 $ | 54,50 | 19,4 % (formats d'emballage, incompressible) |
+| 60 $ | 60,05 $ | 67,30 | 28,6 % |
+| 90 $ | 90,03 $ | 71,40 | 32,2 % |
+| 200 $ | 200,02 $ | 70,40 | 69,0 % |
+| 600 $ | 600,29 $ | 71,40 | 88,8 % |
+
+Le mécanisme est donc un budget **dans sa plage utile** — jusqu'à ce que
+l'appétence plafonne — et du gaspillage au-delà. Ce n'est pas verrouillé par
+une borne arbitraire : la valeur utile dépend du catalogue de la semaine et du
+nombre de portions, et une borne codée en dur mentirait aussi souvent qu'elle
+protégerait. Ce qui **est** verrouillé, c'est la mesure :
+`tests/test_min_grocery_spend.py` tient la saturation de l'appétence, pour que
+personne ne présente plus tard ce plancher comme un budget sans plage.
+
+**Précision d'argent.** Le plancher est imposé sur l'expression PuLP, en
+flottants ; le montant rapporté est recalculé en `Decimal` depuis la solution
+entière (INVARIANTS). Les deux divergent de moins d'un cent — mesuré 5 999,42
+contre un plancher de 6 000 sur le catalogue Super C réel. Les tests tolèrent un
+cent ; affirmer l'égalité stricte serait faux.
+
+## D28 — Rafraîchir les prix depuis l'application : un lot lancé, jamais attendu
+
+**Tension.** `ports/circular.py` et D23 posent que la collecte est exécutée
+**en lot**, « jamais dans le chemin d'une requête HTTP », et que « aucune
+collecte ne se produit dans une requête API ». Or l'usager qui voit « le
+catalogue de prix est périmé » — le cas dès le jeudi suivant, la circulaire
+Super C couvrant jeudi-mercredi — n'avait aucun geste depuis l'application. Il
+devait connaître `scripts/run_weekly_catalogues.py`. Un bouton ne peut pas non
+plus *attendre* : une passe Super C complète demande une trentaine de minutes
+(173 pages à une requête toutes les 10 à 12 secondes, plus la grille des
+promotions).
+
+**Décision.** `services/price_refresh.py` **démarre un processus détaché** et
+rend la main. `POST /api/price-refresh` répond **202** — rien n'est fait au
+retour, un lot vient d'être accepté — et `GET /api/price-refresh` rapporte
+l'état. L'invariant tient au sens propre : aucune requête HTTP ne collecte, et
+le module de lancement n'importe aucun adaptateur web ni aucune bibliothèque
+réseau. La garde est structurelle, sur les imports du module
+(`tests/test_price_refresh.py`), parce qu'un `httpx.get` ajouté un jour
+passerait tous les tests fonctionnels tout en violant l'invariant.
+
+**Deux processus, pas un.** L'API démarre un *superviseur*
+(`python -m app.services.price_refresh --run superc`) qui lance le collecteur,
+attend sa fin et écrit l'état terminal. Sans lui personne ne lirait le code de
+sortie : l'API redémarre à chaque édition de fichier sous `--reload`, et une
+collecte réussie serait alors indistinguable d'un plantage. L'état vit dans un
+fichier JSON, jamais en mémoire, pour la même raison.
+
+**Ce qui est délibérément absent.**
+
+- **Maxi.** Son collecteur exige une fenêtre Edge *visible* et parfois une
+  vérification humaine. Lancé depuis un processus serveur, il ouvrirait une
+  fenêtre que personne ne regarde et échouerait après de longues minutes. La
+  bannière est refusée en 422 avec cette raison, plutôt que tentée.
+- **Aucune file d'attente.** Une seconde demande est refusée en 409. Deux
+  collectes en parallèle doubleraient la cadence vue par le détaillant, ce que
+  le limiteur du collecteur existe précisément pour éviter.
+- **Aucune progression fabriquée.** L'écran affiche la fin du journal du
+  collecteur — sa propre sortie, page par page. Un pourcentage calculé à côté
+  ferait deux vérités dont une fausse.
+- **Aucune annulation.** Un clic malencontreux lance trente minutes de collecte
+  qu'aucun écran ne peut arrêter. Le bouton se débloque seul (un état `running`
+  dont le processus a disparu est rapporté `failed`), mais arrêter une collecte
+  en cours reste un geste de ligne de commande. À faire si le besoin se
+  présente ; l'inventer maintenant serait une commande d'arrêt non éprouvée sur
+  un processus détaché.
+
+**Deux défauts trouvés en exécutant, pas en relisant.**
+
+1. `os.kill(pid, 0)` — le sondage de processus habituel sous POSIX — est
+   traduit par CPython sous Windows en `TerminateProcess(handle, 0)`. Le
+   sondage aurait **tué** la collecte, et avec un code de sortie 0, donc en la
+   faisant passer pour réussie. Remplacé par `OpenProcess`/`WaitForSingleObject`
+   via `ctypes`, avec son test.
+2. Le journal s'affichait en mojibake (« [D�marrage] Superc en parall�le ») :
+   un enfant Python écrit sous Windows dans la page de codes de la console, pas
+   en UTF-8. Le collecteur parle français à chaque ligne et ce journal est la
+   seule fenêtre de l'usager sur une tâche de trente minutes.
+   `PYTHONIOENCODING`/`PYTHONUTF8` sont désormais imposés à l'enfant.
+
+### D28 (suite) — Le bouton met la base à jour, même sur une capture tronquée
+
+**Constat qui a forcé la reprise.** Le bouton lançait
+`run_weekly_catalogues.py --apply`. Or ce script refuse d'importer dès qu'un
+rayon est tronqué :
+
+```python
+if incomplete_listings:
+    raise RuntimeError("Capture Super C tronquée sur N rayon(s) : …")
+```
+
+L'exception est levée **avant** le bloc `if args.apply:`. Mesuré le 20 août
+2026 : 17 rayons sur 35 paginaient moins de produits que Super C n'en annonçait
+(250 légumes annoncés 324, 317 pâtes-riz-féves annoncés 398). La passe
+s'arrêtait donc sans écrire une seule ligne, et le bouton ne servait à rien les
+semaines où le site pagine court — c'est-à-dire celle-là.
+
+**Décision : deux phases, et la règle du collecteur reste intacte.** Effacer le
+refus aurait supprimé une garde délibérée (« l'écart est retenu et rejeté après
+coup, jamais avalé ») pour tous les appelants, ligne de commande comprise. Le
+superviseur enchaîne donc :
+
+1. **collecte** — `run_weekly_catalogues.py` **sans** `--apply`. Il capture, et
+   ne met à jour `data/catalogue-registry/` que si la passe est complète, comme
+   avant. Son échec est retenu, pas fatal.
+2. **import** — `import_captured_catalogue.py --apply`, qui lit les dossiers de
+   capture de la semaine sans se soucier de leur complétude.
+
+C'est l'import qui décide de l'état, parce que c'est lui qui écrit. Une collecte
+tronquée suivie d'un import réussi donne donc `succeeded` **et**
+`collection_complete: false` : deux faits distincts, que l'écran présente
+distinctement (« Prix mis à jour — capture partielle »). Les confondre ferait
+croire à un catalogue entier ; les taire ferait croire à un échec.
+
+**Vérifié en exécutant.** Phase 2 lancée sur les captures partielles du 20 août :
+1 545 produits et 5 966 prix écrits, nouvelle fenêtre de validité
+2026-08-20 → 2026-08-26, `market.product` de 2 248 à 2 267. La date du jour est
+passée de « non couverte » à 1 545 prix valides.
+
+**Ce que les chiffres de l'écran ne sont pas.** « N produits, N prix écrits en
+base » est lu du rapport d'import, jamais estimé — et `prices_upserted` compte
+les upserts de toutes les fenêtres re-normalisées, pas les prix de la semaine
+courante. Le nombre de lignes de la semaine se lit dans `market.price`.
+
+### D28 (suite) — « Quand a-t-on scrapé » se lit sur le disque, pas dans l'état du bouton
+
+**Manque.** L'écran ne montrait la date d'une collecte que pendant et après un
+lancement *passé par l'application*, et seulement pour le dernier. Un usager qui
+lance `run_catalogues.cmd` — le raccourci livré dans le dépôt, prévu pour être
+double-cliqué — se serait vu répondre « jamais collecté » juste après une passe
+complète. Et à l'état `idle`, l'écran ne disait rien du tout : impossible de
+savoir si les prix affichés datent de deux heures ou de trois semaines.
+
+**Décision.** `capture_layout.last_capture_at()` lit l'horodatage du **nom des
+dossiers d'exécution** (`run-<AAAAMMJJ>T<HHMMSS>Z`), que le collecteur écrit
+lui-même avant sa première page. C'est la seule trace qui existe quel que soit
+le chemin de lancement, et elle ne dépend d'aucun état applicatif. La ligne est
+donc toujours affichée, même quand le bouton n'a jamais servi : « Dernière
+collecte Super C : 20 août à 08 h 56 — il y a 2 h ».
+
+Choix explicites :
+
+- **L'instant de départ, pas celui de la fin.** C'est ce que le nom du dossier
+  porte, et une passe dure au plus une heure. Une passe tronquée compte donc
+  aussi : la question posée est « quand a-t-on scrapé », pas « quand a-t-on
+  réussi » — deux faits que l'écran garde séparés, le verdict de la dernière
+  mise à jour vivant dans son propre panneau.
+- **Un nom malformé n'est jamais une date inventée** : il est ignoré.
+- **Les dispositions anciennes à dossiers plats** (sans dossier d'exécution) ne
+  portent aucun horodatage dans leur nom et ne sont pas vues. Dit ici plutôt que
+  deviné par un `mtime`, qu'une simple copie de fichiers falsifierait.
+- **`market.price` n'a pas d'horodatage** et `market.product.updated_at` ne
+  bouge que sur une *insertion* (l'upsert brut ne déclenche pas le `onupdate` de
+  l'ORM). Ni l'un ni l'autre ne pouvait répondre « quand la base a-t-elle été
+  écrite » — mesuré avant de choisir. La fraîcheur affichée est donc celle de la
+  **collecte**, ce que la question posait.
+
+**Défaut d'affichage assumé.** Le panneau de verdict garde le résultat de la
+dernière mise à jour, et rien ne le corrige si la base est écrite par un autre
+chemin (un import lancé à la main, par exemple). On peut donc lire « La mise à
+jour a échoué » devant une base parfaitement à jour — constaté. La ligne de
+fraîcheur et la fenêtre de prix chargés, toutes deux lues des données, disent
+alors la vérité à côté.
+
+### D28 (suite) — Un verdict de mise à jour est une nouvelle, pas un statut
+
+**Constat rapporté deux fois par l'usager.** « La mise à jour a échoué —
+démarrée à 08 h 56 (code 1) », avec sa liste de rayons tronqués, restait affiché
+des heures après, devant une base parfaitement à jour — écrite entre-temps par
+un import lancé à la main. Le verdict n'était pas faux : cette passe avait bien
+échoué. C'est sa **pertinence** qui avait expiré, et sa présentation qui le
+faisait lire comme une affirmation sur l'état courant du catalogue.
+
+**Décision.** `DELETE /api/price-refresh` efface le verdict — pas son journal,
+qui reste la trace de ce qui s'est passé. Un bouton « Masquer » dans l'encadré,
+refusé (409) si une mise à jour est en cours : il n'y a alors pas encore de
+verdict. Le libellé passe de « La mise à jour a échoué » à « Dernière tentative :
+échec », qui dit ce que la phrase décrit — un lancement passé.
+
+**Écarté : l'expiration automatique.** Masquer un verdict au bout de N heures
+aurait choisi un délai arbitraire, alors que le moment où la nouvelle cesse
+d'être utile n'appartient qu'à celui qui l'a lue. Écarté aussi : deviner que la
+base a été écrite ailleurs pour taire le verdict — `market.price` n'a aucun
+horodatage (voir plus haut), donc la comparaison serait fondée sur rien.
+
+**Ce que l'écran distingue désormais**, trois faits de trois sources
+différentes, aucun déduit d'un autre : la fenêtre de prix chargés (la base), la
+date de la dernière collecte (les dossiers de capture), et le verdict de la
+dernière tentative (l'état du lanceur, effaçable).
+
+## D29 — Un apport négligeable est une déclaration bornée, et le plafond n'est pas décoratif
+
+**Contexte.** Le calcul nutritionnel refuse tout total dont une ligne
+d'ingrédient n'est pas résolue. Appliqué tel quel au corpus, ce refus est
+définitif pour 160 recettes sur 161 : le sel, l'eau, le bouillon et les épices
+n'ont pas d'aliment FCÉN rattaché et n'en auront pas avant plusieurs sessions de
+curation. Il fallait pouvoir déclarer qu'un apport est négligeable sans que
+« négligeable » devienne un synonyme d'« oublié ».
+
+**Décision.** `config/nutrition-rules.json`, versionné, lu par un seul module
+(`services/nutrition_rules.py`). Chaque entrée déclare la **teneur fédérale
+mesurée** (`kcal_per_100g`, avec le code d'aliment FCÉN en provenance), le
+**plafond de quantité** sur lequel la déclaration porte, et le plafond de masse
+par unité de base. La borne d'erreur en découle — elle n'est jamais saisie à la
+main — et le module la somme par recette
+(`kcal_error_bound_per_serving`), que l'écran affiche en « ± ». Une entrée sans
+teneur mesurée est refusée à la lecture : sans elle, la règle ne serait qu'une
+omission qui s'ignore.
+
+**Le plafond de quantité est le cœur de la règle, pas un ornement.** Une
+déclaration porte sur un assaisonnement, pas sur un aliment. Mesuré dans ce
+corpus : `basilic_frais` pèse 187,5 g **par portion** dans
+`bon_pour_toi_salade_aux_peches_facon_panzanella` (375 g pour deux portions, à
+côté de 2 000 g de roquette et 900 g de pêches — une conversion
+millilitre→gramme fautive à l'import, pas une recette). Au plafond, la
+déclaration se retire et l'ingrédient redevient bloquant : la donnée fautive
+remonte au lieu d'être absorbée par une borne de 0 kcal. Cinq ingrédients y
+tombent réellement (`epices_steak_montreal` 11,25 g/portion,
+`epices_italiennes` 5 g, `assaisonnement_chili`, `moutarde_seche`,
+`origan_seche` 3,75 g), et c'est le comportement voulu.
+
+**La règle est un recours, jamais une surcharge.** Un ingrédient déclaré
+négligeable qui porte tout de même un aliment FCÉN et une quantité convertible
+est calculé pour de vrai. Sans cette précédence, les 19 épices déjà appariées du
+corpus auraient perdu leur chiffre au profit d'une borne, et le même fait aurait
+eu deux lecteurs — le motif qui a déjà coûté deux divergences à ce dépôt.
+L'entrée par ingrédient l'emporte sur celle de sa famille (le sel est une épice
+au sens du canon, mais sa borne est 0 kcal jusqu'à 15 g, là où la famille
+s'arrête à 2,5 g d'une épice moulue quelconque).
+
+**Écarté : une borne par famille sans plafond de quantité.** Elle aurait dû
+tenir pour la pire épice à la pire quantité observée — 525 kcal/100 g
+(FCÉN 193, muscade) × 11,25 g = 59 kcal par portion, ce qui n'est pas
+négligeable et rendrait la déclaration fausse. Écarté aussi : ne déclarer que
+des ingrédients nommés, sans famille. Les 19 épices non appariées auraient exigé
+19 entrées mesurées une à une pour un apport que le plafond borne déjà.
+
+
+## D30 — L'aliment FCÉN retenu pour la nutrition se déclare, il ne se devine pas
+
+**Constat mesuré.** Le pont canonique → FCÉN a été curé pour l'**identité
+commerciale**, et il ne suffit pas pour la nutrition :
+
+- **26 ingrédients portent plusieurs aliments FCÉN** (la contrainte d'unicité
+  porte sur le code fédéral, pas sur l'ingrédient). L'avocat en porte trois —
+  1511 toutes variétés (160 kcal/100 g), 1512 Californie (167), 1513 Floride
+  (120). Un écart de 39 % ne s'arbitre pas par un tri.
+- **Certains rattachements nomment une autre classe d'aliment.** `mais` a été
+  **créé** (`create_variant`) depuis l'aliment 4452 « Pâtes, maïs, sèches »,
+  357 kcal/100 g au lieu de 86 pour du maïs. Le nom se ressemble; l'aliment
+  non. La curation de prix pouvait vivre avec l'approximation, un calcul
+  nutritionnel non.
+
+**Décision.** Le bloc `food_choices` du même fichier de règles. Chaque entrée
+nomme l'ingrédient, le code d'aliment retenu, un `kind` et une justification
+écrite obligatoire : `primary` (l'ingrédient porte plusieurs aliments, celui-ci
+est le bon — et le module refuse un `primary` qui désigne un aliment non
+rattaché), `correction` (les aliments rattachés nomment une autre classe),
+`substitution` (le FCÉN ne publie pas cette variété; un générique
+nutritionnellement équivalent la remplace). À défaut de choix déclaré : un seul
+aliment rattaché est retenu tel quel, plusieurs donnent un refus
+`ambiguous_cnf_food` qui cite les codes.
+
+**Pourquoi pas corriger le seed.** Les références FCÉN de `seed/main` sont
+**générées** depuis les décisions de `seed/main/cnf_catalog_curation.json` par
+`scripts/generate_catalog.py`, et le journal d'événements de curation est
+append-only. Retirer deux décisions sur trois pour l'avocat réécrirait
+l'histoire d'une décision humaine passée. Le règlement, lui, ajoute une décision
+datée et motivée sans effacer les précédentes — et c'est aussi la forme que
+prendront les substitutions déclarées (basmati, dijon), qui n'ont aucun aliment
+FCÉN à rattacher.
+
+**Ce que l'audit publie plutôt que de trancher.** La carte des appariements
+réellement utilisés (nom canonique, nom fédéral, énergie, nombre de recettes
+touchées), pour relecture humaine, et à part les désaccords francs — aucun mot
+commun entre les deux noms. Un contrôle sur le seul premier segment du nom
+fédéral a été essayé puis retiré : il signalait 30 appariements dont 25 justes
+(« Épices, aneth, frais » pour « Aneth frais » — le premier segment fédéral est
+souvent une classe, pas un démenti). Distinguer une classe d'un produit dérivé
+demande les règles d'appariement, qui sont un chantier à part; un signal à 83 %
+de faux positifs apprend surtout à ignorer la colonne.
+
+
+## D31 — Le calcul nutritionnel lit `staging`, et n'y écrit jamais
+
+**Contexte.** Les teneurs fédérales vivent dans `staging.cnf_nutrient_amount`,
+et la règle d'architecture dit que les services ne lisent jamais `staging`.
+
+**Décision.** La façade `services/recipe_nutrition_facts.py` les lit, en
+lecture seule, sous les deux mêmes conditions que `services/offer_resolution.py`
+— qui lit déjà `staging.raw_offer` pour alimenter sa file de revue : ne jamais
+écrire, et ne jamais court-circuiter la normalisation. L'invariant réel que la
+règle protège est celui-là. La copie FCÉN n'est d'ailleurs pas une file
+transitoire : elle est versionnée par `source_version` et scellée par
+`archive_sha256`, donc rejouable à l'identique.
+
+**Écarté : une table `catalog` de teneurs alimentée par normalisation.** C'est
+la forme architecturalement pure, et elle reste ouverte. Elle coûte une
+migration et une étape de normalisation pour recopier une donnée fédérale déjà
+versionnée, sans rien ajouter à ce que le calcul en fait aujourd'hui.
+
+**Corollaire nommé plutôt que silencieux.** Une base sans teneurs importées ne
+rend pas « 0 kcal » ni 309 ingrédients « sans donnée » : la façade lève
+`NutritionDataUnavailable`, qui devient un 503 citant la commande d'import.
+C'est une panne de déploiement, pas un chantier de curation — la distinction
+qu'un compteur à zéro effaçait.
+
+
+## D32 — L'appariement canonique → FCÉN se propose par jetons, et se rejette par motif
+
+**Pourquoi pas la similarité de chaînes déjà en place.**
+`normalize_label`/`label_similarity` compare des chaînes entières. Mesuré sur
+l'archive réelle, ce choix manque les appariements dont le nom fédéral commence
+ailleurs — « Ketchup » contre « Tomates, ketchup (catsup) », « Parmesan » contre
+« Fromage parmesan, pâte dure », « Courgette » contre « Courge d'été, courgette
+(zucchini), crue », « Poireau » contre « Poireaux (bulbe et portion inférieure),
+crus » — et accepte des faux positifs où le mot est présent mais l'aliment n'a
+rien à voir. La recherche par jetons retrouve les premiers; deux rejets francs
+écartent les seconds.
+
+**Les deux rejets.** `cooked_or_prepared_form` : le candidat porte une marque de
+cuisson que le nom canonique ne porte pas (par 100 g, une carotte bouillie n'est
+pas une carotte crue). `composite_dish` : aucun mot du canon n'apparaît dans les
+deux premiers segments du nom fédéral — le FCÉN nomme du général au particulier,
+donc un ingrédient cité au troisième segment est un ingrédient *de* la
+préparation nommée devant (« Pomme de terre, frite, congelée, préparée au
+restaurant avec de l'huile végétale » pour de l'huile). Les rejets sont publiés
+avec leur motif, jamais effacés.
+
+**Quatre défauts trouvés en exécutant sur l'archive, pas en relisant.** Ils sont
+tous consignés en test, parce qu'aucun n'était visible en lisant le code :
+
+1. **La ligature « œ »** ne se décompose pas en Unicode. « Œuf de calibre gros »
+   ne partageait donc aucun jeton avec « Oeuf, poule, … » et s'appariait sur le
+   mot « gros » à « Porc, morceau de gros, gras de dos, cru » — 812 kcal/100 g.
+2. **Les marques de cuisson comparées par préfixe.** « Poulet **à griller** »
+   est une catégorie d'oiseau, pas du poulet grillé : le seul poulet cru en
+   cuisse du fichier fédéral était rejeté. « Cuisse » se lisait comme « cuit »
+   par le même mécanisme. Les marques se comparent désormais au mot entier,
+   fléchi.
+3. **La congélation lue comme une cuisson.** Le FCÉN écrit « Oeuf, poule,
+   entier, frais ou congelé, cru » : c'est un état d'achat. Le traiter en
+   préparation rejetait l'œuf de poule et laissait l'œuf de cane en tête.
+4. **Le seuil de trois lettres.** « riz », « ail », « sel », « eau », « jus »
+   sont des aliments. Un seuil à quatre lettres laissait `riz_arborio` et
+   `riz_non_precise` sans aucun candidat, faute de pouvoir chercher « riz ».
+
+**Ce que le classement encode, et ce qu'il ne prétend pas savoir.** Couverture
+des mots du canon, puis correspondance de tête (le premier mot du premier *ou*
+du deuxième segment fédéral — « Grains céréaliers, riz blanc » nomme sa classe
+avant l'aliment), puis le nom de famille du canon (« Parmesan » ne dit pas qu'on
+cherche un fromage; sa famille le dit), puis une pénalité par mot de trop dans le
+segment de tête — beaucoup plus lourde que dans les segments suivants, parce
+qu'un mot de trop devant change l'aliment (« Lait de poule » n'est pas du lait)
+alors qu'un mot de trop derrière ne fait que le préciser (« Lait, liquide,
+3,25 % M.G. » reste du lait).
+
+Ce que le module ne sait pas : choisir une variété quand le canon n'en nomme
+aucune. « Œuf de calibre gros » ne dit pas l'espèce, et « canard » n'est pas
+plus bavard que « poule ». Sur les 25 ingrédients les plus bloquants, le premier
+candidat est défendable 19 fois; les six autres échouent soit sur une variété à
+choisir (œuf, lait, crème, riz), soit sur un mot que le fédéral écrit autrement
+(« soya » pour du soja, aucune entrée pour la cassonade). C'est exactement le
+travail qu'une session de revue règle en quelques secondes **par ingrédient**, à
+condition d'avoir la liste sous les yeux : c'est la raison d'être du manifeste,
+pas un défaut qu'un poids mieux réglé effacerait.
+
+
+## D33 — Une masse par unité et une densité se dérivent du FCÉN, ou se refusent
+
+**Livré.** `services/fcen_measures.py` dérive des mesures domestiques de service
+(type 6) la masse d'une unité et la densité, avec la provenance à recopier, et
+refuse en nommant la raison.
+
+**Le refus qui compte : la densité de tassement.** Le FCÉN publie « 250 ml de
+mozzarella râpée = 113 g ». Le rapport donne 0,45 g/ml, et ce n'est pas une
+densité : c'est la façon dont des filaments occupent un contenant. Appliqué à
+200 ml de lait, il rendrait 90 g au lieu de 206. Trois gardes : le libellé qui
+décrit un solide découpé ou tassé est écarté (`not_pourable`), les rapports qui
+sortent de la bande des liquides de cuisine aussi (0,7 à 1,5 g/ml), et deux
+volumes du même aliment doivent s'accorder à 5 % près — une densité est une
+constante, sinon c'est la découpe qu'on mesure.
+
+**Le nom canonique départage l'unité.** « Ail, cru » publie « 1 gousse » (3 g)
+et « 1 bulbe » (24 g), et rien dans le fichier fédéral ne dit laquelle est
+l'unité de la recette. Le canon le dit : l'ingrédient s'appelle « Gousse
+d'ail ». Un facteur huit se jouait sinon sur la longueur d'une étiquette.
+
+**Appliqué : une seule masse.** `gousse_ail` = 3 g par gousse, dans
+`config/cook_recipe_curation.json` (`verified_grams_per_unit` +
+`grams_per_unit_provenance`), la convention qui existait déjà. Effet mesuré :
+68 lignes de recette passent de bloquantes à calculées, et la raison
+`missing_grams_per_unit` disparaît de l'audit. La clé n'a aucun effet sur
+l'import des recettes : `import_cook_recipes.py` ne lit ces masses que pour les
+ingrédients dont l'unité de base est le gramme, et `gousse_ail` se compte.
+
+**Appliqué : six densités dérivées** — huile de canola 0,921 et cinq
+condiments de 1,010 à 1,078 g/ml (vinaigres blanc, de cidre, balsamique, de vin
+rouge, et moutarde de Dijon via sa substitution déclarée). Elles vivent dans
+`canonical_ingredient.density_g_per_ml`, générée depuis la table `INGREDIENTS`
+de `scripts/catalog_seed_data.py`, où la provenance de chacune est écrite en
+commentaire à côté du chiffre — les six densités antérieures, écrites à la main,
+n'en avaient aucune. L'huile d'olive garde son 0,91 : la dérivation le confirme
+à 0,913, et 0,4 % d'écart ne vaut pas de déplacer les prix de 58 recettes.
+
+Effet mesuré : `missing_density` disparaît de l'audit, **200 ingrédients
+bloquants au lieu de 206**, et 508 lignes calculées au lieu de 486.
+
+**Aucun effet sur les prix, et ce n'est pas une supposition.** Les 26 produits
+appariés à ces six ingrédients sont tous vendus en volume (500 ml, 1 l, 3 l…),
+donc convertis directement vers l'unité de base `ml` : aucun format en grammes,
+donc aucune conversion masse↔volume, donc aucune densité lue par le calcul de
+prix. Vérifié en base.
+
+**Rectification — ce qui bloquait n'existait pas.** Cette entrée affirmait
+d'abord que régénérer le catalogue déplaçait trois valeurs de récupération et
+qu'il fallait réconcilier ce désaccord avant d'appliquer une densité. C'était
+faux, et la vérification l'a montré : `scripts/generate_catalog.py` **préserve**
+les paramètres calibrés du fichier qu'il lit, et régénérer sur `HEAD` ne change
+rien du tout. Les trois valeurs vues bouger étaient une modification non
+commitée déjà présente dans l'arbre de travail — le seed versionné est en retard
+sur la calibration de `scripts/generate_seed.py`, qui dérive σ des produits et
+des offres. Prises pour une dérive du générateur, elles ont été effacées par un
+`git checkout --`, puis restaurées en rejouant la calibration (`oignon_jaune`
+0,074208, `gousse_ail` 1,44, `feuille_laurier` 1,71696 — recalculées, pas
+recopiées).
+
+La leçon est consignée en test plutôt qu'en prose :
+`tests/test_seed_catalog_consistency.py` fait échouer un seed dont les valeurs
+calibrées ne sont plus celles de leur générateur. Un chantier n'a pas à
+découvrir ce genre d'écart dans le diff d'un autre.
+
+
+### D29 (suite) — Une borne porte sur les quatre nombres, pas sur l'énergie seule
+
+**Défaut trouvé en revue.** Une ligne déclarée négligeable écrivait
+`kcal_error_bound` et rien d'autre : les trois macronutriments sortaient à
+`0,0 g` avec `status = "complete"`, donc **présentés comme mesurés**. La borne
+de famille des épices est dérivée de la muscade à 525 kcal/100 g, qui porte
+41,56 g de lipides : au plafond déclaré de 2,5 g par portion, jusqu'à **1,04 g
+de gras disparaissaient en silence** pendant que les 13,2 kcal, elles,
+s'affichaient. 184 lignes du corpus sont dans ce cas.
+
+C'est exactement la faute que le module dit ne pas commettre — un chiffre
+présenté comme un fait alors qu'il est une omission. Corrigé : chaque entrée
+déclare les **quatre** teneurs mesurées, la borne se dérive pour chacune, et la
+recette publie `kcal_`, `protein_g_`, `fat_g_` et
+`carbohydrate_g_error_bound_per_serving`. L'écran affiche un « ± » **sous chaque
+nombre**, jamais un seul pour les quatre.
+
+**Les bornes de famille prennent le pire de chaque nutriment séparément.** Un
+seul aliment ne borne pas les quatre : pour les épices, l'énergie et les lipides
+viennent des graines de pavot (aliment 201 : 525 kcal, 41,56 g), les protéines du
+persil déshydraté (197 : 26,63 g) et les glucides de la cannelle moulue (178 :
+80,59 g). Prendre le profil d'un seul aliment aurait donné une borne fausse sur
+les trois autres nombres.
+
+### D30 (suite) — Le règlement nomme l'édition de l'archive, et le lecteur SQL s'y tient
+
+**Deux défauts trouvés en revue**, tous deux latents jusqu'à l'import d'une
+deuxième édition — donc invisibles aujourd'hui et certains demain :
+
+1. La lecture du pont filtrait `source == "cnf"` sans l'édition, alors que
+   l'édition fait partie de la clé unique de la table. Deux archives chargées
+   faisaient porter `("2401", "2401")` à `oignon_jaune`, que le module lisait
+   comme une ambiguïté : 35 recettes bloquées en citant deux fois le même
+   aliment.
+2. La lecture des teneurs n'avait ni filtre d'édition ni ordre, et l'import ne
+   supprime pas les éditions précédentes. Avec deux archives, l'énergie pouvait
+   venir de l'une et les lipides de l'autre — selon l'ordre d'arrivée des
+   lignes, donc d'une requête à l'autre — et la provenance publiée nommait
+   l'édition de la dernière ligne lue.
+
+Corrigé à la source : `nutrition-rules.json` déclare `source_version`, le parseur
+l'exige, et la façade restreint les trois requêtes à cette édition. Ce n'est pas
+un filtre défensif mais une conséquence de D29 : une borne mesurée sur une
+édition ne vaut pas pour une autre, donc les teneurs qui l'accompagnent doivent
+venir de la même.
+
+### D32 (suite) — Deux défauts de plus, trouvés en revue et non en exécutant
+
+1. **Les taux de matière grasse étaient illisibles.** Le découpage jetait les
+   nombres, donc « Crème 35 % » ne pouvait pas préférer « Crème à fouetter,
+   35 % M.G. » (328 kcal, 35 g de lipides) à « Crème, légère, 5 % M.G. »
+   (72 kcal, 5 g) : le classement retombait sur la brièveté du libellé et
+   proposait la crème légère — **4,6 fois moins d'énergie, 7 fois moins de
+   gras**. Même cause pour « Lait 3,25 % », qui ressortait sur du lait écrémé.
+   Les nombres comptent désormais comme des mots : un taux n'est pas un ornement
+   du nom, c'est ce qui distingue deux aliments.
+
+2. **Un test mentait sur l'archive.** Le cas du lait était écrit avec
+   `food("61", "Lait, 3,25 % M.G.")`, alors que l'aliment 61 de l'archive livrée
+   est « Lait, partiellement écrémé, liquide, 2 % M.G. ». Le fichier de test
+   affirme recopier les noms réels : la fixture contredisait sa propre
+   docstring, et masquait le défaut ci-dessus. Corrigée sur l'aliment 113, le
+   vrai lait 3,25 %.
+
+**Un cas resté ouvert, et le commentaire qui le prétendait réglé.** « Melon,
+miel (honeydew), cru » (36 kcal) passe encore devant « Confiseries, miel »
+(304 kcal) pour l'ingrédient « Miel » — les deux noms portent le mot, aux mêmes
+places, et rien de lexical ne distingue un fruit d'un sucre. Le commentaire de
+`_RAW_BONUS` affirmait le contraire; il dit maintenant ce qui est vrai. Le bon
+aliment est dans les cinq candidats, le premier est faux d'un facteur 8.
+
+### D33 (suite) — Le calibre d'un œuf est un jugement, pas une dérivation
+
+**Défaut trouvé en revue, sur les mesures réelles.** L'aliment 125 publie sept
+calibres d'œuf — « 1 oeufs large (gros) » 52,61 g, « 1 oeuf extra gros »
+58,09 g, « 1 œuf jumbo » 66,06 g, « 1 oeuf moyen » 45,62 g… Départager au plus
+court libellé proposait **le jumbo pour un œuf de calibre gros : 66,06 g au lieu
+de 52,61, soit 26 % de trop** sur le deuxième ingrédient le plus bloquant du
+corpus (32 recettes). Deux causes se cumulaient : la ligature « œ » n'était pas
+réduite ici — contrairement au module d'appariement, dont le commentaire avait
+justement été écrit pour ça — donc seul le libellé accentué répondait au canon;
+et rien ne pénalisait un qualificatif de calibre que le canon ne nomme pas.
+
+Corrigé dans le sens du contrat du module, qui est de proposer **ou de refuser** :
+quand plusieurs mesures de compte nomment l'ingrédient sans s'accorder entre
+elles à 5 % près, la dérivation refuse (`ambiguous_count_measures`) et publie
+les candidats avec leurs masses. L'ail garde ses 3 g — « 1 gousse » est la seule
+mesure que « Gousse d'ail » nomme.
+
+## D34 — Le marché de démonstration quitte le seed que la base charge
+
+**Écart.** `docs/spec.md` (§ Données de seed) exige, dans `seed/`, « 4 magasins
+dont deux partageant un `shopping_center_id` » et « ~80 produits, plusieurs
+formats par ingrédient, avec des rabais actifs et un historique de prix ». Ces
+fichiers existent toujours et sont toujours générés à l'identique — mais ils
+vivent désormais dans `seed/demo`, pas dans `seed/main`, le seul répertoire que
+`app.seeding.seed` charge dans la base réelle.
+
+**Ce qui était réellement en base, mesuré.** Quatre épiceries inventées —
+`maxiprix_lebourgneuf` (« Maxi-Prix »), `superfrais_lebourgneuf`
+(« SuperFrais »), `marche_central` (« Marché Central »), `epicier_du_coin`
+(« L'Épicier du Coin »), toutes situées à Montréal — portaient 83 produits
+inventés (marques « Maison Rivard », « Val-Mont », « Récolte d'Or »), 564
+`product_mapping`, **1 128 prix** et **2 256 offres** en `staging.raw_offer`,
+sur quatre semaines. En face, un seul magasin réel avait des prix : Super C 640,
+2 197 produits. Aucun croisement entre les deux ensembles — vérifié requête en
+main avant de retirer quoi que ce soit, pas supposé.
+
+**Pourquoi ce n'est pas cosmétique.** Le préfiltrage et le solveur ne font
+aucune différence entre un prix capturé et un prix fabriqué : les deux sont des
+lignes de `market.price`. Un plan daté dans la fenêtre synthétique (20 juillet
+au 16 août 2026) pouvait donc composer un panier entier chez une bannière qui
+n'existe pas, à des prix que personne ne facture, et l'écran d'épicerie
+l'affichait comme une course à faire. D24 avait déjà nommé la moitié du
+problème — le solveur planifiait sur 83 produits pendant que les devis en
+publiaient 2 165 — et l'avait corrigé en faisant entrer le vrai catalogue.
+Le faux, lui, était resté.
+
+**Raison de le déplacer plutôt que de le supprimer.** Ces produits et ces prix
+ne sont pas décoratifs : `generate_seed.py::ingredients_json` en **dérive** la
+périssabilité et σ des 23 ingrédients historiques (D8), et
+`tests/test_seed_catalog_consistency.py` verrouille cette dérivation. Trois
+tests du solveur y lisent aussi le seul marché non trivial dont ils disposent
+(prix contrastés par bannière, deux magasins en centre commercial, rabais et
+historique) — `test_min_grocery_spend.py` mesure son plancher de dépense
+dessus. Les supprimer aurait donc coûté la calibration de σ et la couverture
+réelle du plancher de dépense, pour régler un problème qui n'est pas leur
+existence mais leur **destination**.
+
+**Mécanique.**
+- `seed/main` : `stores.json` ne garde que `maxi_7552` et `superc_640` ;
+  `products.json` et `raw_offers.json` n'y existent plus. Les produits et les
+  prix d'un magasin réel viennent du pipeline de captures
+  (`run_weekly_catalogues.py`, `import_captured_catalogue.py`), et de lui seul.
+- `seed/demo` : les trois fichiers synthétiques, régénérés octet pour octet par
+  `generate_seed.py` (vérifié — la calibration de σ ne bouge pas d'un chiffre).
+- `app/seeding/seed.py` lit `products.json` en **optionnel**, et
+  `JsonCircularAdapter` traite un `raw_offers.json` absent comme « aucune
+  offre » plutôt que comme une erreur : semer un répertoire sans circulaire
+  JSON n'a rien à faire atterrir, ce n'est pas une panne.
+- `tests/seed_loader.py::problem_from_seed_dir` gagne `market_dir` : un test
+  lit le catalogue de `seed/main` et superpose le marché de `seed/demo`. La
+  séparation est explicite à l'appel, jamais implicite dans un répertoire.
+- `scripts/purge_demo_market.py` retire les lignes déjà chargées (rien sans
+  `--apply`), en lisant les identités de `seed/demo` et en **refusant** d'écrire
+  si les deux marchés se croisent.
+
+**Mesuré après purge sur la base de développement** : `market.store` 6 → 2,
+`market.product` 2 280 → 2 197, `market.product_mapping` 2 761 → 2 197,
+`market.price` 5 240 → 4 112, `staging.raw_offer` 6 368 → 4 112 — soit
+exactement les 4 magasins, 83 produits, 564 appariements, 1 128 prix et 2 256
+offres que `seed/demo` déclare, et rien d'autre. Un rejeu ne trouve plus rien et
+le dit. Suite complète : **468 tests passés, 0 échec, 0 sauté.**
+
+**Ce qui reste, et qui n'est pas de ce chantier.** Le profil de ménage habite
+toujours Montréal (`home_lat` 45,5285) alors que les deux bannières réelles sont
+à Québec, à ~225 km : c'est un vestige de la même famille, mais l'adresse réelle
+du ménage n'est pas une valeur qu'un correctif peut inventer. D26 empêche déjà
+l'effet le plus grave (un magasin sans prix ne peut plus être retenu parce qu'il
+est proche), et le terme de déplacement reste calculé sur une distance fausse
+tant que l'adresse n'est pas corrigée dans Ménage › Préférences. `maxi_7552`
+reste en base sans aucun prix : c'est un magasin réel dont la capture ne produit
+encore que des titres indexés, pas une bannière fantôme.
+
+## D35 — Les recettes de démonstration quittent le seed que la base charge
+
+**Écart.** `docs/spec.md` (§ Données de seed) exige « ~40 recettes **fictives**
+mais cohérentes, partageant délibérément des ingrédients pour que la
+mutualisation opère, avec des τ^fixe et β_r variés ». Ces recettes existent
+toujours et sont toujours générées à l'identique — mais elles vivent désormais
+dans `seed/demo`, pas dans `seed/main`, le seul répertoire que
+`app.seeding.seed` charge dans la base réelle.
+
+**Ce qui était réellement en base.** Quarante plats inventés : vingt bases
+(« Chili aux lentilles », « Galettes de lentilles », « Saag au tofu », « Pâté
+chinois revisité »…) et leurs vingt déclinaisons `_familial`, dérivées par
+formule (π×2, τ^fixe×1,3, τ^marg×0,8, quantités fixes×1,5). Aucune source :
+ni URL, ni livre, ni `import_origin` — le plat, les portions et les quantités
+ont été posés à la main pour que le solveur ait de quoi arbitrer.
+`services/recipe_quality.py` les reconnaissait déjà comme telles et les
+exemptait de la règle « un rendement se lit dans la source » : « ses portions
+sont un choix, pas la lecture d'une source ».
+
+**Pourquoi ce n'est pas cosmétique.** Le solveur ne fait aucune différence
+entre une recette importée et une recette fabriquée : les deux sont des lignes
+de `catalog.recipe`. Et elles ne restaient pas dans un coin — D24 mesurait déjà
+un menu composé de « chili aux lentilles, galettes de lentilles, riz frit et
+sauté de tofu, à 1,00 $/portion », et D25 constatait que sous le drapeau par
+défaut « ce filtre ramène le problème aux 40 recettes de démonstration ». Le
+produit proposait donc à un vrai ménage de cuisiner des plats qui n'existent
+nulle part, avec des quantités que personne n'a testées. C'est le pendant exact
+de D34 côté catalogue : là, un panier chez une bannière qui n'existe pas ; ici,
+un menu de plats qui n'existent pas.
+
+**Raison de les déplacer plutôt que de les supprimer.** Elles sont les seules
+que le marché synthétique de `seed/demo` sache servir — mesuré : ses 23
+ingrédients couvrent **40 des 40** recettes de démonstration et **1 des 121**
+recettes importées. Les supprimer aurait coûté aux tests du solveur le seul
+marché non trivial dont ils disposent (`test_min_grocery_spend.py` y mesure son
+plancher de dépense), pour régler un problème qui n'est pas leur existence mais
+leur **destination**.
+
+**Mécanique.**
+- `seed/main/recipes.json` : 161 → **121 recettes**, toutes importées de
+  sources réelles (Ricardo, Bon pour toi, La cuisine de Jean-Philippe).
+  `generate_seed.py::recipes_json` ne recopie plus que `imported_recipes.json`,
+  et garde la garde anti-collision d'identifiants.
+- `seed/demo/recipes.json` : les 40 recettes écrites à la main, régénérées
+  octet pour octet par le même générateur (`DEMO_RECIPES`, ex-`ALL_RECIPES`).
+- `tests/seed_loader.py::problem_from_seed_dir` **concatène** les recettes des
+  deux répertoires quand `market_dir` en porte : un test du solveur voit alors
+  les 121 importées et les 40 de démonstration, comme avant.
+- `scripts/purge_demo_recipes.py` retire les lignes déjà chargées (rien sans
+  `--apply`), en lisant les identifiants de `seed/demo` et en **refusant**
+  d'écrire tant que `--drop-committed` ne tranche pas le sort des plans
+  `committed` qui les citent.
+
+**Pourquoi le script emporte aussi les plans.** `household.plan` cite ses
+recettes par identifiant dans `servings`/`cooked`, en JSONB, sans clé
+étrangère — rien ne part en cascade. Et `planning.py::_plan_view` fait
+`recipes[rid]` sans garde : un plan dont une recette a disparu devient une 500,
+pas une ligne manquante. Retirer les recettes sans retirer ces plans
+échangerait donc un faux menu contre un écran cassé.
+
+**Mesuré sur la base de développement, après purge** : `catalog.recipe`
+161 → 121, `catalog.recipe_ingredient` 1 441 → 1 223, `household.plan`
+108 → 14 — soit exactement les 40 recettes que `seed/demo` déclare et les 94
+plans qui les citaient (89 `proposed`, 5 `committed`, dont deux dont tous les
+produits achetés avaient déjà disparu à la purge D34). Un rejeu ne trouve plus
+rien et le dit ; `app.seeding.seed --seed-dir ../seed/main` rapporte
+« catalog.recipe : 121 lignes ». Suite complète : **469 tests passés, 0 échec,
+0 sauté** (un de plus qu'en D34 : le nouveau script est balayé par le test
+paramétré de `test_weekly_runner_wiring.py`).
+
+**Conséquence à assumer, mesurée.** Le préfiltrage écarte une recette sans
+composante marginale quand `enable_batch_fixed_cost` est éteint (D25), et les
+121 recettes importées sont **toutes** dans ce cas. Sur `seed/main` seul, au
+20 août 2026 :
+
+| recettes fournies | `enable_batch_fixed_cost` | survivantes |
+| --- | --- | --- |
+| 121 importées | `False` (défaut) | **0** |
+| 121 importées | `True` | 81 |
+| 161 (avec démo) | `False` | 40 |
+| 161 (avec démo) | `True` | 121 |
+
+Autrement dit, les 40 recettes inventées étaient ce qui masquait le fait que la
+configuration par défaut ne sait rien faire du corpus réel. Le défaut de
+`SolverConfig.enable_batch_fixed_cost` (`False`) doit passer à `True` pour que
+le produit reste utilisable sur son propre catalogue — D25 le disait déjà (« le
+défaut du front-end est un défaut de développement, pas un défaut de
+produit ») ; ce chantier le rend bloquant au lieu de latent. **Ce basculement
+n'est pas fait ici** : il change l'équation de besoin de toutes les recettes et
+mérite son propre écart, mesuré.
+
+
+## D36 — Un aliment FCÉN se rattache aussi par le règlement, et 205 choix sont écrits par un outil
+
+**Constat mesuré.** Sur les 198 ingrédients qui bloquaient le calcul
+nutritionnel le 21 août 2026, **189 portaient `no_cnf_food`** : la curation
+d'identité (D20, D30) ne leur avait rattaché aucun aliment fédéral. Aucun des
+trois titres de décision de D30 ne décrit ce cas : `primary` est refusé par
+construction (l'aliment n'est pas rattaché), `correction` suppose un
+rattachement qui nomme une autre classe d'aliment, `substitution` suppose que le
+FCÉN ne publie pas la variété. Or il la publie — « Farine de blé, tout usage,
+enrichie » existe, elle n'était simplement pas rattachée, parce que le pont a
+été curé pour l'**identité commerciale** sous des contrôles qu'un aliment
+parfaitement nutritif peut échouer.
+
+**Décision — un quatrième titre, `attachment`.** Il déclare exactement cela :
+la curation d'identité n'a rien rattaché, le FCÉN publie l'aliment, le règlement
+le retient sans réécrire le pont. Le calcul le **refuse** si l'ingrédient porte
+déjà un aliment (`chosen_food_already_attached`) : sans ce refus, `attachment`
+serait devenu le titre fourre-tout qui dispense de dire pourquoi un
+rattachement existant ne convient pas.
+
+**Pourquoi pas des `attach_existing` dans le seed**, comme les tickets le
+prévoyaient : `seed/main/cnf_catalog_curation.json` est **régénéré en entier**
+par `scripts/refine_cnf_catalog.py` depuis l'archive, et ses 738 décisions
+portent le relecteur `cnf-catalog-quality-v1`. Une décision ajoutée à la main y
+serait effacée au prochain passage, et elle affirmerait au passage une identité
+*commerciale* que la nutrition n'a pas jugée. Le règlement, lui, est écrit à la
+main par construction et daté par `rule_version`.
+
+**La provenance n'est plus saisie : elle est rendue.** Nouveau module pur
+`services/food_choice_ledger.py` (`render_food_choices`, `merge_food_choices`) et
+sa commande `scripts/declare_food_choices.py`. On lui donne (ingrédient, aliment,
+titre, justification écrite); il rend l'entrée avec les **quatre teneurs
+publiées** transcrites de l'archive, refuse un aliment que l'archive ne publie
+pas, refuse une justification vide, refuse un `attachment` sur un ingrédient
+déjà rattaché et un `primary` qui n'est pas dans les aliments portés — les deux
+contrôles que `parse_nutrition_rules` ne peut pas faire, puisqu'il ne voit pas le
+pont. Ce module existe parce que la session précédente a **fabriqué** quatre
+provenances de densité en les rétro-calculant : une provenance saisie à la main
+se lit comme vérifiable sans l'être.
+
+**Effet mesuré, sur le corpus livré (121 recettes importées).**
+
+| étape | recettes calculables | lignes calculées | ingrédients bloquants |
+| --- | --- | --- | --- |
+| avant (règlement 2026-08-20c) | 1 | 444 | 198 |
+| 62 choix (les plus bloquants) | 10 | 722 | 158 |
+| + masses et densités dérivées | 27 | 879 | 136 |
+| 83 choix de plus | 65 | 980 | 67 |
+| 43 choix de plus + mesures | 98 | 1029 | 21 |
+| 5 mélanges d'épices | **105** | **1050** | **16** |
+
+`config/nutrition-rules.json` porte 205 choix d'aliment (`attachment` 131,
+`substitution` 67, `primary` 6, `correction` 1 — 12 d'entre eux préexistaient à
+ce chantier), `config/cook_recipe_curation.json` douze masses par unité
+vérifiées dont six ajoutées ici, et `seed/main/canonical_ingredients.json`
+46 densités, dont 40 dérivées du FCÉN avec leur provenance dans
+`scripts/catalog_seed_data.py`.
+
+**Deux refus de dérivation corrigés, un conservé.**
+
+1. **Une mesure aérée écartait l'aliment entier.** Le FCÉN publie « 250 ml
+   liquide » *et* « 250 ml fouetté » pour la crème 35 %. La garde refusait
+   l'ingrédient dès qu'une mesure décrivait un solide tassé, donc une mesure
+   d'entassement disqualifiait trois mesures d'écoulement qui s'accordent à
+   1,006 g/ml. Elle écarte maintenant les mesures tassées et dérive des autres;
+   un aliment dont **toutes** les mesures sont tassées — le fromage râpé — reste
+   refusé, et les mesures écartées sont nommées dans la provenance.
+2. **Un rendement lu comme un état.** « 250 ml liquide (donne 2 tasses
+   fouettée) » : le mot « tasses » du *rendement* faisait classer comme tassée
+   la seule mesure d'écoulement publiée. Ce qui suit « donne » décrit ce que la
+   mesure produit, pas ce qu'elle mesure, et se coupe avant classement. Au
+   passage, « fouetté » entre dans la liste des états non versables : 100 ml de
+   crème fouettée pèsent la moitié de 100 ml de crème.
+3. **Conservé : le calibre reste un jugement.** L'œuf, le jaune d'œuf, les deux
+   tortillas et la pâte à wonton portent plusieurs mesures de compte qui
+   s'accordent avec le nom canonique sans s'accorder entre elles. La dérivation
+   refuse (`ambiguous_count_measures`) et la décision est écrite à la main avec
+   les calibres écartés : œuf 52,61 g (gros, parmi sept calibres), jaune 18,34 g,
+   tortilla de blé 49 g (17,8–20 cm, parmi quatre diamètres), tortilla de maïs
+   25 g (la mesure sans diamètre du fichier), wonton 8 g (carré de 8,9 cm).
+   `pain_sous_marin` illustre pourquoi ce refus doit rester : la dérivation
+   propose 35 g — « 1 tranche » de pain italien — pour un pain à sous-marin
+   entier. La valeur n'a **pas** été appliquée.
+
+**Les 16 bloquants restants sont des trous du fichier fédéral, pas de la
+curation**, et le test `tests/test_nutrition_coverage_pin.py` verrouille le
+plancher de 105 recettes en même temps qu'il exige que chaque trou restant porte
+une raison publiée :
+
+- aucun aliment publié : pâte brisée, pâte de cari vert thaï, gnocchis frais,
+  gomme de xanthane, origan frais (le fichier ne publie que l'origan moulu, à
+  quatre fois l'énergie du frais — une substitution y serait un faux) ;
+- aucune mesure de volume ou de compte : cognac, confiture d'abricot, sirop
+  aromatisé, poudre pour boisson, pain pita, pain à sous-marin, feuille de riz ;
+- des mesures qui ne s'accordent pas, ou qui décrivent un solide en dés :
+  lait de coco en conserve, feuillage de fenouil, jus de cornichon, aubergines
+  grillées.
+
+**Quatre densités écrites à la main que la dérivation contredit** sont laissées
+en place, et nommées dans le test plutôt que passées sous silence : crème 35 %
+(seed 0,98 / FCÉN 1,006), huile d'olive (0,91 / 0,913), lait 3,25 % (1,03 /
+1,031), sauce soja (1,10 / 1,078). Elles portent déjà des prix; un écart de 0,4
+à 2,6 % ne vaut pas de les déplacer dans le même chantier.
+
+**Sept constats de revue, six corrigés dans la même session.** Trois portaient
+sur des refus qui n'en étaient pas :
+
+1. **Une règle fautive était absorbée par une déclaration d'apport
+   négligeable.** `_computed_line` rendait `None` pour
+   `chosen_food_not_attached`, puis le recours négligeable répondait *avant* que
+   la faute soit constatée : sur un ingrédient déclaré négligeable, un
+   « primary » désignant un aliment non rattaché sortait `status: complete`,
+   0 kcal, `missing: ()` — la règle cassée n'était nommée nulle part, et
+   l'épingle de couverture ne pouvait pas la voir. Neuf ingrédients du règlement
+   livré sont dans cette position. Les deux raisons de faute passent maintenant
+   **avant** le recours (`_RULE_FAULTS`).
+2. **Le grand livre écrivait ce que son propre parseur refuse.** Le titre
+   n'était pas confronté à `CHOICE_KINDS` : `kind: "attachement"` s'écrivait, et
+   le règlement livré devenait illisible — 503 sur toutes les recettes. Le titre
+   est validé, et `declare_food_choices.py` **relit** le règlement fusionné
+   (`parse_nutrition_rules`) avant de l'écrire.
+3. **Une faute de frappe d'identifiant passait pour une décision.**
+   `attached.get(id, ())` confondait « ne porte aucun aliment » et « n'existe
+   pas » : l'entrée s'écrivait, versionnée, et ne débloquait rien. `attached`
+   porte désormais tout le canon, et un identifiant absent est refusé.
+
+Trois autres : un règlement à moitié écrit (`"food_choices": null`, une entrée
+qui n'est pas un objet) remontait en `TypeError` depuis la couche services, donc
+en 500 au lieu de la 503 nommée — la forme des blocs est validée ; `--rule-version`
+refuse maintenant une version **inchangée**, ce que son propre texte d'aide
+promettait ; et l'invariant produit → ingrédient canonique de
+`test_canonical_catalog.py` affirme l'existence de `seed/demo/products.json` au
+lieu de se taire s'il disparaît. L'épingle de couverture, elle, se saute quand
+l'archive fédérale (ignorée par git) est absente : `MENU_REQUIRE_NUTRITION_ARCHIVE=1`
+transforme ce saut en échec, à poser en intégration continue.
+
+**Un défaut trouvé dans mon propre correctif, et la leçon.** La coupe de la
+clause de rendement avait été écrite avec un `\b` transformé en caractère
+backspace : la coupe ne s'appliquait jamais. Le test passait quand même — la
+crème était bien dérivée à 1,006 g/ml, mais depuis la mesure de 100 ml, et
+l'assertion cherchait la chaîne « 250 ml liquide » qui figurait dans la *liste
+des mesures écartées*. Corrigé, et le test coupe désormais la provenance en deux
+pour vérifier séparément la mesure retenue et les mesures écartées : chercher
+une sous-chaîne dans un texte qui contient les deux ne prouve rien.
+
+**Vérifié en exécutant : 489 tests passés, 0 échec**, dont 12 nouveaux
+(règlement, grand livre, mesures, épingle de couverture). Couverture mesurée
+après correctifs : 105/121, 1 050 lignes calculées, 16 bloquants.
+
+
+## D37 — Ce que le fichier fédéral publie autrement : fractions, cuillères, étiquettes arrondies
+
+**Suite immédiate de D36.** Après les 194 décisions d'appariement, seize
+ingrédients bloquaient encore. Douze le faisaient pour une raison qui n'était
+pas un trou du fichier fédéral, mais une **forme** que la dérivation ne savait
+pas lire. Chacune a été trouvée en relisant les mesures publiées, ingrédient par
+ingrédient, jamais en relisant le code.
+
+**Trois lectures ajoutées, chacune avec son test.**
+
+1. **Un compte fractionnaire est un compte.** Le FCÉN publie parfois la demie :
+   « 1/2 pita (16,5 cm dia) = 30 g » et rien d'autre pour le pain pita. La
+   division par le compte existait déjà pour « 2 oeufs = 105 g »; elle lit
+   maintenant la fraction, et le pita rend 60 g par unité.
+2. **La cuillère fédérale est un volume.** « 2 cuillère à table (2) = 29,1 g »
+   est la seule mesure de la poudre à boisson, dont le canon se mesure au
+   millilitre. À la convention canadienne (table 15 ml, thé 5 ml), c'est
+   0,970 g/ml — une densité que le fichier donnait et que personne ne lisait.
+3. **Une étiquette arrondie ne vote plus.** « 15 ml = 15,203 g » pour du lait de
+   coco, c'est 15,92 ml à la densité des trois autres mesures : une cuillère à
+   table écrite « 15 ml ». Ce libellé faisait échouer l'accord à 5 % et refusait
+   une densité que 60, 100 et 125 ml donnent à l'identique. L'accord se juge
+   désormais sur les volumes d'au moins 50 ml; les petits sont **cités dans la
+   provenance**, plus décisifs. Deux grands volumes qui se contredisent refusent
+   toujours.
+
+**Une déclaration d'apport négligeable là où la substitution aurait menti.** Le
+FCÉN ne publie pas l'origan frais, seulement l'origan moulu séché — quatre fois
+l'énergie par gramme. Déclarer une substitution aurait compté du séché pour du
+frais. À la place, une déclaration bornée au sens de D29 : la borne prend la
+teneur du **séché** (265 kcal/100 g), qui majore le frais à masse égale, au
+plafond de 4 g par portion (le double du maximum observé, 1,875 g). L'écran
+affiche « 0 kcal ± 5 ».
+
+**Trois quantités d'import fausses, révélées par le déblocage.** Elles étaient
+masquées : un ingrédient bloquant ne publie pas de total. Une fois débloquées,
+trois recettes sortaient un chiffre faux d'un facteur 3 à 20 — exactement ce que
+ce module existe pour ne pas faire.
+
+| recette | ingrédient | avant | après | ce que dit le fichier fédéral |
+| --- | --- | --- | --- | --- |
+| Sandwich fondant au thon | `pain_levain` | 2 200 g | 384 g | aliment 4063, 1 grosse tranche (15 cm) = 96 g |
+| Soupe won-ton | `pate_wonton` | 454 unités | 57 unités | paquet de 454 g à 8 g l'enveloppe (aliment 4001) |
+| Salade façon panzanella | `roquette` | 2 000 g | 169 g | aliment 2352, 250 ml = 21,133 g |
+
+La cause commune : l'estimation par pièce du fichier de curation vaut pour une
+**miche** et non pour une tranche; « 1 paquet (454 g) » est arrivé comme un
+compte; et 8 tasses de feuilles ont été converties à 1 g/ml, soit de l'eau.
+
+**Le défaut de mécanisme derrière ces trois-là.** Les `quantity_overrides` —
+des décisions humaines écrites — n'étaient consultés que si la projection amont
+était incomplète, ou si un compte avait visiblement été recopié dans un champ
+mesuré, un contrôle qui ne se déclenche pas quand le canonique se compte à
+l'unité. L'override du won-ton ne servait donc à rien. Un override gagne
+maintenant toujours, et un test le dit.
+
+**Effet mesuré.** 105 → **113 recettes calculables sur 121**, 1 050 → 1 058
+lignes calculées, 16 → **8 ingrédients bloquants**. Les huit restants sont des
+trous réels : aucun aliment publié (pâte brisée, pâte de cari vert thaï,
+gnocchis frais), aucune mesure de compte (feuille de riz, pain à sous-marin —
+le fichier ne publie que des tranches de pain italien), ou une seule mesure de
+volume qui décrit un solide en dés (feuillage de fenouil, aubergine grillée, jus
+de cornichon). Ces trois derniers demandent une décision qui n'existe pas
+encore : une **masse par volume tassé**, distincte d'une densité, avec sa propre
+bande de validité. Leur canon se mesure au millilitre alors que la recette
+manipule un solide; c'est en amont que ça se corrige, pas par une densité de
+0,37 g/ml présentée comme telle.
+
+**Ce que la curation ne corrige pas, et qu'il faut savoir.** Dix-neuf recettes
+dépassent 900 kcal par portion, et le premier suspect n'est plus une erreur de
+donnée : « Bouchées d'aubergine parmigiana » compte 750 ml d'huile de friture
+pour six portions (1 019 kcal par portion) parce que la recette *achète* cette
+huile sans qu'on la mange. La distinction entre quantité achetée et quantité
+consommée n'existe pas dans le contrat de recette — c'est un chantier, pas un
+correctif.
+
+**Cinq constats de revue, cinq corrigés.** Le plus sérieux est un piège que
+cette session avait fabriqué elle-même : la dérivation de masse par unité, quand
+**aucune** mesure de compte ne nommait l'ingrédient, prenait toutes les mesures
+plutôt que d'échouer. Elle proposait donc 35 g — « 1 tranche » de pain italien —
+pour un pain à sous-marin d'environ 85 g, sans le moindre refus, dans un rapport
+qu'un curateur lit pour décider. Désormais : plusieurs mesures dont aucune ne
+nomme l'ingrédient donnent `no_named_count_measure`; une mesure unique reste
+prise (« 9 branches » de coriandre est la seule que l'aliment publie, et le canon
+n'a pas à nommer la branche).
+
+Les quatre autres :
+
+1. **Le même libellé était un volume ici et un compte là.** « 2 cuillère à
+   table = 29,1 g » se lisait comme 30 ml pour la densité *et* comme 14,55 g par
+   unité pour la masse. Quatre lignes de l'archive 2026 sont dans ce cas. Une
+   cuillère est maintenant refusée comme compte, et le motif fractionnaire de la
+   cuillère est reconnu pour que « 1/2 cuillère à table » ne bascule pas dans
+   l'autre lecture.
+2. **Une cuillère « comble » est un tas.** Le mot rejoint la liste des états non
+   versables : sinon seule la bande 0,7–1,5 g/ml séparait un écoulement d'un
+   monticule.
+3. **La part marginale d'une recette survit à une résolution de quantité.**
+   Forcer la résolution pour tout override — nécessaire, voir plus haut — la
+   remettait à zéro. Aucune recette du corpus n'était touchée; la garde manquait
+   quand même.
+4. **Un override dérivé n'est plus classé « estimation ».** Les trois quantités
+   corrigées ici viennent d'une mesure fédérale : les voir figurer dans
+   `quantity_estimates` avec une justification qui dit « masse vérifiée » était
+   contradictoire. Un override peut désormais déclarer `"estimated": false`.
+
+**Et une apostrophe.** Le canon écrit « Jaune d’œuf » (apostrophe courbe), le
+fichier fédéral « 4 jaunes d'œuf » (droite) : aucun mot commun, donc un refus
+qui citait la mauvaise raison. Les apostrophes sont ramenées l'une à l'autre
+comme la ligature « œ » l'était déjà. Le refus du jaune reste — les deux mesures
+qui le nomment se contredisent, 17 g contre 12,5 g — mais il le dit maintenant
+correctement, et sa provenance cite les deux.
+
+**Vérifié en exécutant : 499 tests passés, 0 échec.** Couverture après revue :
+113/121, 1 058 lignes calculées, 8 bloquants.
+
+
+### D25 (suite) — Un refus qui récite cinq causes n'en nomme aucune
+
+**Constat, en ouvrant l'application.** Générer un plan avec la configuration de
+développement répond « Aucune recette ne survit au préfiltrage : régime,
+allergènes, équipement, temps de préparation ou absence de prix écartent toutes
+les recettes du catalogue. » Sur le corpus réel, **aucune de ces cinq causes
+n'est la bonne** : les 81 recettes qui entrent dans l'étape suivante tombent sur
+le besoin identiquement nul (D25), parce qu'aucune recette importée ne porte de
+composante marginale par portion et que `enable_batch_fixed_cost` est éteint par
+défaut. La cause réelle n'était pas dans la liste, et le message ne disait pas
+quoi faire.
+
+**Décision.** `prefilter_recipes` publiait déjà ses compteurs par étape
+(`counts_by_stage`, visibles dans le diagnostic) ; la validation les reçoit
+maintenant et le refus nomme **l'étape qui a vidé le catalogue**, le nombre de
+recettes qui y entraient, ce que l'étape vérifie, et — pour le besoin nul — le
+drapeau à rallumer :
+
+> Aucune recette ne survit au préfiltrage : l'étape « besoin_non_nul » a écarté
+> les 81 recettes qui y entraient — aucune recette ne porte de composante
+> marginale par portion, donc son besoin est identiquement nul sans les coûts
+> fixes de lot (D25) : rallumer `enable_batch_fixed_cost` dans `SolverConfig`
+> (onglet Paramètres) rend ces recettes modélisables.
+
+Le paramètre est optionnel et le message générique subsiste sans compteurs : les
+appelants qui ne les passent pas gardent leur comportement.
+
+**Ce que ça ne fait pas.** Le défaut de `SolverConfig.enable_batch_fixed_cost`
+reste `False`. Le basculer change l'équation de besoin de toutes les recettes et
+mérite son propre écart mesuré — D35 le disait déjà, et ce constat ne fait que
+rendre le symptôme lisible en attendant.
+
+
+## D38 — `enable_batch_fixed_cost` est allumé par défaut
+
+**Ce que D35 avait mesuré et laissé.** Le défaut de développement met tous les
+drapeaux du `SolverConfig` à `false`, et le README explique qu'on les rallume un
+à un. Mais `enable_batch_fixed_cost` n'est pas un raffinement : il change ce
+qu'une recette **demande**. Éteint, une recette dont toutes les quantités sont
+fixes par lot a un besoin identiquement nul et le préfiltrage l'écarte (D25).
+Les 121 recettes importées sont **toutes** dans ce cas : le catalogue réel se
+vide entièrement, et l'application ne sait rien planifier. D35 l'avait constaté
+(« 0 recette survivante ») et laissé au chantier suivant. C'est celui-ci.
+
+**Mesuré avant de basculer, pas après.**
+
+| corpus | drapeau éteint | drapeau allumé |
+| --- | --- | --- |
+| `seed/toy` (3 recettes) | Optimal, 5 portions, objectif −3,34 $ | **identique au cent près** |
+| base réelle (121 recettes importées, prix Super C) | *aucun plan* — 81 recettes écartées à l'étape « besoin non nul » | Optimal, 3 plats |
+
+Autrement dit : là où le drapeau ne change rien, il ne change rien; là où il
+change quelque chose, c'est la différence entre un plan et pas de plan.
+
+**Décision.** `SolverConfig.enable_batch_fixed_cost = True`. Le drapeau reste
+désactivable explicitement, et le README garde sa liste — il en sort seulement.
+
+**Trois pins de tests déplacés, et pourquoi.** Aucun ne signalait un défaut :
+
+1. `test_diagnostic_is_complete` voyait
+   `alterent_les_besoins_en_ingredients: []` — la liste contient désormais
+   `enable_batch_fixed_cost`, ce qui est exactement ce que ce champ doit dire.
+2. `test_perishable_penalty_shifts_recipe_selection` attendait
+   `omelette_toy = 3` avec la pénalité de gaspillage; c'est 2 maintenant, parce
+   que la troisième portion porte un coût fixe de lot qui annule le gain. La
+   bascule que le test mesure — 1 → 2 — tient toujours.
+3. `test_min_grocery_spend` éteint désormais le drapeau **explicitement** : ce
+   fichier mesure le plancher de dépense, un mécanisme à la fois, et le laisser
+   entrer déplaçait ses chiffres sans rien dire du plancher (l'écart d'appétence
+   passait de 1 % à 5,5 %).
+
+**Vérifié en exécutant : 501 tests passés, 0 échec**, et un plan généré depuis
+l'API sans toucher à aucun drapeau.
+
+
+## D39 — La valeur nutritive a sa place sur chaque recette, pas seulement sur le menu
+
+**Constat d'usage.** Le bloc « Valeur nutritive par portion » n'existait que dans
+le détail d'une recette **du menu de la semaine** : trois recettes sur 121, et
+seulement après avoir généré un plan. La question « combien de calories dans
+cette recette ? » n'avait donc pas de réponse dans l'application pour les 118
+autres.
+
+**Livré.** Un quatrième onglet, **Recettes**
+(`frontend/src/screens/Recipes.tsx`) : le catalogue paginé avec sa recherche, et
+une page par recette portant la valeur nutritive par portion, ses « ± », et la
+liste des ingrédients. La route `GET /api/recipes` existait déjà, requise par la
+spec et restée sans appelant frontend jusqu'ici — sa docstring le disait, elle le
+dit maintenant autrement.
+
+**Un seul bloc, pas deux copies.** `NutritionBlock` (et ses libellés de raisons
+de blocage) sort de `Result.tsx` vers `frontend/src/components/NutritionBlock.tsx`
+et les deux écrans l'importent. Deux écrans qui affichent le même fait doivent le
+lire au même endroit — ce dépôt s'est déjà fait prendre deux fois par le motif
+inverse.
+
+**Ce que la liste n'affiche pas, et pourquoi.** Pas de kcal dans les lignes de la
+liste. `GET /api/recipe-nutrition` exige un `recipe_id` par choix : sans recette
+nommée, elle calculerait les 121 recettes en une requête non paginée
+(`api/routes.py`). Les afficher en liste demanderait une route en lot — un
+chantier à part, avec sa pagination et son cache. Ici : une recette ouverte, une
+requête.
+
+**Le rendement demandé est celui que la recette publie.** L'écran demande la
+nutrition à `original_servings`, jamais à un nombre choisi : une recette dont
+toutes les quantités sont fixes par lot refuse toute autre valeur (« ne peut
+être chiffrée que pour son rendement publié »), et c'est ce refus que l'écran
+Résultat affiche quand le plan, lui, a mis la recette à l'échelle.
+
+**Vérifié en pilotant l'application** (Playwright, msedge) : onglet Recettes →
+121 au catalogue, 20 par page ; recherche « sushi » → « Boules de sushi »
+ouverte à 161,9 kcal · 3,1 g · 5,9 g · 24,4 g ; recherche « lasagne » → « La
+meilleure lasagne à la viande maison », hors du menu de la semaine, à
+1 230,4 kcal ± 3,0 · 71,2 g ± 0,3 · 74,8 g ± 0,4 · 66,9 g ± 0,6, avec ses 20
+ingrédients. `tsc -b` propre, 16 tests d'API et de module catalogue passés.
+
+**Suite immédiate — les protéines devant, et à quatre endroits plutôt qu'un.**
+Retour d'usage : le nombre que ce ménage surveille est la protéine, et il
+n'était visible qu'en ouvrant une recette. Livré :
+
+- **le résumé de la semaine** (`components/WeekSummary.tsx`), en haut de la page
+  principale : protéines par portion en tête, puis énergie, épicerie, temps de
+  cuisine, portions. Les deux moyennes sont pondérées **par portion** — quatre
+  portions de riz et douze de chili ne pèsent pas pareil — et disent sur combien
+  de plats elles portent : « sur 2 des 3 plats, les autres n'ont pas de valeur
+  nutritive calculable, et leur absence ne se compense pas ». Le coût et le temps
+  sont ceux de l'écran Résultat, calculés de la même façon;
+- **les cartes du menu** portent deux puces de plus, à côté du temps et des
+  portions : `3,1 g prot.` et `162 kcal`. Une recette non chiffrable n'a pas de
+  puce du tout — un « 0 g » se lirait comme une mesure;
+- **les lignes du catalogue** portent les deux nombres par portion.
+
+**Un seul lecteur, trois affichages.** `nutrition.ts::useMenuNutrition` interroge
+la route une fois par plat du menu (trois à sept requêtes, mesurées à 80 ms
+chacune) et le résumé comme les cartes lisent ce même résultat. Trois composants
+qui auraient interrogé la route chacun de leur côté auraient fini par afficher
+trois chiffres différents — il suffit que l'un demande un autre nombre de
+portions.
+
+**Les protéines gardent une décimale, l'énergie n'en a pas.** Arrondir les
+protéines à l'entier affichait « 0 g » pour une recette qui en porte 0,4 : sur le
+nombre que l'usager surveille, l'arrondi efface la différence entre peu et rien.
+Le bloc détaillé en affichait déjà une; les vues compactes s'y alignent plutôt
+que de donner deux chiffres pour le même fait (`nutrition.ts::proteinLabel`).
+
+**Un défaut de données révélé par la liste.** Quatre recettes sur 121 portaient
+une entité HTML dans leur nom (« Bouchées d&rsquo;aubergine parmigiana ») : le
+corpus source échappe ses titres, React échappe ce qu'on lui donne, donc
+l'entité s'affichait telle quelle. Décodée **à l'import**, là où le nom entre
+dans le seed, et non dans chaque écran qui le lit. 502 tests passés.
+
+
+## D40 — Le plancher de dépense d'épicerie est retiré
+
+**Décision de l'utilisateur**, prise en usage : le paramètre « Épicerie
+minimum » est retiré du produit. D27 l'avait introduit pour répondre à un vrai
+problème — sans plancher, le menu part vers les recettes les moins chères, parce
+que l'appétence n'est qu'un crédit dans l'objectif — mais le ménage a désormais
+le **plancher d'appétence** (U_min, préférence du ménage) pour poser la même
+question dans l'unité qui l'intéresse. Garder les deux, c'était garder deux
+réponses à une question, dont une que l'assertion 0 devait justement empêcher de
+combiner.
+
+**Ce qui part, couche par couche.** Le paramètre traversait sept couches :
+
+- `solver/config.py` : le champ `min_grocery_spend_cents_cad` ;
+- `solver/model.py` : la contrainte `depense_min` et sa fonction ;
+- `services/params.py` : la résolution profil/config du paramètre ;
+- `services/validation.py` : **l'assertion 0** (`SpendFloorWithoutRewardError`)
+  et sa classe — elle n'existait que pour interdire plancher de dépense × mode
+  d'appétence « constraint ». Sans plancher, elle n'a plus rien à vérifier, et
+  la garder aurait laissé un contrôle qui passe toujours ;
+- `services/problem_data.py`, `services/household.py`, `api/schemas.py`,
+  `api/routes.py` : le champ du profil ;
+- `frontend` : le champ du formulaire Ménage › Préférences et les deux types ;
+- `models/household.py` + migration `853a7ffc6022` : la colonne et sa contrainte
+  `min_spend_nonneg`.
+
+**La colonne est supprimée, pas laissée en place.** Une colonne que plus
+personne ne lit se fait recopier par le prochain qui la voit. Le `downgrade` de
+la migration la restaure avec sa contrainte, mais **pas les valeurs** — la
+migration le dit, et rappelle la seule valeur qui existait sur cette base (60 $)
+pour qu'un retour arrière puisse la ressaisir plutôt que la deviner.
+
+**Trois pins de tests déplacés, un fichier de tests supprimé.**
+`assertions_passed` compte désormais **7** au lieu de 8 (1..6 + 6b) dans
+`test_solver_flags.py`, `test_solver_toy.py` et `test_validation.py`.
+`tests/test_min_grocery_spend.py` (7 tests) part avec le mécanisme qu'il
+mesurait : ses cas — un plancher qui force la dépense, un plancher absurde qui
+n'achète plus que de la quantité, l'incompatibilité avec le mode « constraint » —
+n'ont plus d'objet.
+
+**Vérifié en exécutant : 495 tests passés, 0 échec** ; la migration appliquée
+contre PostgreSQL réel (la colonne n'est plus dans
+`information_schema.columns`) ; `GET /api/household` ne porte plus le champ ; un
+plan se génère (`POST /api/plan` → 200) ; et l'écran Ménage › Préférences ne
+montre plus « Épicerie minimum » tout en gardant « Plancher d'appétence »,
+enregistrement compris.
+
+
+## D41 — Plancher de protéines : une moyenne du menu, écrite linéairement
+
+**Demande du ménage** : un critère minimum de protéines, pour que le menu tire
+vers les recettes protéinées. Le pendant du plancher d'appétence, dans l'unité
+que le ménage surveille — l'appétence dit « quel menu me plaît », les protéines
+disent « de quoi il est fait ».
+
+**Une moyenne, pas un minimum par plat.** C'est la semaine qui doit être
+protéinée : un plat léger reste servable s'il est compensé. Le plancher porte
+donc sur la moyenne **pondérée par portion** du menu.
+
+**Le problème à résoudre était la linéarité.** Les protéines par portion d'une
+recette à composante fixe valent `fixe ÷ portions + marginal`, et le solveur
+choisit justement les portions : un plancher écrit sur « les protéines par
+portion » supposerait le rendement publié et deviendrait faux dès que le menu
+s'en écarte. La contrainte est donc écrite sur deux coefficients par recette —
+grammes par lot, grammes par portion — et la moyenne, multipliée des deux côtés
+par Σ x_r pour disparaître en tant que fraction :
+
+    Σ_r (fixe_r · δ_r + marginal_r · x_r)  ≥  P_min · Σ_r x_r
+
+La décomposition est **exacte**, pas une approximation : la conversion d'une
+quantité en grammes (densité, masse par unité) est linéaire, donc les protéines
+le sont aussi. `services/recipe_nutrition.py::protein_coefficients` la calcule
+sur les teneurs **non arrondies** — dériver le coefficient de la valeur publiée,
+arrondie au dixième, multipliait l'arrondi par la taille du lot (2 % d'écart
+mesuré sur un lot de 200 g).
+
+**Pourquoi δ_r, et le refus quand il n'existe pas.** Les protéines d'une part
+fixe ne se répètent pas à chaque portion : 500 g de lentilles dans une casserole
+comptent une fois, que la casserole fasse quatre portions ou douze. δ_r porte
+exactement « ce lot est cuisiné », et il n'existe que si les coûts fixes de lot,
+la diversité ou l'exclusion des variantes sont actifs — donc toujours en
+configuration livrée (D38, D16). Sans lui, la part de lot serait comptée une fois
+par portion ou pas du tout, deux erreurs de sens opposé :
+`ProteinFloorWithoutBatchFlagError` refuse, en nommant les drapeaux à rallumer.
+
+**Une recette non chiffrable sort du lot, elle n'entre pas à zéro.** Le
+préfiltrage gagne une étape (`proteines_chiffrables`) quand le plancher est
+actif : une recette dont un ingrédient n'est pas résolu n'a pas sa place dans une
+moyenne, et la faire entrer avec un zéro compterait « non mesuré » comme « sans
+protéines », tirant la moyenne vers le bas au nom d'une donnée absente. Les
+apports déclarés négligeables, eux, comptent bien pour zéro — et leur borne
+n'entre pas, ce qui rend le plancher prudent : il exige au moins `P_min` de
+protéines **mesurées**.
+
+**Chargement paresseux.** Les coefficients ne sont lus que si un plancher les
+réclame (`services/planning.py::_with_protein_coefficients`) : les calculer coûte
+une lecture des teneurs fédérales et du canon, et sans plancher personne ne les
+regarderait.
+
+**Vérifié en exécutant.** Sur le jouet, le plancher **déplace la sélection** : à
+15 g par portion, la moyenne du menu passe sous le plancher sans lui et le
+respecte avec; à 25 g, hors d'atteinte des trois recettes, le solveur sort
+`Infeasible` plutôt qu'un menu approché. La garde δ_r refuse quand les trois
+drapeaux sont éteints. 501 tests passés, migration `8ec98af31b5e` appliquée
+contre PostgreSQL réel, et le champ « Protéines minimum (g par portion, en
+moyenne) » vit dans Ménage › Préférences, à côté du plancher d'appétence.
+
+
+## D42 — R_max : un plafond de plats distincts, indépendant du drapeau de diversité
+
+**Demande du ménage**, née d'un effet mesuré : avec le plancher de protéines à
+25 g, le menu est passé à **12 plats** pour 65 portions. Nourrissant, mais
+personne ne cuisine douze plats différents dans une semaine.
+
+**R_max est le pendant de R_min, pas son symétrique.** R_min (assertion 6, D9)
+ne s'applique qu'avec `enable_diversity` : c'est un mécanisme qu'on rallume pour
+étudier la variété. R_max, lui, s'applique **dès qu'il est réglé** — il ne décrit
+pas un mécanisme à l'étude mais une limite de ce que le ménage accepte de
+cuisiner. `Σ δ_r ≤ R_max`, une ligne, sur la variable qui dit qu'un plat est au
+menu.
+
+**Deux refus nommés avant le solveur**, plutôt qu'un `Infeasible` muet :
+
+1. **R_max < R_min** — deux réglages qui se contredisent. Le message les cite
+   tous les deux ;
+2. **R_max plats ne peuvent pas nourrir le ménage** — α plafonne chaque recette à
+   `⌊α·⌈D(1+ε)⌉⌋` portions, donc peu de plats ne suffisent pas toujours. La
+   vérification prend les **R_max recettes les plus capables** (la borne haute de
+   ce que le plafond permet), et refuse si leur somme reste sous `⌈D⌉`. Le message
+   nomme les trois leviers : le plafond, α, ou la demande.
+
+**δ_r est requis, et son absence se refuse** (`RecipeCapWithoutDeltaError`) :
+sans lui, le plafond serait silencieusement absent, ce qui est pire qu'un refus.
+Il existe dès que les coûts fixes de lot, la diversité ou l'exclusion des
+variantes sont actifs — donc toujours en configuration livrée (D38, D16).
+
+**Une assertion de plus, comptée.** `assertions_passed` passe de 7 à 8 : la
+nouvelle passe même sans plafond réglé, comme les autres passent sans que leur
+mécanisme soit actif.
+
+**Une valeur par famille de plat, pas par recette.** Le contrôle de capacité
+prenait d'abord les R_max *recettes* les plus capables — or deux variantes
+d'échelle du même plat ne peuvent pas être actives ensemble (D16), donc les
+compter comme deux plats surestimait ce que le plafond permet de servir. C'est
+exactement le biais que l'assertion 6b avait déjà corrigé une fois (D17), reproduit
+puis corrigé ici : une valeur par famille, la plus généreuse de ses variantes.
+
+**Ce que la mesure a appris, et qui n'était pas prévu.** Sur le corpus réel, les
+deux réglages se disputent :
+
+| plancher de protéines | plafond de plats | résultat |
+| --- | --- | --- |
+| 25 g | 5, 6 ou 8 | **Infeasible** |
+| 25 g | 10 | Optimal, 10 plats, 66 portions |
+| 15 g | 5 | Optimal, 5 plats, 66 portions |
+| 10 g | 5 | Optimal, 5 plats, 66 portions |
+
+La cause n'est pas une capacité manquante que le contrôle pré-solveur pourrait
+prouver : les 52 recettes à 25 g ou plus offrent assez de portions. C'est
+l'interaction — α plafonne chaque recette, `max_batch_servings` la plafonne
+souvent plus bas encore (les plus protéinées tiennent 2 à 10 portions), et une
+seule variante par famille peut être active. Le diagnostic le dit ainsi :
+« l'infaisabilité vient de l'interaction des contraintes actives, en dernier lieu
+du drapeau `enable_variant_exclusion` ». Prouver ce genre d'infaisabilité avant
+le solveur demanderait un IIS, que CBC ne fournit pas.
+
+**Le ménage doit donc choisir son compromis** : peu de plats *ou* beaucoup de
+protéines par portion. 15 g pour cinq plats, 25 g pour dix. C'est une propriété
+du catalogue, pas un défaut du modèle — et c'est le genre de fait qu'un plancher
+sans mesure aurait laissé croire réglable.
+
+**Vérifié en exécutant : 506 tests passés**, migration `9f482abb2232` appliquée
+contre PostgreSQL réel, et le champ « Plats distincts au plus » vit dans
+Ménage › Préférences avec les deux planchers.
+
+
+## D43 — Importer une recette depuis une URL : la page propose, l'humain confirme
+
+**Demande.** Coller une URL, en tirer les ingrédients, en faire une recette de la
+base.
+
+**Ce que les pages publient vraiment, mesuré sur deux sites du corpus.**
+bonpourtoi.ca publie un JSON-LD `schema.org/Recipe` complet : nom, rendement,
+temps, et les lignes d'ingrédients avec leurs mesures.
+ricardocuisine.com ne publie qu'un noeud `WebSite` — les lignes existent dans la
+mise en page, pas dans une donnée déclarée. Le module lit donc le JSON-LD, et
+**refuse en nommant la raison** (`no_structured_recipe`) quand il n'y en a pas :
+lire la mise en page serait deviner, et un deuxième chemin est nécessaire pour
+ces pages.
+
+**La mesure métrique gagne, et toutes les mesures sont gardées.** Les pages
+québécoises écrivent « 2 c. à soupe (30 ml (30 g)) » : une mesure d'ustensile,
+puis une ou deux mesures métriques. Le parseur garde **tout** ce que la ligne
+publie et laisse l'appelant choisir celle dont la dimension correspond à l'unité
+de base du canon. Effet mesuré : choisir le millilitre avant de connaître
+l'ingrédient forçait ensuite une densité curée pour du beurre pesé au gramme,
+alors que la page donnait les grammes.
+
+**Trois défauts trouvés en lisant deux pages réelles, pas en relisant le code.**
+
+1. **La virgule décimale coupait le libellé.** « Lait 3,25 %, 750 ml » donnait le
+   libellé « lait 3 », résolu vers `lait_non_precise` — un ingrédient voisin,
+   assez proche pour n'alerter personne, assez faux pour changer la valeur
+   nutritive. La coupe se fait à la dernière virgule *suivie d'une quantité*, et
+   jamais entre deux chiffres.
+2. **Le pluriel empêchait la reconnaissance.** Le canon écrit « clou de
+   girofle », la page « clous de girofle entiers ». Les deux côtés se comparent
+   désormais au singulier, symétriquement.
+3. **La dimension seule refusait trop.** « ½ c. à thé de paprika » est
+   convertible si le fichier de curation porte la densité. La cascade de
+   conversion est donc celle de l'importateur de recettes — même ordre, **même
+   fichier**, pas une seconde table de facteurs.
+
+Effet des trois : 28 lignes sur 33 lisibles à 32 sur 33 pour une lasagne réelle.
+
+**La commande propose, elle n'importe rien.** `scripts/import_recipe_from_url.py`
+écrit une file de revue par recette. Chaque ligne porte sa quantité, son unité,
+l'ingrédient canonique visé, les mesures publiées, et ses **blocages nommés** :
+aucune quantité lisible, aucun alias ne nomme l'ingrédient, quantité non
+convertible faute d'équivalence curée. `--apply` refuse tant qu'une ligne n'est
+pas confirmée à la main, refuse une ligne bloquée même confirmée, et refuse une
+page sans rendement publié — mettre à l'échelle sans point de départ fausserait
+toutes les quantités par portion.
+
+**Pourquoi la confirmation reste humaine, malgré un taux élevé.** Une résolution
+peut être fausse en ayant l'air juste : « tomates italiennes entières, 796 ml »
+se résout vers la tomate *fraîche* alors que 796 ml désigne une conserve. Aucune
+règle de chaîne ne voit cette différence; une personne, oui. C'est la même règle
+que pour l'appariement canonique → FCÉN (D32) : proposer, jamais rattacher sur
+une ressemblance.
+
+**Ce qui reste, et se voit dans les blocages.** Sur les ailes de poulet Buffalo,
+7 lignes sur 13 passent sans blocage. Les 6 autres sont des épices mesurées en
+millilitres que le canon pèse au gramme, et dont `cook_recipe_curation.json` ne
+porte pas la densité. C'est la même lacune que le chantier nutritionnel a déjà
+rencontrée, et elle se comble une épice à la fois.
+
+**Vérifié en exécutant : 540 tests passés**, dont 29 sur le module pur et 4 sur
+le refus d'écriture, et deux pages réelles lues de bout en bout.

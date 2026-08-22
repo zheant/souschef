@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import math
 from decimal import Decimal
+from typing import Mapping
 
 from .demand import DemandBounds, compute_demand_bounds
 from .params import EffectiveParams
@@ -66,18 +67,68 @@ class DiversityInfeasibleError(ValidationError):
     assertion = "6_compatibilite_diversite"
 
 
+class RecipeCapWithoutDeltaError(ValidationError):
+    """Plafond de plats distincts sans la variable qui dit qu'un plat est servi.
+
+    Même raison que pour le plancher de protéines : δ_r porte « ce plat est au
+    menu », et sans lui le plafond serait silencieusement absent — un réglage
+    ignoré est pire qu'un réglage refusé.
+    """
+
+    assertion = "0_plafond_recettes_modelisable"
+
+
+class RecipeCapInfeasibleError(ValidationError):
+    """Le plafond de plats ne peut pas nourrir le ménage, ou contredit R_min.
+
+    Deux façons d'être impossible, refusées avant le solveur plutôt qu'en
+    `Infeasible` muet : R_max < R_min (deux réglages qui se contredisent), et
+    R_max plats à leur capacité maximale ne couvrant pas la demande minimale
+    (α plafonne les portions par recette, donc peu de plats ne suffisent pas à
+    nourrir la semaine).
+    """
+
+    assertion = "0_plafond_recettes_atteignable"
+
+
+class ProteinFloorWithoutBatchFlagError(ValidationError):
+    """Plancher de protéines sans la variable qui dit qu'un lot est cuisiné.
+
+    Les protéines d'une part fixe ne se répètent pas à chaque portion : 500 g de
+    lentilles dans une casserole comptent une fois, que la casserole fasse
+    quatre portions ou douze. δ_r porte cette information, et il n'existe que si
+    les coûts fixes de lot, la diversité ou l'exclusion des variantes sont
+    actifs. Sans lui, le plancher compterait ces protéines une fois par portion
+    ou pas du tout — un plancher faux dans les deux sens, refusé plutôt que
+    servi.
+    """
+
+    assertion = "0_plancher_proteines_modelisable"
+
+
 class CapacityError(ValidationError):
     assertion = "6b_capacite_entiere"
 
 
 def min_taxed_price_per_base_unit(
     problem: ProblemData,
+    store_ids: frozenset[int] | None = None,
 ) -> dict[str, Decimal]:
     """min_{p∈P_i, s} c_ps(1+t_p)/v_p par ingrédient, sur les prix valides à
-    la date du problème."""
+    la date du problème.
+
+    ``store_ids`` restreint le minimum aux magasins donnés. ``None`` — le
+    défaut — balaie tous les magasins : c'est ce que veulent l'assertion 1
+    (borner σ par le prix le plus bas du marché est la borne la plus stricte)
+    et le préfiltrage (réduction grossière, avant toute sélection de magasin).
+    L'assertion 4, elle, doit se juger sur les magasins que le modèle va
+    réellement utiliser — sinon elle certifie un prix que le panier n'a pas le
+    droit d'aller chercher, et l'infaisabilité ressort muette."""
     products_by_id = {p.id: p for p in problem.products}
     best: dict[str, Decimal] = {}
     for price in problem.prices:
+        if store_ids is not None and price.store_id not in store_ids:
+            continue
         prod = products_by_id[price.product_id]
         per_unit = (
             Decimal(price.price_cents_cad)
@@ -90,10 +141,65 @@ def min_taxed_price_per_base_unit(
     return best
 
 
+#: Ce que chaque étape du préfiltrage vérifie, et ce qu'on peut y faire. Le
+#: message de refus citait cinq causes possibles sans dire laquelle avait
+#: frappé : sur le corpus réel, c'est toujours la sixième — le besoin
+#: identiquement nul (D25) — qui vide le catalogue, et elle n'était pas dans la
+#: liste.
+_PREFILTER_STAGES: dict[str, str] = {
+    "allergenes": (
+        "un allergène déclaré du ménage figure dans toutes les recettes"
+    ),
+    "regime": "aucune recette ne porte tous les régimes déclarés",
+    "equipement": (
+        "toutes les recettes exigent un équipement que le ménage n'a pas"
+    ),
+    "temps_preparation": (
+        "toutes les recettes dépassent le temps de préparation par repas"
+    ),
+    "besoin_non_nul": (
+        "aucune recette ne porte de composante marginale par portion, donc son "
+        "besoin est identiquement nul sans les coûts fixes de lot (D25) : "
+        "rallumer enable_batch_fixed_cost dans SolverConfig (onglet Paramètres) "
+        "rend ces recettes modélisables"
+    ),
+    "prix_disponible": (
+        "chaque recette porte au moins un ingrédient sans prix valide à cette "
+        "date"
+    ),
+    "exclusion": "toutes les recettes restantes ont été exclues explicitement",
+}
+
+
+def _empty_prefilter_message(counts: Mapping[str, int] | None) -> str:
+    """Nomme l'étape qui a vidé le catalogue, et ce qu'elle veut dire."""
+    generic = (
+        "Aucune recette ne survit au préfiltrage : régime, allergènes, "
+        "équipement, temps de préparation ou absence de prix écartent toutes "
+        "les recettes du catalogue."
+    )
+    if not counts:
+        return generic
+    before = None
+    for stage, remaining in counts.items():
+        if remaining == 0 and stage in _PREFILTER_STAGES:
+            explanation = _PREFILTER_STAGES[stage]
+            entering = before if before is not None else remaining
+            return (
+                f"Aucune recette ne survit au préfiltrage : l'étape "
+                f"« {stage} » a écarté les {entering} recettes qui y "
+                f"entraient — {explanation}."
+            )
+        before = remaining
+    return generic
+
+
 def validate_problem(
     problem: ProblemData,
     surviving_recipes: tuple[RecipeData, ...],
     params: EffectiveParams,
+    selected_stores: tuple = (),
+    prefilter_counts: Mapping[str, int] | None = None,
 ) -> tuple[list[str], DemandBounds]:
     """Exécute les assertions 1 à 6 dans l'ordre de la spec.
 
@@ -111,11 +217,23 @@ def validate_problem(
     modèle (trouvé en écrivant un test de non-régression sans rapport,
     jamais couvert avant).
 
+    ``selected_stores`` : les magasins que le modèle va réellement utiliser
+    (sortie de ``solver/model.py::select_stores``). L'assertion 4 s'y
+    restreint. Vide — le défaut — la laisse balayer tous les magasins, comme
+    avant : les tests qui n'ont pas de notion de sélection gardent leur
+    comportement. Pourquoi ce paramètre existe : magasin unique, l'assertion 4
+    passait en constatant qu'un ingrédient est prixé *quelque part* pendant que
+    le magasin retenu n'avait aucun prix valide à cette date. Le solveur
+    sortait alors `Infeasible` sans cause nommée, et le diagnostic accusait le
+    dernier drapeau activé — `enable_variant_exclusion` — qui n'y était pour
+    rien.
+
     Retourne (assertions passées, bornes de demande) ; lève à la première
     violation.
     """
     passed: list[str] = []
     profile = problem.profile
+
 
     # -- 1. Bornitude de la récupération, avec marge de sécurité ------------
     min_price = min_taxed_price_per_base_unit(problem)
@@ -170,11 +288,24 @@ def validate_problem(
         for r in surviving_recipes
         for ri in r.ingredients
     }
-    unpriced = sorted(required - set(min_price))
+    store_ids = frozenset(s.id for s in selected_stores) or None
+    reachable_price = (
+        min_price
+        if store_ids is None
+        else min_taxed_price_per_base_unit(problem, store_ids)
+    )
+    unpriced = sorted(required - set(reachable_price))
     if unpriced:
+        where = (
+            ""
+            if store_ids is None
+            else " au magasin " + ", ".join(
+                sorted(s.external_key for s in selected_stores)
+            )
+        )
         raise MissingPriceError(
-            f"Aucun produit avec prix valide au {problem.on_date} pour : "
-            f"{unpriced} — infaisabilité garantie."
+            f"Aucun produit avec prix valide au {problem.on_date}{where} "
+            f"pour : {unpriced} — infaisabilité garantie."
         )
     passed.append(MissingPriceError.assertion)
 
@@ -189,7 +320,20 @@ def validate_problem(
     if not problem.stores:
         raise EmptyProblemError("Aucun magasin.")
     if not surviving_recipes:
-        raise EmptyProblemError("Aucune recette après préfiltrage.")
+        # Distinguer les deux causes : un catalogue périmé et un préfiltrage
+        # trop serré produisaient le même message, et l'appelant ne pouvait
+        # rien en faire. `problem.prices` est déjà filtré sur la fenêtre de
+        # validité au chargement (`problem_data.py`) : vide ici veut dire
+        # qu'aucune offre ne couvre `on_date`, donc que le catalogue est
+        # périmé — pas que les recettes ont été écartées une à une.
+        if not problem.prices:
+            raise EmptyProblemError(
+                f"Aucun prix valide au {problem.on_date} : le catalogue de prix "
+                "est périmé pour cette date. Rafraîchir les circulaires "
+                "(scripts/run_weekly_catalogues.py --apply) ou demander un plan "
+                "à une date couverte par les prix déjà chargés."
+            )
+        raise EmptyProblemError(_empty_prefilter_message(prefilter_counts))
     passed.append(EmptyProblemError.assertion)
 
     # -- 6. Compatibilité des contraintes de diversité ----------------------
@@ -228,6 +372,37 @@ def validate_problem(
             f"maximale α = {alpha} exige plus de recettes distinctes."
         )
     passed.append(DiversityInfeasibleError.assertion)
+
+    # -- 6c. Le plafond de plats distincts peut-il nourrir le ménage ? ------
+    r_max_param = params.max_distinct_recipes.value
+    if r_max_param is not None:
+        r_max = int(r_max_param)
+        if r_max < r_min:
+            raise RecipeCapInfeasibleError(
+                f"R_max = {r_max} < R_min = {r_min} : les deux réglages se "
+                "contredisent. Le plafond de plats distincts doit laisser "
+                "atteindre le minimum exigé."
+            )
+        # Les R_max plats les plus capables, et **une valeur par famille** :
+        # deux variantes d'échelle du même plat ne peuvent pas être actives
+        # ensemble (D16), donc les compter comme deux plats surestimait la
+        # capacité du plafond — le même biais que l'assertion 6b a déjà corrigé
+        # une fois (D17).
+        per_family: dict[str, int] = {}
+        for r in surviving_recipes:
+            capacity = min(math.floor(alpha * bounds.high), r.max_batch_servings)
+            if capacity > per_family.get(r.dish_family_id, 0):
+                per_family[r.dish_family_id] = capacity
+        best = sorted(per_family.values(), reverse=True)[:r_max]
+        if sum(best) < bounds.low:
+            raise RecipeCapInfeasibleError(
+                f"R_max = {r_max} plats distincts, au mieux "
+                f"{sum(best)} portions (α plafonne chaque recette à "
+                f"{math.floor(alpha * bounds.high)} portions) < ⌈D⌉ = "
+                f"{bounds.low} : ce plafond ne peut pas nourrir le ménage. "
+                "Relever le plafond, ou α, ou baisser la demande."
+            )
+    passed.append(RecipeCapInfeasibleError.assertion)
 
     # -- 6b. Capacité entière contre la borne haute (D9) --------------------
     # D17 : même biais, en miroir — sommer min(cap, m_r) sur TOUTES les

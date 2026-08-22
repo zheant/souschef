@@ -47,6 +47,11 @@ import pytest
 
 from app.services.appetence import RuleBasedAppetenceScorer
 from app.services.prefilter import prefilter_recipes
+from app.services.recipe_nutrition import ProteinCoefficients
+from app.services.validation import (
+    ProteinFloorWithoutBatchFlagError,
+    RecipeCapInfeasibleError,
+)
 from app.solver import PulpMenuSolver, SolverConfig
 from tests.seed_loader import problem_from_seed_dir
 
@@ -211,8 +216,10 @@ def test_perishable_penalty_shifts_recipe_selection(toy):
     périssabilité 1,0 (dataclasses.replace, seul ingrédient jouet dont le
     surplus de paquet est significatif — 1 douzaine achetée quel que soit le
     besoin réel). Sans le drapeau, le mélange retenu laisse 10 œufs de
-    surplus (omelette_toy=1) ; avec, le solveur bascule vers omelette_toy=3
-    (le maximum que permet max_batch_servings) pour absorber le surplus —
+    surplus (omelette_toy=1) ; avec, le solveur bascule vers omelette_toy=2
+    pour absorber le surplus — deux et non trois depuis que
+    `enable_batch_fixed_cost` est allumé par défaut (D38) : la troisième
+    portion porte alors un coût fixe de lot qui annule le gain —
     preuve que la pénalité change réellement la sélection, pas seulement
     qu'elle est calculée sans effet. Calibration de RATIO documentée dans
     D19 : un ratio ≤ 0,8 (par analogie avec le plafond de σ_i) n'a AUCUN
@@ -239,7 +246,7 @@ def test_perishable_penalty_shifts_recipe_selection(toy):
         biased, pre, SolverConfig(**kwargs, enable_perishable_penalty=True)
     )
     assert on.status == "Optimal"
-    assert on.servings_by_recipe.get("omelette_toy", 0) == 3
+    assert on.servings_by_recipe.get("omelette_toy", 0) == 2
     assert on.diagnostic.objective_terms.gaspillage_cents > Decimal("0.00")
 
     # Jamais de biais de prix (contrairement aux essentiels/staples) : le
@@ -282,12 +289,17 @@ def test_diagnostic_is_complete(toy):
         "D_exact": "4.0", "borne_basse": "4", "borne_haute": "5",
         "total_retenu": str(sum(res.servings_by_recipe.values())),
     }
-    assert len(d.assertions_passed) == 7
+    # Sept, et non huit : l'assertion 0 (cohérence plancher de dépense ×
+    # mode d'appétence) est partie avec le plancher lui-même (D40).
+    assert len(d.assertions_passed) == 8  # 1..6 + 6b + 6c
     # enable_variant_exclusion est à True par défaut (D16) : il apparaît donc
     # après enable_diversity dans les deux listes, sans qu'on l'ait demandé.
     assert d.last_enabled_flag == "enable_variant_exclusion"
+    # `enable_batch_fixed_cost` est allumé par défaut depuis D38 : il figure
+    # donc dans les drapeaux qui altèrent les besoins, alors que ce pin le
+    # voyait vide du temps où tous les drapeaux étaient éteints.
     assert d.flag_effects == {
-        "alterent_les_besoins_en_ingredients": [],
+        "alterent_les_besoins_en_ingredients": ["enable_batch_fixed_cost"],
         "objectif_ou_contraintes_seulement": [
             "enable_diversity", "enable_variant_exclusion",
         ],
@@ -324,3 +336,112 @@ def test_flags_altering_needs_are_signaled(toy):
     assert fx["objectif_ou_contraintes_seulement"] == [
         "enable_time_cost", "enable_staples", "enable_variant_exclusion",
     ]
+
+
+def test_a_protein_floor_lifts_the_menu_toward_protein_rich_recipes(toy):
+    """Le plancher doit changer la sélection, pas seulement être calculé.
+
+    Le jouet porte trois recettes : riz nature (peu de protéines), dahl et
+    omelette (davantage). Sans plancher, le solveur prend le moins cher; avec un
+    plancher de protéines, il doit se déplacer vers les plats protéinés — et si
+    le plancher est hors d'atteinte, refuser plutôt que servir n'importe quoi.
+    """
+    problem, _pre = toy
+    coefficients = {
+        "riz_nature": ProteinCoefficients(Decimal("0"), Decimal("2")),
+        "dahl_toy": ProteinCoefficients(Decimal("0"), Decimal("20")),
+        "omelette_toy": ProteinCoefficients(Decimal("0"), Decimal("12")),
+    }
+    biased = dataclasses.replace(problem, protein_coefficients=coefficients)
+    pre = prefilter_recipes(
+        biased.recipes, biased.profile, RuleBasedAppetenceScorer(biased),
+        protein_coefficient_ids=frozenset(coefficients),
+    )
+
+    sans = PulpMenuSolver().solve(biased, pre, SolverConfig())
+    avec = PulpMenuSolver().solve(
+        biased, pre, SolverConfig(min_protein_g_per_serving=15),
+    )
+    assert sans.status == "Optimal" and avec.status == "Optimal"
+
+    def moyenne(result) -> Decimal:
+        portions = sum(result.servings_by_recipe.values())
+        total = sum(
+            coefficients[rid].marginal_g_per_serving * servings
+            for rid, servings in result.servings_by_recipe.items()
+        )
+        return total / portions
+
+    assert moyenne(sans) < Decimal("15")
+    assert moyenne(avec) >= Decimal("15")
+
+
+def test_an_unreachable_protein_floor_is_refused_not_approximated(toy):
+    """Aucun mélange des trois recettes n'atteint 25 g par portion."""
+    problem, _pre = toy
+    coefficients = {
+        "riz_nature": ProteinCoefficients(Decimal("0"), Decimal("2")),
+        "dahl_toy": ProteinCoefficients(Decimal("0"), Decimal("20")),
+        "omelette_toy": ProteinCoefficients(Decimal("0"), Decimal("12")),
+    }
+    biased = dataclasses.replace(problem, protein_coefficients=coefficients)
+    pre = prefilter_recipes(
+        biased.recipes, biased.profile, RuleBasedAppetenceScorer(biased),
+        protein_coefficient_ids=frozenset(coefficients),
+    )
+    result = PulpMenuSolver().solve(
+        biased, pre, SolverConfig(min_protein_g_per_serving=25),
+    )
+    assert result.status == "Infeasible"
+
+
+def test_a_protein_floor_needs_the_variable_that_says_a_batch_is_cooked(toy):
+    """Sans δ_r, la part de lot serait comptée une fois par portion ou jamais.
+
+    Les deux sont faux, donc le solveur refuse en nommant les drapeaux qui font
+    exister δ_r plutôt que d'approcher le plancher.
+    """
+    problem, _pre = toy
+    # Deux recettes au moins : avec une seule, R_min = 2 refuse avant que la
+    # garde du plancher ait son mot à dire.
+    coefficients = {
+        "riz_nature": ProteinCoefficients(Decimal("30"), Decimal("1")),
+        "dahl_toy": ProteinCoefficients(Decimal("40"), Decimal("2")),
+    }
+    biased = dataclasses.replace(problem, protein_coefficients=coefficients)
+    pre = prefilter_recipes(
+        biased.recipes, biased.profile, RuleBasedAppetenceScorer(biased),
+        protein_coefficient_ids=frozenset(coefficients),
+    )
+    with pytest.raises(ProteinFloorWithoutBatchFlagError) as error:
+        PulpMenuSolver().solve(
+            biased,
+            pre,
+            SolverConfig(
+                min_protein_g_per_serving=5,
+                enable_batch_fixed_cost=False,
+                enable_variant_exclusion=False,
+            ),
+        )
+    assert "enable_batch_fixed_cost" in str(error.value)
+
+
+def test_a_recipe_cap_limits_the_number_of_distinct_dishes(toy):
+    """R_max borne les plats distincts, sans dépendre du drapeau de diversité.
+
+    Le jouet en porte trois : la diversité peut en exiger trois, le plafond en
+    autorise deux, et le menu s'y tient.
+    """
+    sans = solve(toy, enable_diversity=True, min_distinct_recipes=3)
+    assert len(sans.servings_by_recipe) == 3
+
+    avec = solve(toy, max_distinct_recipes=2)
+    assert avec.status == "Optimal"
+    assert len(avec.servings_by_recipe) <= 2
+
+
+def test_a_recipe_cap_below_the_minimum_is_refused_as_a_contradiction(toy):
+    with pytest.raises(RecipeCapInfeasibleError) as error:
+        solve(toy, enable_diversity=True, min_distinct_recipes=3, max_distinct_recipes=2)
+    assert "R_max = 2 < R_min = 3" in str(error.value)
+

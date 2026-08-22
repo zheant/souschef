@@ -58,12 +58,12 @@ def _upsert(session: Session, model, rows: list[dict], key_cols: list[str]) -> i
 
 
 def _load(seed_dir: Path, name: str) -> list | dict:
-    return json.loads((seed_dir / name).read_text())
+    return json.loads((seed_dir / name).read_text(encoding="utf-8"))
 
 
 def _load_optional(seed_dir: Path, name: str) -> list:
     path = seed_dir / name
-    return json.loads(path.read_text()) if path.exists() else []
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
 
 
 def seed_catalog(

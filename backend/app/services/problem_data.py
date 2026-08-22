@@ -118,6 +118,15 @@ class ProfileData:
     available_equipment: tuple[str, ...]
     max_prep_time_per_meal_h: Decimal
     appetite_coefficients: tuple[Decimal, ...]   # ρ_h
+    #: U_min — plancher d'appétence, ou `None` (appétence en crédit).
+    appetence_u_min_dollars: Decimal | None = None
+    #: Plancher de protéines : grammes par portion, en moyenne sur le menu
+    #: (None = aucun). Une moyenne, et non un minimum par plat : c'est la
+    #: semaine qui doit être protéinée, et un plat léger reste servable s'il est
+    #: compensé.
+    min_protein_g_per_serving: Decimal | None = None
+    #: R_max — plats distincts au plus (None = aucun plafond).
+    max_distinct_recipes: int | None = None
 
 
 @dataclass(frozen=True)
@@ -142,6 +151,13 @@ class ProblemData:
     historical_low_price_cents_per_base_unit: dict[str, Decimal] = field(
         default_factory=dict
     )
+    #: Protéines par recette, décomposées (part de lot, part de portion), pour
+    #: les recettes chiffrables seulement. Vide quand aucun plancher de
+    #: protéines n'est demandé : les charger coûte une lecture des teneurs
+    #: fédérales, et personne ne les lirait. Une recette absente n'est pas une
+    #: recette sans protéines — c'est une recette non chiffrable, que le
+    #: préfiltrage écarte quand le plancher est actif.
+    protein_coefficients: dict = field(default_factory=dict)
 
 
 def load_problem_data(
@@ -248,6 +264,9 @@ def load_problem_data(
             appetite_coefficients=tuple(
                 m.appetite_coefficient for m in profile.members
             ),
+            appetence_u_min_dollars=profile.appetence_u_min_dollars,
+        min_protein_g_per_serving=profile.min_protein_g_per_serving,
+        max_distinct_recipes=profile.max_distinct_recipes,
         ),
         ingredients=ingredients,
         recipes=recipes,

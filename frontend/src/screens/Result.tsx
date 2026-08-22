@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { api, cents } from "../api";
+import { api, cents, hours, messageOf } from "../api";
 import { describeChanges } from "../changes";
+import { NutritionBlock } from "../components/NutritionBlock";
+import { kcalLabel, perServing, proteinLabel, useMenuNutrition } from "../nutrition";
 import type {
-  Household, Plan, RecipeIngredientLine, RecipeQuote, SolverConfigInput, Store,
+  Household, Plan, RecipeIngredientLine, RecipeNutrition, RecipeQuote,
+  SolverConfigInput, Store,
 } from "../types";
 
 /** Écran 3 — Résultat (piste « circulaire du quartier », disposition « P »,
@@ -43,6 +46,40 @@ const DISH_ICON = (
     <path d="M9 4v4M12 3v5M15 4v4" />
   </svg>
 );
+
+/** Prix d'une recette, tel que le module de devis le calcule.
+ *
+ *  La carte affichait `attributed_cost_cents_cad` : la part des achats au
+ *  prorata des portions. Cette part vaut `total × portions / portions_totales`,
+ *  donc elle sort identique à la portion pour **toutes** les recettes du menu
+ *  (0,75 $ partout sur un panier de 30,78 $ pour 41 portions) et ne dit rien du
+ *  coût propre à la recette. `planning.py` l'assume : « lecture simple pour
+ *  l'écran Résultat ». Le devis, lui, chiffre les ingrédients réellement
+ *  consommés — et le panneau de détail l'affichait déjà, si bien que les deux
+ *  nombres se contredisaient dans le même écran.
+ *
+ *  Un devis absent ou incomplet ne se remplace pas par un nombre inventé : il
+ *  se dit. `null` laisse l'appelant choisir sa mise en forme. */
+function quotePrice(
+  quote: RecipeQuote | undefined,
+  loading: boolean,
+): { label: string; complete: boolean } {
+  if (loading) return { label: "…", complete: false };
+  if (!quote || quote.consumed_cost_cents == null) {
+    return { label: "prix indisponible", complete: false };
+  }
+  const label = cents(quote.consumed_cost_cents);
+  return quote.status === "complete"
+    ? { label, complete: true }
+    : { label: `${label} — partiel`, complete: false };
+}
+
+/** Même prix, phrasé pour le panneau de détail (portions déjà annoncées). */
+function quotePriceLabel(quote: RecipeQuote | undefined, loading: boolean): string {
+  const { label } = quotePrice(quote, loading);
+  if (!quote || quote.consumed_cost_per_serving_cents == null) return label;
+  return `${label} (${cents(quote.consumed_cost_per_serving_cents)} la portion)`;
+}
 
 const CLOCK_ICON = (
   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
@@ -98,6 +135,12 @@ export default function ResultScreen(props: {
   const [openRecipeId, setOpenRecipeId] = useState<string | null>(null);
   const [ingredients, setIngredients] = useState<RecipeIngredientLine[] | null>(null);
   const [ingredientsError, setIngredientsError] = useState<string | null>(null);
+  const [nutrition, setNutrition] = useState<RecipeNutrition | null>(null);
+  const [nutritionError, setNutritionError] = useState<string | null>(null);
+  // Trois états, pas deux : « en chargement » et « indisponible » se
+  // ressemblent quand on ne garde qu'un `null`, et l'écran restait sur
+  // « Chargement… » pour toujours dès que la route répondait une liste vide.
+  const [nutritionLoading, setNutritionLoading] = useState(false);
   const [recipeQuotes, setRecipeQuotes] = useState<Record<string, RecipeQuote>>({});
   const [quotesError, setQuotesError] = useState<string | null>(null);
   const [quotesLoading, setQuotesLoading] = useState(false);
@@ -158,7 +201,7 @@ export default function ResultScreen(props: {
       .catch((error) => {
         if (cancelled) return;
         setQuotesLoading(false);
-        setQuotesError(String(error));
+        setQuotesError(messageOf(error));
       });
     return () => { cancelled = true; };
   }, [plan]);
@@ -183,6 +226,8 @@ export default function ResultScreen(props: {
   }
 
   const currentPlan = plan;
+  // Les puces des cartes et le résumé de la semaine lisent la même source.
+  const { facts: menuNutrition } = useMenuNutrition(currentPlan.menu);
   const groceryTotalCents = currentPlan.grocery_list_by_store
     .reduce((s, g) => s + Number(g.subtotal_cents_cad), 0);
   const totalTimeH = currentPlan.menu.reduce((s, m) => s + Number(m.prep_time_h), 0);
@@ -209,7 +254,7 @@ export default function ResultScreen(props: {
       }
       props.onCommitted(r.plan.id);
     } catch (e) {
-      setReoptimizeError(String(e));
+      setReoptimizeError(messageOf(e));
     } finally {
       setReoptimizing(false); setReplacingId(null);
     }
@@ -225,10 +270,26 @@ export default function ResultScreen(props: {
     setOpenRecipeId(recipeId);
     setIngredients(null);
     setIngredientsError(null);
+    setNutrition(null);
+    setNutritionError(null);
+    setNutritionLoading(true);
+    const servings =
+      currentPlan.menu.find((m) => m.recipe_id === recipeId)?.servings ?? 0;
     try {
       setIngredients(await api.recipeIngredients(recipeId));
     } catch (e) {
-      setIngredientsError(String(e));
+      setIngredientsError(messageOf(e));
+    }
+    // Chargée à part et après : une valeur nutritive indisponible ne doit pas
+    // effacer la liste d'ingrédients, qui est la raison première de l'écran.
+    try {
+      setNutrition(
+        servings > 0 ? await api.recipeNutrition(recipeId, servings) : null,
+      );
+    } catch (e) {
+      setNutritionError(messageOf(e));
+    } finally {
+      setNutritionLoading(false);
     }
   }
 
@@ -244,7 +305,7 @@ export default function ResultScreen(props: {
       setAccepted(true);
       props.onCommitted(currentPlan.id);
     } catch (e) {
-      setCommitError(String(e));
+      setCommitError(messageOf(e));
     } finally {
       setCommitting(false);
     }
@@ -274,7 +335,7 @@ export default function ResultScreen(props: {
           <div className={`rp-cost-card${barDetailed ? " rp-cost-card--detail" : ""}`}>
             <div className="rp-hero-label">Coût à l'épicerie</div>
             <div className="rp-hero-amount">
-              {cents(groceryTotalCents)} <span className="rp-time">· {totalTimeH.toFixed(2)} h de cuisine</span>
+              {cents(groceryTotalCents)} <span className="rp-time">· {hours(totalTimeH)} de cuisine</span>
             </div>
             <div className="rp-bar-slot" onClick={() => setBarDetailed((v) => !v)} role="button" tabIndex={0}>
               {!barDetailed && (
@@ -346,9 +407,39 @@ export default function ResultScreen(props: {
                 <div className="rp-recipe-body">
                   <div className="rp-recipe-name">{m.name}</div>
                   <div className="rp-recipe-meta">
-                    <span className="rp-chip">{CLOCK_ICON} {Number(m.prep_time_h).toFixed(2)} h</span>
+                    <span className="rp-chip">{CLOCK_ICON} {hours(m.prep_time_h)}</span>
                     <span className="rp-chip">{PORTIONS_ICON} {m.servings} portions</span>
-                    <span className="rp-recipe-price">{cents(m.attributed_cost_cents_cad)}</span>
+                    {(() => {
+                      // Par portion, comme partout ailleurs dans l'écran. Une
+                      // recette non chiffrable n'a pas de puce du tout : un
+                      // « 0 g » se lirait comme une mesure.
+                      const facts = menuNutrition[m.recipe_id];
+                      const kcal = perServing(facts, "kcal_per_serving");
+                      const protein = perServing(facts, "protein_g_per_serving");
+                      if (kcal == null || protein == null) return null;
+                      return (
+                        <>
+                          <span className="rp-chip">{proteinLabel(protein)} prot.</span>
+                          <span className="rp-chip">{kcalLabel(kcal)}</span>
+                        </>
+                      );
+                    })()}
+                    {(() => {
+                      const { label, complete } = quotePrice(
+                        recipeQuotes[m.recipe_id], quotesLoading,
+                      );
+                      return (
+                        <span
+                          className={
+                            complete
+                              ? "rp-recipe-price"
+                              : "rp-recipe-price rp-recipe-price--partial"
+                          }
+                        >
+                          {label}
+                        </span>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
@@ -427,10 +518,18 @@ export default function ResultScreen(props: {
             <div className="rp-detail-name">{openRecipe?.name ?? openRecipeId}</div>
             {openRecipe && (
               <div className="rp-detail-meta">
-                {openRecipe.servings} portions · {Number(openRecipe.prep_time_h).toFixed(2)} h de cuisine ·{" "}
+                {openRecipe.servings} portions · {hours(openRecipe.prep_time_h)} de cuisine ·{" "}
                 {quotePriceLabel(recipeQuotes[openRecipe.recipe_id], quotesLoading)}
               </div>
             )}
+            <div className="rp-detail-sec">Valeur nutritive par portion</div>
+            {nutritionError && <p className="callout error">{nutritionError}</p>}
+            {!nutritionError && nutritionLoading && <p className="muted">Chargement…</p>}
+            {!nutritionError && !nutritionLoading && !nutrition && (
+              <p className="muted">Valeur nutritive indisponible pour cette recette.</p>
+            )}
+            {nutrition && <NutritionBlock facts={nutrition} />}
+
             <div className="rp-detail-sec">Ingrédients</div>
             {ingredientsError && <p className="callout error">{ingredientsError}</p>}
             {!ingredientsError && !ingredients && <p className="muted">Chargement…</p>}
