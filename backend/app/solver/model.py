@@ -30,6 +30,7 @@ from ..services.problem_data import ProblemData, ProductData, RecipeData
 from ..services.travel import TravelCosts, compute_travel_costs, haversine_km
 from ..services.validation import (
     ProteinFloorWithoutBatchFlagError,
+    RecipeCapWithoutDeltaError,
     min_taxed_price_per_base_unit,
     validate_problem,
 )
@@ -338,6 +339,32 @@ def _add_diversity(m: pulp.LpProblem, c: _Ctx) -> None:
     cap = alpha * c.bounds.high
     for r in c.recipes:
         m += c.x[r.id] <= cap, f"part_max_{r.id}"
+
+
+def _add_recipe_cap(m: pulp.LpProblem, c: _Ctx) -> None:
+    """Σδ_r ≤ R_max : au plus R_max plats distincts au menu.
+
+    Le pendant de R_min, mais il ne dépend **pas** du drapeau de diversité :
+    R_min sert à forcer la variété quand on l'étudie, R_max à borner ce qu'un
+    ménage accepte de cuisiner dans une semaine. Les deux se lisent sur
+    `c.params`, jamais sur `c.config` — `resolve_effective_params` est la seule
+    lecture croisée profil/configuration.
+
+    δ_r est requis : c'est lui qui dit « ce plat est au menu ». Il existe dès que
+    les coûts fixes de lot, la diversité ou l'exclusion des variantes sont actifs
+    — donc toujours en configuration livrée. Sans lui, le plafond serait
+    silencieusement absent, ce qui est pire qu'un refus.
+    """
+    r_max = int(c.params.max_distinct_recipes.value)
+    if not c.needs_delta:
+        raise RecipeCapWithoutDeltaError(
+            f"Plafond de {r_max} plats distincts demandé alors que δ_r n'existe "
+            "pas dans ce modèle : seul enable_batch_fixed_cost, "
+            "enable_diversity ou enable_variant_exclusion fait exister la "
+            "variable qui dit qu'un plat est au menu. Rallumer l'un des trois, "
+            "ou retirer le plafond."
+        )
+    m += pulp.lpSum(c.delta.values()) <= r_max, "diversite_r_max"
 
 
 def _add_variant_exclusion(m: pulp.LpProblem, c: _Ctx) -> None:
@@ -704,6 +731,8 @@ class PulpMenuSolver:
             _add_perishable_waste(m, c)
         if params.appetence_mode == "constraint":
             _add_appetence_constraint(m, c)
+        if params.max_distinct_recipes.value is not None:
+            _add_recipe_cap(m, c)
         if params.min_protein_g_per_serving.value is not None:
             _add_protein_floor(m, c)
 

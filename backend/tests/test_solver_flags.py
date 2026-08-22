@@ -71,7 +71,7 @@ def test_main_seed_all_flags_on():
     assert d.prefilter_counts["troncature"] == 41
     # Sept, et non huit : l'assertion 0 (cohérence plancher de dépense ×
     # mode d'appétence) est partie avec le plancher lui-même (D40).
-    assert len(d.assertions_passed) == 7  # 1..6 + 6b
+    assert len(d.assertions_passed) == 8  # 1..6 + 6b + 6c
     # Les portions produites sont couvertes par les achats :
     # les couvertures saturées listées existent bien dans le problème.
     for iid in d.saturated_constraints["couvertures_ingredients"]:

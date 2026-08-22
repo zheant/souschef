@@ -43,6 +43,7 @@ def _household_out(view: household.HouseholdView) -> schemas.HouseholdOut:
         max_prep_time_per_meal_h=view.max_prep_time_per_meal_h,
         appetence_u_min_dollars=view.appetence_u_min_dollars,
         min_protein_g_per_serving=view.min_protein_g_per_serving,
+        max_distinct_recipes=view.max_distinct_recipes,
         members=[schemas.MemberOut(**asdict(m)) for m in view.members],
         demand=view.demand,
     )

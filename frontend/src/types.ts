@@ -13,6 +13,7 @@ export interface Household {
   //: Plancher d'appétence du plan, en dollars. `null` : aucun plancher.
   appetence_u_min_dollars: number | null;
   min_protein_g_per_serving: number | null;
+  max_distinct_recipes: number | null;
   members: Member[];
   demand: { D_exact: string; borne_basse: number; borne_haute: number };
 }
@@ -32,6 +33,7 @@ export interface SolverConfigInput {
   appetence_mode?: "objective" | "constraint";
   appetence_u_min_dollars?: number | null;
   min_protein_g_per_serving?: number | null;
+  max_distinct_recipes?: number | null;
   max_store_visits?: number | null; min_distinct_recipes?: number | null;
   max_share_per_recipe?: number | null; demand_slack_epsilon?: number | null;
   solver_time_limit_s?: number; mip_gap?: number;

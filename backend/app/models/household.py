@@ -44,6 +44,10 @@ class HouseholdProfile(TimestampMixin, Base):
             "min_protein_g_per_serving IS NULL OR min_protein_g_per_serving >= 0",
             name="min_protein_nonneg",
         ),
+        CheckConstraint(
+            "max_distinct_recipes IS NULL OR max_distinct_recipes >= 1",
+            name="r_max_at_least_one",
+        ),
         {"schema": SCHEMA},
     )
 
@@ -99,6 +103,11 @@ class HouseholdProfile(TimestampMixin, Base):
     min_protein_g_per_serving: Mapped[Decimal | None] = mapped_column(
         Numeric(8, 2), nullable=True
     )
+    #: R_max — nombre maximal de plats distincts au menu. `None` : aucun
+    #: plafond. Le pendant de R_min, mais il s'applique **même sans le drapeau
+    #: de diversité** : R_min sert à forcer la variété quand on l'étudie, R_max
+    #: à borner ce qu'un ménage accepte de cuisiner dans une semaine.
+    max_distinct_recipes: Mapped[int | None] = mapped_column(nullable=True)
 
     members: Mapped[list["HouseholdMember"]] = relationship(
         back_populates="profile", cascade="all, delete-orphan"

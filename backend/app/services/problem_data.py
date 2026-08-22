@@ -125,6 +125,8 @@ class ProfileData:
     #: semaine qui doit être protéinée, et un plat léger reste servable s'il est
     #: compensé.
     min_protein_g_per_serving: Decimal | None = None
+    #: R_max — plats distincts au plus (None = aucun plafond).
+    max_distinct_recipes: int | None = None
 
 
 @dataclass(frozen=True)
@@ -264,6 +266,7 @@ def load_problem_data(
             ),
             appetence_u_min_dollars=profile.appetence_u_min_dollars,
         min_protein_g_per_serving=profile.min_protein_g_per_serving,
+        max_distinct_recipes=profile.max_distinct_recipes,
         ),
         ingredients=ingredients,
         recipes=recipes,

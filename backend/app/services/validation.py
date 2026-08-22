@@ -67,6 +67,30 @@ class DiversityInfeasibleError(ValidationError):
     assertion = "6_compatibilite_diversite"
 
 
+class RecipeCapWithoutDeltaError(ValidationError):
+    """Plafond de plats distincts sans la variable qui dit qu'un plat est servi.
+
+    Même raison que pour le plancher de protéines : δ_r porte « ce plat est au
+    menu », et sans lui le plafond serait silencieusement absent — un réglage
+    ignoré est pire qu'un réglage refusé.
+    """
+
+    assertion = "0_plafond_recettes_modelisable"
+
+
+class RecipeCapInfeasibleError(ValidationError):
+    """Le plafond de plats ne peut pas nourrir le ménage, ou contredit R_min.
+
+    Deux façons d'être impossible, refusées avant le solveur plutôt qu'en
+    `Infeasible` muet : R_max < R_min (deux réglages qui se contredisent), et
+    R_max plats à leur capacité maximale ne couvrant pas la demande minimale
+    (α plafonne les portions par recette, donc peu de plats ne suffisent pas à
+    nourrir la semaine).
+    """
+
+    assertion = "0_plafond_recettes_atteignable"
+
+
 class ProteinFloorWithoutBatchFlagError(ValidationError):
     """Plancher de protéines sans la variable qui dit qu'un lot est cuisiné.
 
@@ -348,6 +372,37 @@ def validate_problem(
             f"maximale α = {alpha} exige plus de recettes distinctes."
         )
     passed.append(DiversityInfeasibleError.assertion)
+
+    # -- 6c. Le plafond de plats distincts peut-il nourrir le ménage ? ------
+    r_max_param = params.max_distinct_recipes.value
+    if r_max_param is not None:
+        r_max = int(r_max_param)
+        if r_max < r_min:
+            raise RecipeCapInfeasibleError(
+                f"R_max = {r_max} < R_min = {r_min} : les deux réglages se "
+                "contredisent. Le plafond de plats distincts doit laisser "
+                "atteindre le minimum exigé."
+            )
+        # Les R_max plats les plus capables, et **une valeur par famille** :
+        # deux variantes d'échelle du même plat ne peuvent pas être actives
+        # ensemble (D16), donc les compter comme deux plats surestimait la
+        # capacité du plafond — le même biais que l'assertion 6b a déjà corrigé
+        # une fois (D17).
+        per_family: dict[str, int] = {}
+        for r in surviving_recipes:
+            capacity = min(math.floor(alpha * bounds.high), r.max_batch_servings)
+            if capacity > per_family.get(r.dish_family_id, 0):
+                per_family[r.dish_family_id] = capacity
+        best = sorted(per_family.values(), reverse=True)[:r_max]
+        if sum(best) < bounds.low:
+            raise RecipeCapInfeasibleError(
+                f"R_max = {r_max} plats distincts, au mieux "
+                f"{sum(best)} portions (α plafonne chaque recette à "
+                f"{math.floor(alpha * bounds.high)} portions) < ⌈D⌉ = "
+                f"{bounds.low} : ce plafond ne peut pas nourrir le ménage. "
+                "Relever le plafond, ou α, ou baisser la demande."
+            )
+    passed.append(RecipeCapInfeasibleError.assertion)
 
     # -- 6b. Capacité entière contre la borne haute (D9) --------------------
     # D17 : même biais, en miroir — sommer min(cap, m_r) sur TOUTES les

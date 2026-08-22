@@ -30,6 +30,7 @@ class HouseholdOut(BaseModel):
     max_prep_time_per_meal_h: float
     appetence_u_min_dollars: float | None
     min_protein_g_per_serving: float | None
+    max_distinct_recipes: int | None
     members: list[MemberOut]
     demand: dict  # D exact + bornes (D9)
 
@@ -56,6 +57,7 @@ class HouseholdUpdate(BaseModel):
     #: est une valeur, pas une absence de valeur.
     appetence_u_min_dollars: float | None = Field(default=None, ge=0)
     min_protein_g_per_serving: float | None = Field(default=None, ge=0)
+    max_distinct_recipes: int | None = Field(default=None, ge=1)
     #: Plancher de dépense d'épicerie, en cents CAD. Même sémantique de
     #: `null` que U_min ci-dessus : omettre laisse inchangé, envoyer `null`
     #: efface. En cents parce que c'est de l'argent (INVARIANTS, CLAUDE.md) —

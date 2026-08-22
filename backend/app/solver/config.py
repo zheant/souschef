@@ -99,6 +99,8 @@ class SolverConfig(BaseModel):
     #: Plancher de protéines (g par portion, en moyenne sur le menu).
     #: Surcharge la préférence du ménage; `None` la laisse s'appliquer.
     min_protein_g_per_serving: float | None = Field(default=None, ge=0)
+    #: R_max — plats distincts au plus. Surcharge la préférence du ménage.
+    max_distinct_recipes: int | None = Field(default=None, ge=1)
     #: Plancher de dépense d'épicerie en cents CAD — surcharge du profil.
     #: `None` : suivre le profil.
 

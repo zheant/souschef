@@ -50,6 +50,8 @@ class EffectiveParams:
     #: Plancher de protéines, en grammes par portion, sur la moyenne du
     #: menu (None = aucun plancher).
     min_protein_g_per_serving: EffectiveParam
+    #: R_max — plats distincts au plus (None = aucun plafond).
+    max_distinct_recipes: EffectiveParam
     #: Plancher de dépense d'épicerie en cents (None = aucun plancher).
 
     @property
@@ -99,6 +101,9 @@ def resolve_effective_params(
             profile.demand_slack_epsilon,
         ),
         appetence_u_min_dollars=_resolve_u_min(profile, config),
+        max_distinct_recipes=_pick(
+            config.max_distinct_recipes, profile.max_distinct_recipes
+        ),
         min_protein_g_per_serving=_pick(
             Decimal(str(config.min_protein_g_per_serving))
             if config.min_protein_g_per_serving is not None

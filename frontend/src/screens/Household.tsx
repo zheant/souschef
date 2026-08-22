@@ -73,6 +73,7 @@ export default function HouseholdScreen(props: {
     min_protein: h.min_protein_g_per_serving == null
       ? ""
       : String(h.min_protein_g_per_serving),
+    r_max: h.max_distinct_recipes == null ? "" : String(h.max_distinct_recipes),
   });
   const [members, setMembers] = useState<Member[]>(h.members);
   const [saving, setSaving] = useState(false);
@@ -120,6 +121,9 @@ export default function HouseholdScreen(props: {
         min_protein_g_per_serving: form.min_protein.trim() === ""
           ? null
           : Number(form.min_protein),
+        max_distinct_recipes: form.r_max.trim() === ""
+          ? null
+          : Math.round(Number(form.r_max)),
         members,
       });
       props.onSaved(saved);
@@ -227,6 +231,16 @@ export default function HouseholdScreen(props: {
                   type="text" inputMode="decimal" value={form.min_protein}
                   onChange={(e) => setForm({ ...form, min_protein: e.target.value })}
                   placeholder="ex. 25"
+                />
+              </label>
+              <label className="field">
+                <span>
+                  Plats distincts au plus <em>(vide = aucun plafond)</em>
+                </span>
+                <input
+                  type="text" inputMode="numeric" value={form.r_max}
+                  onChange={(e) => setForm({ ...form, r_max: e.target.value })}
+                  placeholder="ex. 5"
                 />
               </label>
             </div>

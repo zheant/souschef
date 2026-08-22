@@ -48,7 +48,10 @@ import pytest
 from app.services.appetence import RuleBasedAppetenceScorer
 from app.services.prefilter import prefilter_recipes
 from app.services.recipe_nutrition import ProteinCoefficients
-from app.services.validation import ProteinFloorWithoutBatchFlagError
+from app.services.validation import (
+    ProteinFloorWithoutBatchFlagError,
+    RecipeCapInfeasibleError,
+)
 from app.solver import PulpMenuSolver, SolverConfig
 from tests.seed_loader import problem_from_seed_dir
 
@@ -288,7 +291,7 @@ def test_diagnostic_is_complete(toy):
     }
     # Sept, et non huit : l'assertion 0 (cohérence plancher de dépense ×
     # mode d'appétence) est partie avec le plancher lui-même (D40).
-    assert len(d.assertions_passed) == 7  # 1..6 + 6b
+    assert len(d.assertions_passed) == 8  # 1..6 + 6b + 6c
     # enable_variant_exclusion est à True par défaut (D16) : il apparaît donc
     # après enable_diversity dans les deux listes, sans qu'on l'ait demandé.
     assert d.last_enabled_flag == "enable_variant_exclusion"
@@ -421,3 +424,24 @@ def test_a_protein_floor_needs_the_variable_that_says_a_batch_is_cooked(toy):
             ),
         )
     assert "enable_batch_fixed_cost" in str(error.value)
+
+
+def test_a_recipe_cap_limits_the_number_of_distinct_dishes(toy):
+    """R_max borne les plats distincts, sans dépendre du drapeau de diversité.
+
+    Le jouet en porte trois : la diversité peut en exiger trois, le plafond en
+    autorise deux, et le menu s'y tient.
+    """
+    sans = solve(toy, enable_diversity=True, min_distinct_recipes=3)
+    assert len(sans.servings_by_recipe) == 3
+
+    avec = solve(toy, max_distinct_recipes=2)
+    assert avec.status == "Optimal"
+    assert len(avec.servings_by_recipe) <= 2
+
+
+def test_a_recipe_cap_below_the_minimum_is_refused_as_a_contradiction(toy):
+    with pytest.raises(RecipeCapInfeasibleError) as error:
+        solve(toy, enable_diversity=True, min_distinct_recipes=3, max_distinct_recipes=2)
+    assert "R_max = 2 < R_min = 3" in str(error.value)
+

@@ -35,6 +35,7 @@ def test_diagnostic_shape():
     assert set(d) == {"max_store_visits", "min_distinct_recipes",
                       "max_share_per_recipe", "demand_slack_epsilon",
                       "appetence_u_min_dollars", "min_protein_g_per_serving",
+                      "max_distinct_recipes",
                       "appetence_mode"}
     assert all({"valeur", "provenance"} == set(v) for v in d.values())
     assert d["appetence_mode"]["provenance"] == "dérivé"

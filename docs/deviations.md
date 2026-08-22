@@ -2268,3 +2268,71 @@ respecte avec; à 25 g, hors d'atteinte des trois recettes, le solveur sort
 drapeaux sont éteints. 501 tests passés, migration `8ec98af31b5e` appliquée
 contre PostgreSQL réel, et le champ « Protéines minimum (g par portion, en
 moyenne) » vit dans Ménage › Préférences, à côté du plancher d'appétence.
+
+
+## D42 — R_max : un plafond de plats distincts, indépendant du drapeau de diversité
+
+**Demande du ménage**, née d'un effet mesuré : avec le plancher de protéines à
+25 g, le menu est passé à **12 plats** pour 65 portions. Nourrissant, mais
+personne ne cuisine douze plats différents dans une semaine.
+
+**R_max est le pendant de R_min, pas son symétrique.** R_min (assertion 6, D9)
+ne s'applique qu'avec `enable_diversity` : c'est un mécanisme qu'on rallume pour
+étudier la variété. R_max, lui, s'applique **dès qu'il est réglé** — il ne décrit
+pas un mécanisme à l'étude mais une limite de ce que le ménage accepte de
+cuisiner. `Σ δ_r ≤ R_max`, une ligne, sur la variable qui dit qu'un plat est au
+menu.
+
+**Deux refus nommés avant le solveur**, plutôt qu'un `Infeasible` muet :
+
+1. **R_max < R_min** — deux réglages qui se contredisent. Le message les cite
+   tous les deux ;
+2. **R_max plats ne peuvent pas nourrir le ménage** — α plafonne chaque recette à
+   `⌊α·⌈D(1+ε)⌉⌋` portions, donc peu de plats ne suffisent pas toujours. La
+   vérification prend les **R_max recettes les plus capables** (la borne haute de
+   ce que le plafond permet), et refuse si leur somme reste sous `⌈D⌉`. Le message
+   nomme les trois leviers : le plafond, α, ou la demande.
+
+**δ_r est requis, et son absence se refuse** (`RecipeCapWithoutDeltaError`) :
+sans lui, le plafond serait silencieusement absent, ce qui est pire qu'un refus.
+Il existe dès que les coûts fixes de lot, la diversité ou l'exclusion des
+variantes sont actifs — donc toujours en configuration livrée (D38, D16).
+
+**Une assertion de plus, comptée.** `assertions_passed` passe de 7 à 8 : la
+nouvelle passe même sans plafond réglé, comme les autres passent sans que leur
+mécanisme soit actif.
+
+**Une valeur par famille de plat, pas par recette.** Le contrôle de capacité
+prenait d'abord les R_max *recettes* les plus capables — or deux variantes
+d'échelle du même plat ne peuvent pas être actives ensemble (D16), donc les
+compter comme deux plats surestimait ce que le plafond permet de servir. C'est
+exactement le biais que l'assertion 6b avait déjà corrigé une fois (D17), reproduit
+puis corrigé ici : une valeur par famille, la plus généreuse de ses variantes.
+
+**Ce que la mesure a appris, et qui n'était pas prévu.** Sur le corpus réel, les
+deux réglages se disputent :
+
+| plancher de protéines | plafond de plats | résultat |
+| --- | --- | --- |
+| 25 g | 5, 6 ou 8 | **Infeasible** |
+| 25 g | 10 | Optimal, 10 plats, 66 portions |
+| 15 g | 5 | Optimal, 5 plats, 66 portions |
+| 10 g | 5 | Optimal, 5 plats, 66 portions |
+
+La cause n'est pas une capacité manquante que le contrôle pré-solveur pourrait
+prouver : les 52 recettes à 25 g ou plus offrent assez de portions. C'est
+l'interaction — α plafonne chaque recette, `max_batch_servings` la plafonne
+souvent plus bas encore (les plus protéinées tiennent 2 à 10 portions), et une
+seule variante par famille peut être active. Le diagnostic le dit ainsi :
+« l'infaisabilité vient de l'interaction des contraintes actives, en dernier lieu
+du drapeau `enable_variant_exclusion` ». Prouver ce genre d'infaisabilité avant
+le solveur demanderait un IIS, que CBC ne fournit pas.
+
+**Le ménage doit donc choisir son compromis** : peu de plats *ou* beaucoup de
+protéines par portion. 15 g pour cinq plats, 25 g pour dix. C'est une propriété
+du catalogue, pas un défaut du modèle — et c'est le genre de fait qu'un plancher
+sans mesure aurait laissé croire réglable.
+
+**Vérifié en exécutant : 506 tests passés**, migration `9f482abb2232` appliquée
+contre PostgreSQL réel, et le champ « Plats distincts au plus » vit dans
+Ménage › Préférences avec les deux planchers.
