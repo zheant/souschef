@@ -223,7 +223,7 @@
   },
   {
     "id": "bon_pour_toi_bouchees_daubergine_parmigiana",
-    "name": "Bouchées d&rsquo;aubergine parmigiana",
+    "name": "Bouchées d’aubergine parmigiana",
     "original_servings": 6,
     "prep_time_fixed_h": "0.333333",
     "prep_time_marginal_h": "0",
@@ -359,7 +359,7 @@
   },
   {
     "id": "bon_pour_toi_bouchees_doeufs_au_bacon",
-    "name": "Bouchées d&rsquo;oeufs au bacon",
+    "name": "Bouchées d’oeufs au bacon",
     "original_servings": 7,
     "prep_time_fixed_h": "0.166667",
     "prep_time_marginal_h": "0",
@@ -993,7 +993,7 @@
   },
   {
     "id": "bon_pour_toi_caviar_de_cowboy_comme_chez_trader_joes",
-    "name": "Caviar de Cowboy (comme chez Trader Joe&rsquo;s)",
+    "name": "Caviar de Cowboy (comme chez Trader Joe’s)",
     "original_servings": 12,
     "prep_time_fixed_h": "0.333333",
     "prep_time_marginal_h": "0",
@@ -1259,7 +1259,7 @@
   },
   {
     "id": "bon_pour_toi_frites_davocats",
-    "name": "Frites d&rsquo;avocats",
+    "name": "Frites d’avocats",
     "original_servings": 6,
     "prep_time_fixed_h": "0.166667",
     "prep_time_marginal_h": "0",

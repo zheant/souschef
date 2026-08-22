@@ -419,3 +419,49 @@ pre.raw {
   gap: 0.6rem;
   margin-top: 0.9rem;
 }
+
+/* Résumé de la semaine — quatre nombres au-dessus du plan. Volontairement plat
+   et sans couleur d'accent : c'est un rappel, pas un tableau de bord. */
+.ws-card {
+  margin: 14px 0 10px;
+  padding: 0.85rem 1rem 0.7rem;
+  border: 1px solid var(--line, #dcdfd3);
+  border-radius: 0.8rem;
+  background: var(--card, #fff);
+}
+.ws-title {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted, #6b7268);
+  margin-bottom: 0.55rem;
+}
+.ws-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+@media (max-width: 560px) {
+  .ws-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.ws-cell { min-width: 0; }
+.ws-value { font-weight: 700; font-size: 1.05rem; }
+.ws-label { font-size: 0.74rem; color: var(--muted, #6b7268); }
+.ws-note {
+  margin: 0.6rem 0 0;
+  font-size: 0.74rem;
+  color: var(--muted, #6b7268);
+}
+.rc-kcal { font-weight: 600; }
+.rc-kcal-missing { font-style: italic; }
+
+/* Les protéines mènent le résumé : la cellule de tête porte le nombre un cran
+   plus grand, sans couleur d'accent — c'est une hiérarchie, pas une alarme. */
+.ws-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+@media (max-width: 720px) {
+  .ws-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+  .ws-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.ws-cell--lead .ws-value { font-size: 1.3rem; }

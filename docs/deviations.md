@@ -2120,3 +2120,38 @@ ouverte à 161,9 kcal · 3,1 g · 5,9 g · 24,4 g ; recherche « lasagne » → 
 meilleure lasagne à la viande maison », hors du menu de la semaine, à
 1 230,4 kcal ± 3,0 · 71,2 g ± 0,3 · 74,8 g ± 0,4 · 66,9 g ± 0,6, avec ses 20
 ingrédients. `tsc -b` propre, 16 tests d'API et de module catalogue passés.
+
+**Suite immédiate — les protéines devant, et à quatre endroits plutôt qu'un.**
+Retour d'usage : le nombre que ce ménage surveille est la protéine, et il
+n'était visible qu'en ouvrant une recette. Livré :
+
+- **le résumé de la semaine** (`components/WeekSummary.tsx`), en haut de la page
+  principale : protéines par portion en tête, puis énergie, épicerie, temps de
+  cuisine, portions. Les deux moyennes sont pondérées **par portion** — quatre
+  portions de riz et douze de chili ne pèsent pas pareil — et disent sur combien
+  de plats elles portent : « sur 2 des 3 plats, les autres n'ont pas de valeur
+  nutritive calculable, et leur absence ne se compense pas ». Le coût et le temps
+  sont ceux de l'écran Résultat, calculés de la même façon;
+- **les cartes du menu** portent deux puces de plus, à côté du temps et des
+  portions : `3,1 g prot.` et `162 kcal`. Une recette non chiffrable n'a pas de
+  puce du tout — un « 0 g » se lirait comme une mesure;
+- **les lignes du catalogue** portent les deux nombres par portion.
+
+**Un seul lecteur, trois affichages.** `nutrition.ts::useMenuNutrition` interroge
+la route une fois par plat du menu (trois à sept requêtes, mesurées à 80 ms
+chacune) et le résumé comme les cartes lisent ce même résultat. Trois composants
+qui auraient interrogé la route chacun de leur côté auraient fini par afficher
+trois chiffres différents — il suffit que l'un demande un autre nombre de
+portions.
+
+**Les protéines gardent une décimale, l'énergie n'en a pas.** Arrondir les
+protéines à l'entier affichait « 0 g » pour une recette qui en porte 0,4 : sur le
+nombre que l'usager surveille, l'arrondi efface la différence entre peu et rien.
+Le bloc détaillé en affichait déjà une; les vues compactes s'y alignent plutôt
+que de donner deux chiffres pour le même fait (`nutrition.ts::proteinLabel`).
+
+**Un défaut de données révélé par la liste.** Quatre recettes sur 121 portaient
+une entité HTML dans leur nom (« Bouchées d&rsquo;aubergine parmigiana ») : le
+corpus source échappe ses titres, React échappe ce qu'on lui donne, donc
+l'entité s'affichait telle quelle. Décodée **à l'import**, là où le nom entre
+dans le seed, et non dans chaque écran qui le lit. 502 tests passés.

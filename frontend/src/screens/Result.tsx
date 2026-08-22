@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { api, cents, hours, messageOf } from "../api";
 import { describeChanges } from "../changes";
 import { NutritionBlock } from "../components/NutritionBlock";
+import { kcalLabel, perServing, proteinLabel, useMenuNutrition } from "../nutrition";
 import type {
   Household, Plan, RecipeIngredientLine, RecipeNutrition, RecipeQuote,
   SolverConfigInput, Store,
@@ -225,6 +226,8 @@ export default function ResultScreen(props: {
   }
 
   const currentPlan = plan;
+  // Les puces des cartes et le résumé de la semaine lisent la même source.
+  const { facts: menuNutrition } = useMenuNutrition(currentPlan.menu);
   const groceryTotalCents = currentPlan.grocery_list_by_store
     .reduce((s, g) => s + Number(g.subtotal_cents_cad), 0);
   const totalTimeH = currentPlan.menu.reduce((s, m) => s + Number(m.prep_time_h), 0);
@@ -406,6 +409,21 @@ export default function ResultScreen(props: {
                   <div className="rp-recipe-meta">
                     <span className="rp-chip">{CLOCK_ICON} {hours(m.prep_time_h)}</span>
                     <span className="rp-chip">{PORTIONS_ICON} {m.servings} portions</span>
+                    {(() => {
+                      // Par portion, comme partout ailleurs dans l'écran. Une
+                      // recette non chiffrable n'a pas de puce du tout : un
+                      // « 0 g » se lirait comme une mesure.
+                      const facts = menuNutrition[m.recipe_id];
+                      const kcal = perServing(facts, "kcal_per_serving");
+                      const protein = perServing(facts, "protein_g_per_serving");
+                      if (kcal == null || protein == null) return null;
+                      return (
+                        <>
+                          <span className="rp-chip">{proteinLabel(protein)} prot.</span>
+                          <span className="rp-chip">{kcalLabel(kcal)}</span>
+                        </>
+                      );
+                    })()}
                     {(() => {
                       const { label, complete } = quotePrice(
                         recipeQuotes[m.recipe_id], quotesLoading,

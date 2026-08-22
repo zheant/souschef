@@ -70,6 +70,11 @@ export default function HouseholdScreen(props: {
     // plancher ». Les deux doivent rester distinguables jusqu'à la
     // sérialisation.
     u_min: h.appetence_u_min_dollars == null ? "" : String(h.appetence_u_min_dollars),
+    // Saisi en dollars, transporté en cents : l'argent ne devient jamais un
+    // flottant côté serveur (INVARIANTS, CLAUDE.md).
+    min_spend: h.min_grocery_spend_cents_cad == null
+      ? ""
+      : String(h.min_grocery_spend_cents_cad / 100),
   });
   const [members, setMembers] = useState<Member[]>(h.members);
   const [saving, setSaving] = useState(false);
@@ -111,6 +116,9 @@ export default function HouseholdScreen(props: {
         // `null` explicite retire le plancher : la route sérialise avec
         // `exclude_unset`, donc envoyer la clé à `null` l'efface réellement.
         appetence_u_min_dollars: form.u_min.trim() === "" ? null : Number(form.u_min),
+        min_grocery_spend_cents_cad: form.min_spend.trim() === ""
+          ? null
+          : Math.round(Number(form.min_spend) * 100),
         members,
       });
       props.onSaved(saved);
@@ -209,6 +217,14 @@ export default function HouseholdScreen(props: {
                   placeholder="ex. 65"
                 />
               </label>
+              <label className="field">
+                <span>Épicerie minimum ($) <em>(vide = aucun)</em></span>
+                <input
+                  type="text" inputMode="decimal" value={form.min_spend}
+                  onChange={(e) => setForm({ ...form, min_spend: e.target.value })}
+                  placeholder="ex. 60"
+                />
+              </label>
             </div>
             <p className="muted" style={{ marginTop: 4 }}>
               Sans plancher, le menu part vers les recettes les moins chères :
@@ -216,6 +232,15 @@ export default function HouseholdScreen(props: {
               bon marché l'emporte. Un plancher inverse la question — minimiser
               le coût <em>sous</em> une appétence exigée. Plus il monte, plus le
               menu suit vos goûts et plus l'épicerie coûte.
+            </p>
+            <p className="muted" style={{ marginTop: 4 }}>
+              Les deux planchers répondent à la même question en deux unités.
+              L'appétence dit « quel menu », l'épicerie minimum dit « quel
+              montant » — et c'est le second qui se raisonne en budget, la
+              correspondance entre les deux changeant à chaque circulaire.
+              Ils ne s'emploient pas ensemble : avec une appétence exigée, plus
+              rien ne départage les façons d'atteindre le montant et le solveur
+              pourrait l'atteindre en surplus. Remplir un seul des deux.
             </p>
 
             <details style={{ marginTop: 16 }}>

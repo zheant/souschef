@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, hours, messageOf } from "../api";
+import { kcalLabel, perServing, proteinLabel } from "../nutrition";
 import { NutritionBlock } from "../components/NutritionBlock";
 import type {
   RecipeIngredientLine, RecipeNutrition, RecipeSummary,
@@ -32,6 +33,15 @@ export default function RecipesScreen() {
   const [items, setItems] = useState<RecipeSummary[] | null>(null);
   const [listError, setListError] = useState<string | null>(null);
 
+  // Les kcal par portion de la page affichée. Une requête par recette de la
+  // page (vingt), lancées ensemble : la route exige une recette nommée, et
+  // mesuré sur cette base, un appel coûte 80 ms. La liste s'affiche sans
+  // attendre — chaque ligne se complète quand sa réponse arrive, et une
+  // recette dont la valeur est refusée montre « — », jamais un zéro.
+  const [perRecipe, setPerRecipe] = useState<
+    Record<string, { kcal: number; protein: number } | null>
+  >({});
+
   const [open, setOpen] = useState<RecipeSummary | null>(null);
   const [nutrition, setNutrition] = useState<RecipeNutrition | null>(null);
   const [nutritionError, setNutritionError] = useState<string | null>(null);
@@ -47,6 +57,21 @@ export default function RecipesScreen() {
         if (!live) return;
         setItems(page.items);
         setTotal(page.total);
+        setPerRecipe({});
+        page.items.forEach((recipe) => {
+          api.recipeNutrition(recipe.id, recipe.original_servings)
+            .then((facts) => {
+              if (!live) return;
+              const kcal = perServing(facts, "kcal_per_serving");
+              const protein = perServing(facts, "protein_g_per_serving");
+              setPerRecipe((prev) => ({
+                ...prev,
+                [recipe.id]:
+                  kcal == null || protein == null ? null : { kcal, protein },
+              }));
+            })
+            .catch(() => live && setPerRecipe((prev) => ({ ...prev, [recipe.id]: null })));
+        });
       })
       .catch((e) => live && setListError(messageOf(e)));
     return () => { live = false; };
@@ -132,6 +157,17 @@ export default function RecipesScreen() {
               <span className="rc-name">{recipe.name}</span>
               <span className="rc-meta">
                 {recipe.original_servings} portions · {hours(recipe.prep_time_fixed_h)}
+                {" · "}
+                {recipe.id in perRecipe
+                  ? perRecipe[recipe.id] == null
+                    ? <span className="rc-kcal-missing">valeur nutritive indisponible</span>
+                    : <span className="rc-kcal">
+                        {proteinLabel(perRecipe[recipe.id]!.protein)} de protéines
+                        {" · "}
+                        {kcalLabel(perRecipe[recipe.id]!.kcal)}
+                        {" par portion"}
+                      </span>
+                  : <span className="muted">…</span>}
               </span>
             </button>
           </li>

@@ -10,6 +10,7 @@ aucune valeur inconnue n'est remplacée par zéro.
 from __future__ import annotations
 
 import argparse
+import html
 import json
 import re
 import unicodedata
@@ -327,7 +328,13 @@ def _convert_recipe(
 
     return {
         "id": _recipe_id(source, source_url, source_recipe.get("title")),
-        "name": projection.get("name") or source_recipe.get("title") or "",
+        # Le corpus source porte des titres échappés en HTML
+        # (« Bouchées d&rsquo;aubergine ») : l'interface les afficherait tels
+        # quels, React échappant ce qu'on lui donne. Le nom se décode ici,
+        # là où il entre dans le seed, et non dans chaque écran qui le lit.
+        "name": html.unescape(
+            projection.get("name") or source_recipe.get("title") or ""
+        ),
         "original_servings": original_servings,
         "prep_time_fixed_h": _number_text(projection.get("prep_time_fixed_h")),
         "prep_time_marginal_h": _number_text(

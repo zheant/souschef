@@ -231,3 +231,21 @@ def test_an_override_keeps_the_marginal_part_the_projection_declared():
     assert line["qty_marginal_per_serving_base_unit"] == "3"
     # Un override dérivé d'une mesure fédérale n'est pas une estimation.
     assert imported[0]["tags"].get("quantity_estimates") in (None, [])
+
+
+def test_an_html_entity_in_the_source_title_is_decoded():
+    """« Bouchées d&rsquo;aubergine » s'affiche tel quel dans l'interface.
+
+    Le corpus source porte des titres échappés en HTML. React échappe ce qu'on
+    lui donne, donc l'entité se lit à l'écran — quatre recettes sur 121 étaient
+    dans ce cas, et l'écran Recettes les a rendues visibles. Le nom se décode à
+    l'import : c'est là qu'il entre dans le seed.
+    """
+    recipe = _source_recipe()
+    recipe["title"] = "Bouchées d&rsquo;aubergine parmigiana"
+    recipe["souschef_projection"]["name"] = "Bouchées d&rsquo;aubergine parmigiana"
+    imported, _review, _excluded, _report = recipe_import.convert_corpus(
+        {"recipes": [recipe], "summary": {"selected": 1}},
+        {"carotte"},
+    )
+    assert imported[0]["name"] == "Bouchées d’aubergine parmigiana"
